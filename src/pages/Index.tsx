@@ -1,12 +1,9 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
 import { ArrowRight, Leaf, Zap, Users, LightbulbOff, Badge, CheckCircle } from 'lucide-react';
-
 const Index = () => {
-  return (
-    <div className="min-h-screen flex flex-col bg-white">
+  return <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       
       {/* Hero Section */}
@@ -16,7 +13,7 @@ const Index = () => {
             <div className="space-y-4">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-voltgreen-50 text-voltgreen-700 border border-voltgreen-100 text-sm font-medium mb-2 animate-fade-in">
                 <Badge className="h-4 w-4 mr-1" />
-                <span>Sfide dal 31 Marzo al 6 Aprile 2025</span>
+                <span>Prossime sfide dal 31 Marzo al 6 Aprile 2025</span>
               </div>
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight animate-fade-in">
@@ -73,11 +70,7 @@ const Index = () => {
           <div className="flex-1 flex justify-center md:justify-end animate-fade-in animation-delay-500">
             <div className="relative w-full max-w-md">
               <div className="absolute inset-0 bg-voltgreen-200 rounded-3xl rotate-3 transform-gpu"></div>
-              <img 
-                src="/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png" 
-                alt="VolTogether Logo" 
-                className="relative z-10 w-full h-auto p-8 animate-float"
-              />
+              <img src="/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png" alt="VolTogether Logo" className="relative z-10 w-full h-auto p-8 animate-float" />
             </div>
           </div>
         </div>
@@ -95,23 +88,11 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard 
-              icon={<LightbulbOff className="h-8 w-8 text-voltgreen-500" />}
-              title="Riduci i consumi"
-              description="Impegnati a ridurre i tuoi consumi energetici durante le ore di picco, dalle 19 alle 20, contribuendo al bilanciamento della rete."
-            />
+            <FeatureCard icon={<LightbulbOff className="h-8 w-8 text-voltgreen-500" />} title="Riduci i consumi" description="Impegnati a ridurre i tuoi consumi energetici durante le ore di picco, dalle 19 alle 20, contribuendo al bilanciamento della rete." />
             
-            <FeatureCard 
-              icon={<Zap className="h-8 w-8 text-voltgreen-500" />}
-              title="Guadagna punti"
-              description="Ogni azione sostenibile ti fa guadagnare punti. Mantieni una 'streak' di 3 giorni consecutivi per ottenere bonus extra."
-            />
+            <FeatureCard icon={<Zap className="h-8 w-8 text-voltgreen-500" />} title="Guadagna punti" description="Ogni azione sostenibile ti fa guadagnare punti. Mantieni una 'streak' di 3 giorni consecutivi per ottenere bonus extra." />
             
-            <FeatureCard 
-              icon={<Users className="h-8 w-8 text-voltgreen-500" />}
-              title="Unisciti alla community"
-              description="Fai parte di una community di persone attente alla sostenibilità, partecipando insieme a sfide che hanno un impatto positivo sull'ambiente."
-            />
+            <FeatureCard icon={<Users className="h-8 w-8 text-voltgreen-500" />} title="Unisciti alla community" description="Fai parte di una community di persone attente alla sostenibilità, partecipando insieme a sfide che hanno un impatto positivo sull'ambiente." />
           </div>
         </div>
       </section>
@@ -152,11 +133,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <img 
-                src="/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png" 
-                alt="VolTogether Logo" 
-                className="h-8 w-auto" 
-              />
+              <img src="/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png" alt="VolTogether Logo" className="h-8 w-auto" />
               <span className="text-voltgreen-700 font-display font-semibold text-xl">VolTogether</span>
             </div>
             
@@ -193,20 +170,23 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
-const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => {
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+const FeatureCard = ({
+  icon,
+  title,
+  description
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) => {
+  return <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
       <div className="bg-voltgreen-50 rounded-full w-16 h-16 flex items-center justify-center mb-4 mx-auto">
         {icon}
       </div>
       <h3 className="text-xl font-bold text-center mb-2">{title}</h3>
       <p className="text-gray-600 text-center">{description}</p>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
