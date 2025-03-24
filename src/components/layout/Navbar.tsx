@@ -4,7 +4,24 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, User as UserIcon, HelpCircle, LifeBuoy } from 'lucide-react';
+import {
+  Menu,
+  X,
+  LogOut,
+  User as UserIcon,
+  HelpCircle,
+  LifeBuoy,
+  Bell,
+  BellDot
+} from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useNotifications } from '@/context/NotificationContext';
+import { format, parseISO } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 interface NavbarProps {
   isAuthenticated?: boolean;
@@ -15,6 +32,10 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const location = useLocation();
+  const { notifications, markAsRead } = useNotifications();
+
+  // Controlla se ci sono notifiche non lette
+  const hasUnreadNotifications = notifications.some(n => !n.read);
 
   // Close mobile menu when location changes
   useEffect(() => {
@@ -29,6 +50,10 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
       title: "Disconnesso",
       description: "Hai effettuato il logout con successo",
     });
+  };
+
+  const handleNotificationClick = (id: string) => {
+    markAsRead(id);
   };
 
   return (
@@ -50,20 +75,8 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
 
           {/* Desktop navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
-            <Link 
-              to="/" 
-              className="text-gray-700 hover:text-voltgreen-600 transition-colors px-2 py-1 rounded-md"
-            >
-              Home
-            </Link>
             {isAuthenticated ? (
               <>
-                <Link 
-                  to="/dashboard" 
-                  className="text-gray-700 hover:text-voltgreen-600 transition-colors px-2 py-1 rounded-md"
-                >
-                  Dashboard
-                </Link>
                 <Link 
                   to="/how-it-works" 
                   className="text-gray-700 hover:text-voltgreen-600 transition-colors px-2 py-1 rounded-md"
@@ -76,6 +89,51 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
                 >
                   Support
                 </Link>
+                
+                {/* Notification Bell */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      {hasUnreadNotifications ? (
+                        <>
+                          <BellDot className="h-5 w-5 text-voltgreen-600" />
+                          <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+                        </>
+                      ) : (
+                        <Bell className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto">
+                    <div className="p-4 border-b border-gray-100">
+                      <h4 className="font-medium">Notifiche</h4>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p>Nessuna notifica</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {notifications.map(notification => (
+                          <div 
+                            key={notification.id}
+                            className={`p-4 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-gray-50' : ''}`}
+                            onClick={() => handleNotificationClick(notification.id)}
+                          >
+                            <div className="flex justify-between mb-1">
+                              <h5 className="font-medium text-sm">{notification.title}</h5>
+                              <span className="text-xs text-gray-500">
+                                {format(parseISO(notification.timestamp), 'HH:mm', { locale: it })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600">{notification.message}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+                
                 <div className="flex items-center space-x-2">
                   <Link to="/profile" className="text-gray-700 hover:text-voltgreen-600">
                     <UserIcon className="h-5 w-5" />
@@ -137,12 +195,6 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
       {isOpen && (
         <div className="md:hidden absolute top-16 inset-x-0 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-lg animate-fade-in">
           <div className="pt-2 pb-4 space-y-1 px-4">
-            <Link 
-              to="/" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-voltgreen-600 hover:bg-gray-50"
-            >
-              Home
-            </Link>
             {isAuthenticated ? (
               <>
                 <Link 

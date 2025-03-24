@@ -42,8 +42,7 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-// Test notification scheduler
-const SECONDS_IN_HOUR = 1; // Ridotto a 1 secondo per testing
+// For testing - make sure challenges start immediately
 const getCurrentChallengeId = () => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -140,6 +139,35 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     return newNotification;
   };
   
+  // Verifica immediata delle notifiche all'avvio
+  useEffect(() => {
+    const challengeId = getCurrentChallengeId();
+    if (challengeId !== null) {
+      // Verifica se l'utente ha già risposto alla partecipazione per questa sfida
+      const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
+      
+      // Se non ha ancora risposto, mostra la notifica di partecipazione
+      if (participationResponse === null) {
+        // Verifica se abbiamo già inviato questa notifica oggi per evitare duplicati
+        const alreadySentParticipation = notifications.some(n => 
+          n.type === 'participation-request' && 
+          n.challengeId === challengeId &&
+          isToday(parseISO(n.timestamp))
+        );
+        
+        if (!alreadySentParticipation) {
+          createNotification(
+            'participation-request',
+            'Sfida di oggi',
+            `Parteciperai alla sfida di oggi dalle 19:00 alle 20:00?`,
+            challengeId,
+            true
+          );
+        }
+      }
+    }
+  }, []);
+
   // Controlla e crea notifiche appropriate in base all'ora del giorno
   const checkForScheduledNotifications = () => {
     const now = new Date();
@@ -158,10 +186,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const today20 = new Date(todayStr);
     today20.setHours(20, 0, 0, 0);
     
-    // PER TESTING: usa ore ridotte in secondi
-    // Se ora attuale è tra 9:00 e 9:01 (0-1 secondo per testing)
-    if (now.getTime() >= today9AM.getTime() && 
-        now.getTime() <= today9AM.getTime() + SECONDS_IN_HOUR * 1000) {
+    // Se ora attuale è dopo le 9:00
+    if (now.getTime() >= today9AM.getTime()) {
       
       // Controlla se abbiamo già inviato questa notifica oggi
       const alreadySentParticipation = notifications.some(n => 
@@ -170,7 +196,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         isToday(parseISO(n.timestamp))
       );
       
-      if (!alreadySentParticipation) {
+      // Controlla se l'utente ha già risposto alla richiesta di partecipazione
+      const hasResponded = localStorage.getItem(`challenge_${challengeId}_participating`) !== null;
+      
+      if (!alreadySentParticipation && !hasResponded) {
         createNotification(
           'participation-request',
           'Sfida di oggi',
@@ -181,9 +210,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     
-    // Se ora attuale è tra 18:55 e 18:56 (1-2 secondi per testing)
-    else if (now.getTime() >= today1855.getTime() && 
-             now.getTime() <= today1855.getTime() + SECONDS_IN_HOUR * 1000) {
+    // Se ora attuale è dopo le 18:55
+    if (now.getTime() >= today1855.getTime()) {
       
       // Controlla se l'utente ha accettato di partecipare
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
@@ -208,9 +236,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     
-    // Se ora attuale è tra 20:00 e 20:01 (2-3 secondi per testing)
-    else if (now.getTime() >= today20.getTime() && 
-             now.getTime() <= today20.getTime() + SECONDS_IN_HOUR * 1000) {
+    // Se ora attuale è dopo le 20:00
+    if (now.getTime() >= today20.getTime()) {
       
       // Controlla se l'utente ha accettato di partecipare
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
@@ -223,7 +250,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           isToday(parseISO(n.timestamp))
         );
         
-        if (!alreadySentCompletion) {
+        // Controlla se la sfida è già stata completata
+        const hasCompleted = localStorage.getItem(`challenge_${challengeId}_completed`) === 'true';
+        
+        if (!alreadySentCompletion && !hasCompleted) {
           createNotification(
             'challenge-completion',
             'Sfida finita!',
@@ -238,9 +268,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   // Controlla le notifiche ogni 30 secondi
   useEffect(() => {
+    checkForScheduledNotifications(); // Controlla subito
+    
     const interval = setInterval(() => {
       checkForScheduledNotifications();
-    }, 1000); // Controlla ogni secondo per test
+    }, 30000); // Controlla ogni 30 secondi
     
     return () => clearInterval(interval);
   }, [notifications]);
