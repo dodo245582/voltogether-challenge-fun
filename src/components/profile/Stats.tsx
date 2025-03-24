@@ -38,7 +38,7 @@ const Stats = ({ user, totalChallenges }: StatsProps) => {
       <StatsCard 
         title="Streak Attuale" 
         value={streak.toString()} 
-        description={streak >= 3 ? "Hai ottenuto bonus punti!" : "Completa 3 sfide consecutive"}
+        description={streak >= 3 ? "Completa 3 sfide consecutive e ottieni +5 punti bonus!" : "Completa 3 sfide consecutive per ottenere punti bonus"}
         icon={<TrendingUp className="h-5 w-5 text-orange-500" />} 
         trend={streak >= 3 ? "up" : "neutral"}
       />
