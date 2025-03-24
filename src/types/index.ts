@@ -38,15 +38,28 @@ export type DiscoverySource =
   | 'event'
   | 'other';
 
-export const CHALLENGE_DATES = [
-  '2025-03-31',
-  '2025-04-01',
-  '2025-04-02',
-  '2025-04-03',
-  '2025-04-04',
-  '2025-04-05',
-  '2025-04-06'
-];
+// Compute the current week dates starting from today
+const generateCurrentWeekDates = () => {
+  const dates: string[] = [];
+  const today = new Date();
+  
+  // Reset hours to get a clean date
+  today.setHours(0, 0, 0, 0);
+  
+  // Start with today
+  const startDate = new Date(today);
+  
+  // Add 7 days from today
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    dates.push(currentDate.toISOString().split('T')[0]);
+  }
+  
+  return dates;
+};
+
+export const CHALLENGE_DATES = generateCurrentWeekDates();
 
 export const SUSTAINABLE_ACTIONS: SustainableAction[] = [
   {

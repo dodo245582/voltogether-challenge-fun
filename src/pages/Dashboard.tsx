@@ -13,11 +13,13 @@ import { format, parseISO, isSameDay } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, Award, Users, ArrowRight, Leaf, AlertTriangle } from 'lucide-react';
+import { useNotifications } from '@/context/NotificationContext';
+import NotificationModals from '@/components/notifications/NotificationModals';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const { notificationsEnabled, enableNotifications } = useNotifications();
   
   // Recupera il nome dell'utente dal localStorage
   const userName = localStorage.getItem('userName') || 'utente';
@@ -28,27 +30,34 @@ const Dashboard = () => {
     email: 'demo@voltogether.com',
     name: userName,
     createdAt: new Date().toISOString(),
-    city: 'Milano',
-    discoverySource: 'social-media',
-    selectedActions: ['laundry', 'pc', 'lights', 'tv'],
-    completedChallenges: 0,
-    totalPoints: 0,
-    streak: 0
+    city: localStorage.getItem('userCity') || 'Milano',
+    discoverySource: localStorage.getItem('userDiscoverySource') as any || 'social-media',
+    selectedActions: JSON.parse(localStorage.getItem('userSelectedActions') || '[]'),
+    completedChallenges: parseInt(localStorage.getItem('completedChallenges') || '0'),
+    totalPoints: parseInt(localStorage.getItem('totalPoints') || '0'),
+    streak: parseInt(localStorage.getItem('streak') || '0')
   });
   
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   
   // Funzione per generare le sfide
   useEffect(() => {
-    const generatedChallenges = CHALLENGE_DATES.map((date, index) => ({
-      id: index + 1,
-      date,
-      startTime: '19:00:00',
-      endTime: '20:00:00',
-      completed: false,
-      participating: undefined,
-      userActions: []
-    }));
+    const generatedChallenges = CHALLENGE_DATES.map((date, index) => {
+      const challengeId = index + 1;
+      const participating = localStorage.getItem(`challenge_${challengeId}_participating`) === 'true';
+      const completed = localStorage.getItem(`challenge_${challengeId}_completed`) === 'true';
+      const userActions = JSON.parse(localStorage.getItem(`challenge_${challengeId}_actions`) || '[]');
+      
+      return {
+        id: challengeId,
+        date,
+        startTime: '19:00:00',
+        endTime: '20:00:00',
+        completed,
+        participating,
+        userActions
+      };
+    });
     
     setChallenges(generatedChallenges);
   }, []);
@@ -66,7 +75,7 @@ const Dashboard = () => {
     
     if (activeChallenge) return activeChallenge;
     
-    // Cerca la prossima sfida
+    // Cerca la sfida di oggi
     const todayChallenge = challenges.find((challenge) => 
       isSameDay(parseISO(challenge.date), now)
     );
@@ -82,6 +91,21 @@ const Dashboard = () => {
   
   const handleLogout = () => {
     // In futuro, qui ci sarà la logica di logout di Supabase
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userCity');
+    localStorage.removeItem('userDiscoverySource');
+    localStorage.removeItem('userSelectedActions');
+    localStorage.removeItem('completedChallenges');
+    localStorage.removeItem('totalPoints');
+    localStorage.removeItem('streak');
+    
+    // Rimuovi anche i dati delle sfide
+    challenges.forEach(challenge => {
+      localStorage.removeItem(`challenge_${challenge.id}_participating`);
+      localStorage.removeItem(`challenge_${challenge.id}_completed`);
+      localStorage.removeItem(`challenge_${challenge.id}_actions`);
+    });
+    
     toast({
       title: "Disconnesso",
       description: "Hai effettuato il logout con successo",
@@ -89,40 +113,11 @@ const Dashboard = () => {
     navigate('/');
   };
   
-  const requestNotificationPermission = () => {
-    if (!('Notification' in window)) {
-      toast({
-        title: "Notifiche non supportate",
-        description: "Il tuo browser non supporta le notifiche push",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        setNotificationsEnabled(true);
-        toast({
-          title: "Notifiche attivate",
-          description: "Riceverai notifiche per le prossime sfide",
-        });
-        
-        // Demo notification
-        new Notification('VolTogether - Notifiche attivate', {
-          body: 'Riceverai notifiche per le prossime sfide di risparmio energetico',
-          icon: '/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png'
-        });
-      } else {
-        toast({
-          title: "Permesso negato",
-          description: "Non possiamo inviarti notifiche senza il tuo permesso",
-          variant: "destructive",
-        });
-      }
-    });
-  };
-  
   const handleParticipate = (challengeId: number, participating: boolean) => {
+    // Salva la partecipazione
+    localStorage.setItem(`challenge_${challengeId}_participating`, participating.toString());
+    
+    // Aggiorna la lista delle sfide
     setChallenges((prev) =>
       prev.map((challenge) =>
         challenge.id === challengeId ? { ...challenge, participating } : challenge
@@ -138,6 +133,10 @@ const Dashboard = () => {
     });
     
     if (participating) {
+      // Aggiorna il contatore delle sfide partecipate
+      const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0');
+      localStorage.setItem('completedChallenges', (completedChallenges + 1).toString());
+      
       setUser((prev) => ({
         ...prev,
         completedChallenges: (prev.completedChallenges || 0) + 1
@@ -146,6 +145,9 @@ const Dashboard = () => {
   };
   
   const handleCompleteChallenge = (challengeId: number, actionIds: string[]) => {
+    // Salva le azioni completate
+    localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
+    
     // Calcola i punti guadagnati
     const pointsPerAction = 10;
     const totalNewPoints = actionIds.length * pointsPerAction;
@@ -159,15 +161,26 @@ const Dashboard = () => {
       )
     );
     
+    // Segna la sfida come completata
+    localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
+    
     // Determina se l'utente ha una streak
-    const completedChallenges = challenges.filter((c) => c.completed).length;
-    const newStreak = (user.streak || 0) + 1;
+    const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+    const newStreak = currentStreak + 1;
     const streakBonus = newStreak >= 3 ? 5 : 0;
+    
+    // Salva lo streak
+    localStorage.setItem('streak', newStreak.toString());
+    
+    // Aggiorna punti totali
+    const currentPoints = parseInt(localStorage.getItem('totalPoints') || '0');
+    const newTotalPoints = currentPoints + totalNewPoints + streakBonus;
+    localStorage.setItem('totalPoints', newTotalPoints.toString());
     
     // Aggiorna i dati dell'utente
     setUser((prev) => ({
       ...prev,
-      totalPoints: (prev.totalPoints || 0) + totalNewPoints + streakBonus,
+      totalPoints: newTotalPoints,
       streak: newStreak,
     }));
     
@@ -195,6 +208,10 @@ const Dashboard = () => {
   const completedChallengesCount = challenges.filter((c) => c.completed).length;
   const progressPercentage = (completedChallengesCount / challenges.length) * 100;
   
+  // Prepara le date per il display del progresso settimanale
+  const firstDate = challenges.length > 0 ? parseISO(challenges[0].date) : new Date();
+  const lastDate = challenges.length > 0 ? parseISO(challenges[challenges.length - 1].date) : new Date();
+  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar isAuthenticated={true} onLogout={handleLogout} />
@@ -212,7 +229,7 @@ const Dashboard = () => {
               <Button
                 variant={notificationsEnabled ? "outline" : "default"}
                 className={notificationsEnabled ? "border-voltgreen-500 text-voltgreen-700" : "bg-voltgreen-600 hover:bg-voltgreen-700"}
-                onClick={requestNotificationPermission}
+                onClick={enableNotifications}
               >
                 {notificationsEnabled ? (
                   <>
@@ -248,8 +265,8 @@ const Dashboard = () => {
             </div>
             
             <div className="flex justify-between text-xs text-gray-500">
-              <span>31 Marzo</span>
-              <span>6 Aprile 2025</span>
+              <span>{format(firstDate, 'd MMMM', { locale: it })}</span>
+              <span>{format(lastDate, 'd MMMM yyyy', { locale: it })}</span>
             </div>
           </div>
           
@@ -327,6 +344,8 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+      
+      <NotificationModals />
       
       <footer className="bg-white py-6 border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">

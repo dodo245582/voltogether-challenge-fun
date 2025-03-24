@@ -10,20 +10,15 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleRegister = (email: string, password: string, name?: string) => {
+  const handleRegister = (email: string, password: string) => {
     setIsLoading(true);
     
     // In futuro, qui andrà la logica di Supabase per la registrazione
-    console.log('Register attempt with:', email, password, name);
+    console.log('Register attempt with:', email, password);
     
     // Simula un ritardo per la registrazione
     setTimeout(() => {
       setIsLoading(false);
-      
-      // Salva il nome in localStorage per usarlo successivamente
-      if (name) {
-        localStorage.setItem('userName', name);
-      }
       
       // Successo
       toast({
