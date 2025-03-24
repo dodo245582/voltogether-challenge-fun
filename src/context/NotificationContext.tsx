@@ -355,6 +355,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const newTotalPoints = currentPoints + totalNewPoints + streakBonus;
     localStorage.setItem('totalPoints', newTotalPoints.toString());
     
+    // Aggiorna il contatore delle sfide completate
+    const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0');
+    localStorage.setItem('completedChallenges', (completedChallenges + 1).toString());
+    
     // Segna la sfida come completata
     localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
     
