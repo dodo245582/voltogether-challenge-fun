@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, User as UserIcon } from 'lucide-react';
+import { Menu, X, LogOut, User as UserIcon, HelpCircle, LifeBuoy } from 'lucide-react';
 
 interface NavbarProps {
   isAuthenticated?: boolean;
@@ -64,6 +64,18 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
                 >
                   Dashboard
                 </Link>
+                <Link 
+                  to="/how-it-works" 
+                  className="text-gray-700 hover:text-voltgreen-600 transition-colors px-2 py-1 rounded-md"
+                >
+                  Come funziona
+                </Link>
+                <Link 
+                  to="/support" 
+                  className="text-gray-700 hover:text-voltgreen-600 transition-colors px-2 py-1 rounded-md"
+                >
+                  Support
+                </Link>
                 <div className="flex items-center space-x-2">
                   <Link to="/profile" className="text-gray-700 hover:text-voltgreen-600">
                     <UserIcon className="h-5 w-5" />
@@ -80,6 +92,18 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
               </>
             ) : (
               <>
+                <Link 
+                  to="/how-it-works" 
+                  className="text-gray-700 hover:text-voltgreen-600 transition-colors px-2 py-1 rounded-md"
+                >
+                  Come funziona
+                </Link>
+                <Link 
+                  to="/support" 
+                  className="text-gray-700 hover:text-voltgreen-600 transition-colors px-2 py-1 rounded-md"
+                >
+                  Support
+                </Link>
                 <Link 
                   to="/login" 
                   className="text-gray-700 hover:text-voltgreen-600 transition-colors px-3 py-1.5 rounded-md"
@@ -128,6 +152,18 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
                   Dashboard
                 </Link>
                 <Link 
+                  to="/how-it-works" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-voltgreen-600 hover:bg-gray-50"
+                >
+                  Come funziona
+                </Link>
+                <Link 
+                  to="/support" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-voltgreen-600 hover:bg-gray-50"
+                >
+                  Support
+                </Link>
+                <Link 
                   to="/profile" 
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-voltgreen-600 hover:bg-gray-50"
                 >
@@ -142,6 +178,18 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
               </>
             ) : (
               <>
+                <Link 
+                  to="/how-it-works" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-voltgreen-600 hover:bg-gray-50"
+                >
+                  Come funziona
+                </Link>
+                <Link 
+                  to="/support" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-voltgreen-600 hover:bg-gray-50"
+                >
+                  Support
+                </Link>
                 <Link 
                   to="/login" 
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-voltgreen-600 hover:bg-gray-50"

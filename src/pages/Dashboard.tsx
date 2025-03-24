@@ -19,10 +19,14 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   
+  // Recupera il nome dell'utente dal localStorage
+  const userName = localStorage.getItem('userName') || 'utente';
+  
   // In futuro, questi dati verrebbero caricati da Supabase
   const [user, setUser] = useState<User>({
     id: '1',
     email: 'demo@voltogether.com',
+    name: userName,
     createdAt: new Date().toISOString(),
     city: 'Milano',
     discoverySource: 'social-media',
@@ -201,7 +205,7 @@ const Dashboard = () => {
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold">Ciao, {user.city ? `da ${user.city}` : 'utente'}</h1>
+                <h1 className="text-2xl font-bold">Ciao, {user.name}</h1>
                 <p className="text-gray-600">Benvenuto alla tua dashboard di VolTogether</p>
               </div>
               
@@ -280,9 +284,6 @@ const Dashboard = () => {
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Community</h3>
                     <p className="text-gray-600 mb-4">Insieme a te, ci sono altre 245 persone che partecipano alle sfide questa settimana.</p>
-                    <Button variant="outline" className="w-full">
-                      Scopri la community <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               </CardContent>

@@ -5,26 +5,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 interface AuthFormProps {
   type: 'login' | 'register';
-  onSubmit: (email: string, password: string) => void;
+  onSubmit: (email: string, password: string, name?: string) => void;
   isLoading?: boolean;
 }
 
 const AuthForm = ({ type, onSubmit, isLoading = false }: AuthFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({
     email: '',
     password: '',
+    name: '',
   });
 
   const validateForm = () => {
     let isValid = true;
-    const newErrors = { email: '', password: '' };
+    const newErrors = { email: '', password: '', name: '' };
 
     // Email validation
     if (!email) {
@@ -44,6 +46,12 @@ const AuthForm = ({ type, onSubmit, isLoading = false }: AuthFormProps) => {
       isValid = false;
     }
 
+    // Name validation (only for registration)
+    if (type === 'register' && !name) {
+      newErrors.name = 'Il nome è richiesto';
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -51,7 +59,7 @@ const AuthForm = ({ type, onSubmit, isLoading = false }: AuthFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(email, password);
+      onSubmit(email, password, type === 'register' ? name : undefined);
     }
   };
 
@@ -73,6 +81,24 @@ const AuthForm = ({ type, onSubmit, isLoading = false }: AuthFormProps) => {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {type === 'register' && (
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Il tuo nome"
+                  className="pl-10"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+            </div>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
