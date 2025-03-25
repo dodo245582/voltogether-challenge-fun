@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!email) return;
     
     const { data, error } = await supabase
-      .from('users')
+      .from('Users')
       .select('id')
       .eq('id', userId)
       .single();
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // If user doesn't exist, create one
     if (!data) {
       const { error: insertError } = await supabase
-        .from('users')
+        .from('Users')
         .insert({
           id: userId,
           email: email,

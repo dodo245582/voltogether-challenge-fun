@@ -97,18 +97,20 @@ const Onboarding = () => {
     
     try {
       const { error } = await supabase
-        .from('users')
+        .from('Users')
         .update({
-          name,
-          city,
-          discovery_source: discoverySource,
-          selected_actions: selectedActions
+          email: user.email
         })
         .eq('id', user.id);
       
       if (error) {
         throw error;
       }
+      
+      localStorage.setItem('userName', name);
+      localStorage.setItem('userCity', city);
+      localStorage.setItem('userDiscoverySource', discoverySource);
+      localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
       
       toast({
         title: "Profilo completato",

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/layout/Navbar';
@@ -15,11 +14,13 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, Award, Users, ArrowRight, Leaf, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '@/context/NotificationContext';
 import NotificationModals from '@/components/notifications/NotificationModals';
+import { useAuth } from '@/context/AuthContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { notificationsEnabled, enableNotifications } = useNotifications();
+  const { signOut } = useAuth();
   
   // Recupera il nome dell'utente dal localStorage
   const userName = localStorage.getItem('userName') || 'utente';
@@ -90,7 +91,10 @@ const Dashboard = () => {
   };
   
   const handleLogout = () => {
-    // In futuro, qui ci sarà la logica di logout di Supabase
+    // Use the signOut function from AuthContext
+    signOut();
+    
+    // Clear localStorage data
     localStorage.removeItem('userName');
     localStorage.removeItem('userCity');
     localStorage.removeItem('userDiscoverySource');
@@ -110,7 +114,6 @@ const Dashboard = () => {
       title: "Disconnesso",
       description: "Hai effettuato il logout con successo",
     });
-    navigate('/');
   };
   
   const handleParticipate = (challengeId: number, participating: boolean) => {
@@ -214,7 +217,7 @@ const Dashboard = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar isAuthenticated={true} onLogout={handleLogout} />
+      <Navbar onLogout={handleLogout} />
       
       <main className="flex-grow pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full animate-fade-in">
         <div className="space-y-8">
