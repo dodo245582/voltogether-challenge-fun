@@ -9,20 +9,30 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Checkbox } from '@/components/ui/checkbox';
 import { DiscoverySource, SUSTAINABLE_ACTIONS } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, Home, User2, ListChecks, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User2, MapPin, Radio, ListChecks, CheckCircle2 } from 'lucide-react';
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [step, setStep] = useState(1);
+  const [name, setName] = useState('');
   const [city, setCity] = useState('');
   const [discoverySource, setDiscoverySource] = useState<DiscoverySource | ''>('');
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   const nextStep = () => {
-    if (step === 1 && !city) {
+    if (step === 1 && !name) {
+      toast({
+        title: "Campo richiesto",
+        description: "Per favore, inserisci il tuo nome",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (step === 2 && !city) {
       toast({
         title: "Campo richiesto",
         description: "Per favore, inserisci la tua città",
@@ -31,7 +41,7 @@ const Onboarding = () => {
       return;
     }
     
-    if (step === 2 && !discoverySource) {
+    if (step === 3 && !discoverySource) {
       toast({
         title: "Campo richiesto",
         description: "Per favore, seleziona come ci hai conosciuto",
@@ -40,7 +50,7 @@ const Onboarding = () => {
       return;
     }
     
-    if (step === 3 && selectedActions.length === 0) {
+    if (step === 4 && selectedActions.length === 0) {
       toast({
         title: "Selezione richiesta",
         description: "Per favore, seleziona almeno un'azione sostenibile",
@@ -49,7 +59,7 @@ const Onboarding = () => {
       return;
     }
     
-    if (step < 4) {
+    if (step < 5) {
       setStep(step + 1);
     } else {
       completeOnboarding();
@@ -73,8 +83,14 @@ const Onboarding = () => {
   const completeOnboarding = () => {
     setIsLoading(true);
     
+    // Salva i dati nel localStorage per uso futuro
+    localStorage.setItem('userName', name);
+    localStorage.setItem('userCity', city);
+    localStorage.setItem('userDiscoverySource', discoverySource);
+    localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
+    
     // In futuro qui ci sarà la logica per salvare i dati su Supabase
-    console.log('Onboarding data:', { city, discoverySource, selectedActions });
+    console.log('Onboarding data:', { name, city, discoverySource, selectedActions });
     
     // Simula un ritardo per il salvataggio dei dati
     setTimeout(() => {
@@ -105,10 +121,11 @@ const Onboarding = () => {
         
         <div className="mb-8">
           <div className="flex justify-between items-center relative">
-            <StepIndicator number={1} title="Località" isActive={step === 1} isCompleted={step > 1} icon={<Home className="h-5 w-5" />} />
-            <StepIndicator number={2} title="Scoperta" isActive={step === 2} isCompleted={step > 2} icon={<User2 className="h-5 w-5" />} />
-            <StepIndicator number={3} title="Azioni" isActive={step === 3} isCompleted={step > 3} icon={<ListChecks className="h-5 w-5" />} />
-            <StepIndicator number={4} title="Conferma" isActive={step === 4} isCompleted={false} icon={<CheckCircle2 className="h-5 w-5" />} />
+            <StepIndicator number={1} title="Profilo" isActive={step === 1} isCompleted={step > 1} icon={<User2 className="h-5 w-5" />} />
+            <StepIndicator number={2} title="Località" isActive={step === 2} isCompleted={step > 2} icon={<MapPin className="h-5 w-5" />} />
+            <StepIndicator number={3} title="Scoperta" isActive={step === 3} isCompleted={step > 3} icon={<Radio className="h-5 w-5" />} />
+            <StepIndicator number={4} title="Azioni" isActive={step === 4} isCompleted={step > 4} icon={<ListChecks className="h-5 w-5" />} />
+            <StepIndicator number={5} title="Conferma" isActive={step === 5} isCompleted={false} icon={<CheckCircle2 className="h-5 w-5" />} />
             
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -z-10" />
           </div>
@@ -117,15 +134,33 @@ const Onboarding = () => {
         <Card className="shadow-lg border border-gray-200 animate-scale-in duration-300">
           <CardHeader>
             <CardTitle>
-              {step === 1 && "Dove vivi?"}
-              {step === 2 && "Come ci hai conosciuto?"}
-              {step === 3 && "Quali azioni sostenibili faresti?"}
-              {step === 4 && "Conferma i tuoi dati"}
+              {step === 1 && "Come ti chiami?"}
+              {step === 2 && "Dove vivi?"}
+              {step === 3 && "Come ci hai conosciuto?"}
+              {step === 4 && "Quali azioni sostenibili faresti?"}
+              {step === 5 && "Conferma i tuoi dati"}
             </CardTitle>
           </CardHeader>
           
           <CardContent className="pt-2">
             {step === 1 && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Il tuo nome</Label>
+                  <Input
+                    id="name"
+                    placeholder="Inserisci il tuo nome"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                  <p className="text-sm text-gray-500">
+                    Utilizzeremo il tuo nome per personalizzare l'esperienza nella piattaforma.
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {step === 2 && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="city">In quale città vivi?</Label>
@@ -142,7 +177,7 @@ const Onboarding = () => {
               </div>
             )}
             
-            {step === 2 && (
+            {step === 3 && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Come ci hai conosciuto?</Label>
@@ -182,7 +217,7 @@ const Onboarding = () => {
               </div>
             )}
             
-            {step === 3 && (
+            {step === 4 && (
               <div className="space-y-4">
                 <Label>Seleziona le azioni che saresti disposto a fare:</Label>
                 <p className="text-sm text-gray-500 mb-4">
@@ -212,11 +247,15 @@ const Onboarding = () => {
               </div>
             )}
             
-            {step === 4 && (
+            {step === 5 && (
               <div className="space-y-6">
                 <div>
                   <h3 className="font-medium mb-2">Riepilogo dei tuoi dati</h3>
                   <div className="space-y-2 text-sm">
+                    <div className="grid grid-cols-3 gap-1 py-2 border-b">
+                      <div className="text-gray-500">Nome</div>
+                      <div className="col-span-2 font-medium">{name}</div>
+                    </div>
                     <div className="grid grid-cols-3 gap-1 py-2 border-b">
                       <div className="text-gray-500">Città</div>
                       <div className="col-span-2 font-medium">{city}</div>
@@ -283,7 +322,7 @@ const Onboarding = () => {
                 </span>
               ) : (
                 <span className="flex items-center">
-                  {step < 4 ? "Avanti" : "Completa registrazione"}
+                  {step < 5 ? "Avanti" : "Completa registrazione"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               )}
