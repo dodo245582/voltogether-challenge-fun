@@ -1,4 +1,3 @@
-
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -35,16 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // Create a user profile if one doesn't exist
           await createUserProfileIfNotExists(session.user.id, session.user.email);
-          // Fetch user profile
           await fetchUserProfile(session.user.id);
         } else if (event === 'SIGNED_OUT') {
           setProfile(null);
@@ -54,13 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Create a user profile if one doesn't exist and fetch it
         await createUserProfileIfNotExists(session.user.id, session.user.email);
         await fetchUserProfile(session.user.id);
       }
@@ -71,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Helper function to fetch user profile
   const fetchUserProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('Users')
@@ -89,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Helper function to create a user profile if it doesn't exist
   const createUserProfileIfNotExists = async (userId: string, email: string | undefined) => {
     if (!email) return;
     
@@ -104,7 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // If user doesn't exist, create one
     if (!data) {
       const { error: insertError } = await supabase
         .from('Users')
@@ -136,11 +127,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('id', user.id);
     
     if (!error && profile) {
-      // Update local profile state
       setProfile({
         ...profile,
         ...data
       });
+      
+      if (data.selected_actions) {
+        localStorage.setItem('userSelectedActions', JSON.stringify(data.selected_actions));
+      }
       
       return { error: null, success: true };
     }

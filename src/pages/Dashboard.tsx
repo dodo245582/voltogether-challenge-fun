@@ -9,13 +9,17 @@ import { useAuth } from '@/context/AuthContext';
 import { User, Challenge, SUSTAINABLE_ACTIONS, SustainableAction, CHALLENGE_DATES } from '@/types';
 import Stats from '@/components/profile/Stats';
 import Navbar from '@/components/layout/Navbar';
+import { useNotifications } from '@/context/NotificationContext';
+import NotificationModals from '@/components/notifications/NotificationModals';
 
 const Dashboard = () => {
   const { user, profile, updateProfile } = useAuth();
-  const { toast } = useToast()
+  const { toast } = useToast();
+  const { enableNotifications, notificationsEnabled } = useNotifications();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedActions, setSelectedActions] = useState<string[]>([]);
+  const [communityCount, setCommunityCount] = useState(1024); // Esempio di conteggio della community
+  const [showActions, setShowActions] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const fetchChallenges = async () => {
@@ -25,8 +29,8 @@ const Dashboard = () => {
         const fetchedChallenges = CHALLENGE_DATES.map((date, index) => ({
           id: index + 1,
           date: date,
-          startTime: '18:00',
-          endTime: '19:00',
+          startTime: '19:00',
+          endTime: '20:00',
           completed: false,
           participating: false,
           userActions: [],
@@ -69,113 +73,17 @@ const Dashboard = () => {
     ));
   };
 
-  const handleActionSelect = (challengeId: number, actionId: string) => {
-    setChallenges(challenges.map(c => {
-      if (c.id === challengeId) {
-        const actionIndex = c.userActions ? c.userActions.indexOf(actionId) : -1;
-        if (actionIndex > -1) {
-          // Action already selected, remove it
-          const newUserActions = [...(c.userActions || [])];
-          newUserActions.splice(actionIndex, 1);
-          return { ...c, userActions: newUserActions };
-        } else {
-          // Action not selected, add it
-          return { ...c, userActions: [...(c.userActions || []), actionId] };
-        }
-      }
-      return c;
+  const toggleShowActions = (challengeId: number) => {
+    setShowActions(prev => ({
+      ...prev,
+      [challengeId]: !prev[challengeId]
     }));
   };
 
-  const handleCompleteChallengeClick = async (challengeId: number) => {
-    const challenge = challenges.find(c => c.id === challengeId);
-    if (!challenge) {
-      console.error(`Challenge with id ${challengeId} not found`);
-      return;
-    }
-
-    if (!challenge.participating) {
-      toast({
-        variant: "destructive",
-        title: "Attenzione!",
-        description: "Devi partecipare alla sfida prima di poterla completare.",
-      })
-      return;
-    }
-
-    if (!challenge.userActions || challenge.userActions.length === 0) {
-       toast({
-        variant: "destructive",
-        title: "Attenzione!",
-        description: "Devi selezionare almeno un'azione sostenibile per completare la sfida.",
-      })
-      return;
-    }
-
-    const pointsEarned = challenge.userActions.reduce((sum, actionId) => {
-      const action = SUSTAINABLE_ACTIONS.find(a => a.id === actionId);
-      return sum + (action ? action.pointValue : 0);
-    }, 0);
-
-    try {
-      // Update challenges state with the updated challenge
-      setChallenges(challenges.map(c => (
-        c.id === challengeId ? { ...c, completed: true } : c
-      )));
-
-      // Update user stats
-      const updatedUser = {
-        ...userData,
-        completed_challenges: (userData.completed_challenges || 0) + 1,
-        total_points: (userData.total_points || 0) + pointsEarned,
-        streak: (userData.streak || 0) + 1,
-      };
-
-      await updateProfile(updatedUser);
-
-      toast({
-        title: "Sfida completata!",
-        description: `Hai guadagnato ${pointsEarned} punti.`,
-      })
-    } catch (error) {
-      console.error("Failed to update user:", error);
-      toast({
-        variant: "destructive",
-        title: "Errore!",
-        description: "Failed to update user stats.",
-      })
-    }
-  };
-
-  const handleDiscoverySourceChange = async (source: string) => {
-    try {
-      const updatedUser = {
-        ...userData,
-        discovery_source: source,
-      };
-      await updateProfile(updatedUser);
-      toast({
-        title: "Fonte di scoperta aggiornata!",
-        description: `Hai aggiornato la tua fonte di scoperta a ${source}.`,
-      })
-    } catch (error) {
-      console.error("Failed to update discovery source:", error);
-       toast({
-        variant: "destructive",
-        title: "Errore!",
-        description: "Failed to update discovery source.",
-      })
-    }
-  };
-
-  const selectedActionsCount = userData.selected_actions?.length || 0;
-  const participatingChallengesCount = challenges.filter(c => c.participating).length;
-  
-  const hasSelectedActions = userData.selected_actions && userData.selected_actions.length > 0;
-  
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      <NotificationModals />
       
       <div className="container mx-auto py-12">
         <h1 className="text-3xl font-semibold text-gray-800 mb-8">
@@ -183,6 +91,68 @@ const Dashboard = () => {
         </h1>
 
         <Stats user={userData} totalChallenges={totalChallenges} />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Community Card */}
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Community</CardTitle>
+              <CardDescription>Tutti insieme per l'ambiente</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-voltgreen-600">{communityCount.toLocaleString('it-IT')}</div>
+              <p className="text-sm text-gray-500 mt-1">utenti registrati</p>
+            </CardContent>
+          </Card>
+
+          {/* Notifications Card */}
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Notifiche</CardTitle>
+              <CardDescription>Ricevi aggiornamenti sulle sfide</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!notificationsEnabled && (
+                <Button onClick={enableNotifications} className="w-full">
+                  Attiva notifiche
+                </Button>
+              )}
+              {notificationsEnabled && (
+                <div className="text-sm text-gray-600">
+                  <p className="flex items-center">
+                    <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                    Notifiche attive
+                  </p>
+                  <p className="mt-2">Riceverai notifiche per le prossime sfide</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Tips Card */}
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Consigli utili</CardTitle>
+              <CardDescription>Per ridurre i consumi</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-gray-600 space-y-2">
+                <li className="flex items-start">
+                  <span className="text-voltgreen-500 mr-2">•</span>
+                  <span>Spegni le luci quando esci da una stanza</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-voltgreen-500 mr-2">•</span>
+                  <span>Usa la lavatrice e lavastoviglie a pieno carico</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-voltgreen-500 mr-2">•</span>
+                  <span>Scollega i caricabatterie quando non in uso</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="mt-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
@@ -203,41 +173,32 @@ const Dashboard = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-4">
-                    <div className="mb-4">
-                      <h3 className="text-md font-semibold text-gray-700 mb-2">
-                        Azioni Sostenibili
-                      </h3>
-                      {SUSTAINABLE_ACTIONS.map((action) => (
-                        <div key={action.id} className="flex items-center mb-2">
-                          <Checkbox
-                            id={`action-${challenge.id}-${action.id}`}
-                            checked={challenge.userActions?.includes(action.id) || false}
-                            onCheckedChange={(checked) => {
-                              handleActionSelect(challenge.id, action.id);
-                            }}
-                          />
-                          <label
-                            htmlFor={`action-${challenge.id}-${action.id}`}
-                            className="ml-2 text-sm text-gray-600"
-                          >
-                            {action.label} ({action.pointValue} punti)
-                          </label>
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="font-medium">Azioni consigliate</p>
+                        <Button variant="ghost" size="sm" onClick={() => toggleShowActions(challenge.id)}>
+                          {showActions[challenge.id] ? "Nascondi" : "Mostra"}
+                        </Button>
+                      </div>
+                      
+                      {showActions[challenge.id] && (
+                        <div className="space-y-2 mt-2 pl-2 border-l-2 border-voltgreen-200">
+                          {SUSTAINABLE_ACTIONS.slice(0, 3).map((action) => (
+                            <div key={action.id} className="flex items-start space-x-2">
+                              <div className="h-4 w-4 text-voltgreen-500 flex-shrink-0">✓</div>
+                              <span className="text-sm">{action.label}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mt-4">
                       <Button
                         variant="outline"
                         onClick={() => handleParticipateClick(challenge.id)}
                         disabled={challenge.completed}
                       >
                         {challenge.participating ? 'Non Partecipare' : 'Partecipa'}
-                      </Button>
-                      <Button
-                        onClick={() => handleCompleteChallengeClick(challenge.id)}
-                        disabled={challenge.completed || !challenge.participating}
-                      >
-                        Completa
                       </Button>
                     </div>
                   </CardContent>

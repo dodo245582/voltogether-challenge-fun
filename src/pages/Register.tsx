@@ -25,9 +25,8 @@ const Register = () => {
           variant: 'default',
         });
         
-        // Reindirizza alla pagina di login anziché all'onboarding
-        // così l'utente può controllare la sua email
-        navigate('/login');
+        // Passa all'onboarding
+        navigate('/onboarding');
       } else {
         console.error("Registration error:", error);
         let errorMessage = 'Si è verificato un errore durante la registrazione';
