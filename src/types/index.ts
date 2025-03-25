@@ -3,12 +3,12 @@ export interface User {
   id: string;
   email: string;
   name?: string;
-  createdAt: string;
+  created_at?: string;
   city?: string;
-  discoverySource?: string;
-  selectedActions?: string[];
-  completedChallenges?: number;
-  totalPoints?: number;
+  discovery_source?: string;
+  selected_actions?: string[];
+  completed_challenges?: number;
+  total_points?: number;
   streak?: number;
 }
 

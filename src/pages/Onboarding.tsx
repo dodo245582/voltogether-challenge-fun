@@ -10,12 +10,11 @@ import { DiscoverySource, SUSTAINABLE_ACTIONS } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, User2, MapPin, Radio, ListChecks, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -96,29 +95,26 @@ const Onboarding = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('Users')
-        .update({
-          email: user.email
-        })
-        .eq('id', user.id);
+      const { error, success } = await updateProfile({
+        name,
+        city,
+        discovery_source: discoverySource,
+        selected_actions: selectedActions,
+      });
       
       if (error) {
         throw error;
       }
       
-      localStorage.setItem('userName', name);
-      localStorage.setItem('userCity', city);
-      localStorage.setItem('userDiscoverySource', discoverySource);
-      localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
-      
-      toast({
-        title: "Profilo completato",
-        description: "Il tuo profilo è stato configurato con successo",
-        variant: "default",
-      });
-      
-      navigate('/dashboard');
+      if (success) {
+        toast({
+          title: "Profilo completato",
+          description: "Il tuo profilo è stato configurato con successo",
+          variant: "default",
+        });
+        
+        navigate('/dashboard');
+      }
     } catch (error: any) {
       console.error("Error updating user profile:", error);
       toast({

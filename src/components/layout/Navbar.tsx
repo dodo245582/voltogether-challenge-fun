@@ -1,26 +1,21 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X } from 'lucide-react';
 import { useMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/context/AuthContext';
 
-type NavbarProps = {
-  onLogout?: () => void;
-};
-
-const Navbar = ({ onLogout }: NavbarProps) => {
+const Navbar = () => {
   const [open, setOpen] = useState(false);
   const isMobile = useMobile();
+  const { user, signOut } = useAuth();
   
-  // Check if the user is authenticated by checking if the onLogout function exists
-  const isAuthenticated = !!onLogout;
+  // Check if the user is authenticated
+  const isAuthenticated = !!user;
   
   const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    }
+    signOut();
     setOpen(false);
   };
   

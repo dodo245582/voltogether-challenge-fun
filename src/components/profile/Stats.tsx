@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from '@/types';
 import { Zap, Award, Calendar, TrendingUp } from 'lucide-react';
@@ -9,8 +8,8 @@ interface StatsProps {
 }
 
 const Stats = ({ user, totalChallenges }: StatsProps) => {
-  const completedChallenges = user.completedChallenges || 0;
-  const totalPoints = user.totalPoints || 0;
+  const completedChallenges = user.completed_challenges || 0;
+  const totalPoints = user.total_points || 0;
   const streak = user.streak || 0;
   
   const percentageCompleted = totalChallenges > 0 

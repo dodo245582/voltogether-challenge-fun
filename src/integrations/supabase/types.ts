@@ -11,22 +11,43 @@ export type Database = {
     Tables: {
       Users: {
         Row: {
+          city: string | null
+          completed_challenges: number | null
           created_at: string | null
+          discovery_source: string | null
           email: string
           id: string
+          name: string | null
           password: string
+          selected_actions: string[] | null
+          streak: number | null
+          total_points: number | null
         }
         Insert: {
+          city?: string | null
+          completed_challenges?: number | null
           created_at?: string | null
+          discovery_source?: string | null
           email?: string
           id?: string
+          name?: string | null
           password?: string
+          selected_actions?: string[] | null
+          streak?: number | null
+          total_points?: number | null
         }
         Update: {
+          city?: string | null
+          completed_challenges?: number | null
           created_at?: string | null
+          discovery_source?: string | null
           email?: string
           id?: string
+          name?: string | null
           password?: string
+          selected_actions?: string[] | null
+          streak?: number | null
+          total_points?: number | null
         }
         Relationships: []
       }
