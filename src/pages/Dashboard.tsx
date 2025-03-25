@@ -11,7 +11,7 @@ import Stats from '@/components/profile/Stats';
 import Navbar from '@/components/layout/Navbar';
 
 const Dashboard = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const { toast } = useToast()
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,17 +47,18 @@ const Dashboard = () => {
     fetchChallenges();
   }, [toast]);
 
-  const userData: User = {
+  // Create a user data object from the profile
+  const userData: User = profile || {
     id: user?.id || '',
     email: user?.email || '',
     name: user?.user_metadata?.name || '',
     created_at: user?.created_at || '',
-    city: user?.city || '',
-    discovery_source: user?.discovery_source || '',
-    selected_actions: user?.selected_actions || [],
-    completed_challenges: user?.completed_challenges || 0,
-    total_points: user?.total_points || 0,
-    streak: user?.streak || 0,
+    city: '',
+    discovery_source: '',
+    selected_actions: [],
+    completed_challenges: 0,
+    total_points: 0,
+    streak: 0,
   };
 
   const totalChallenges = challenges.length;

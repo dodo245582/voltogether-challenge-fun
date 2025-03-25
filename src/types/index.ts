@@ -10,6 +10,10 @@ export interface User {
   completed_challenges?: number;
   total_points?: number;
   streak?: number;
+  // Add any user metadata fields
+  user_metadata?: {
+    name?: string;
+  };
 }
 
 export interface SustainableAction {
