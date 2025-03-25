@@ -4,23 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import AuthForm from '@/components/auth/AuthForm';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn } = useAuth();
 
-  const handleLogin = (email: string, password: string) => {
+  const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     
-    // In futuro, qui andrà la logica di Supabase per l'autenticazione
-    console.log('Login attempt with:', email, password);
-    
-    // Simula un ritardo per l'autenticazione
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error, success } = await signIn(email, password);
       
-      if (email === 'demo@voltogether.com' && password === 'password123') {
+      if (success) {
         toast({
           title: 'Login effettuato',
           description: 'Hai effettuato l\'accesso con successo',
@@ -28,13 +26,23 @@ const Login = () => {
         });
         navigate('/dashboard');
       } else {
+        console.error("Login error:", error);
         toast({
           title: 'Errore di login',
-          description: 'Email o password non validi',
+          description: error?.message || 'Email o password non validi',
           variant: 'destructive',
         });
       }
-    }, 1000);
+    } catch (error) {
+      console.error("Unexpected error during login:", error);
+      toast({
+        title: 'Errore di login',
+        description: 'Si è verificato un errore imprevisto',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,10 +9,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DiscoverySource, SUSTAINABLE_ACTIONS } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, User2, MapPin, Radio, ListChecks, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -80,21 +82,33 @@ const Onboarding = () => {
     );
   };
   
-  const completeOnboarding = () => {
+  const completeOnboarding = async () => {
+    if (!user) {
+      toast({
+        title: "Errore",
+        description: "Devi effettuare l'accesso per completare l'onboarding",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+    
     setIsLoading(true);
     
-    // Salva i dati nel localStorage per uso futuro
-    localStorage.setItem('userName', name);
-    localStorage.setItem('userCity', city);
-    localStorage.setItem('userDiscoverySource', discoverySource);
-    localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
-    
-    // In futuro qui ci sarà la logica per salvare i dati su Supabase
-    console.log('Onboarding data:', { name, city, discoverySource, selectedActions });
-    
-    // Simula un ritardo per il salvataggio dei dati
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name,
+          city,
+          discovery_source: discoverySource,
+          selected_actions: selectedActions
+        })
+        .eq('id', user.id);
+      
+      if (error) {
+        throw error;
+      }
       
       toast({
         title: "Profilo completato",
@@ -103,7 +117,16 @@ const Onboarding = () => {
       });
       
       navigate('/dashboard');
-    }, 1500);
+    } catch (error: any) {
+      console.error("Error updating user profile:", error);
+      toast({
+        title: "Errore",
+        description: error.message || "Si è verificato un errore durante il salvataggio del profilo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (

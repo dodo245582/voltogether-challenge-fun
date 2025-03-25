@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -22,17 +21,16 @@ import {
 import { useNotifications } from '@/context/NotificationContext';
 import { format, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { useAuth } from '@/context/AuthContext';
 
-interface NavbarProps {
-  isAuthenticated?: boolean;
-  onLogout?: () => void;
-}
-
-const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
+const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const location = useLocation();
   const { notifications, markAsRead } = useNotifications();
+  const { user, signOut } = useAuth();
+  
+  const isAuthenticated = !!user;
 
   // Controlla se ci sono notifiche non lette
   const hasUnreadNotifications = notifications.some(n => !n.read);
@@ -42,10 +40,8 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
     setIsOpen(false);
   }, [location]);
 
-  const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    }
+  const handleLogout = async () => {
+    await signOut();
     toast({
       title: "Disconnesso",
       description: "Hai effettuato il logout con successo",
@@ -60,7 +56,6 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
     <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md shadow-sm z-40 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo and brand */}
           <Link 
             to="/" 
             className="flex items-center space-x-2 text-voltgreen-600 font-display font-semibold text-xl"
@@ -73,7 +68,6 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
             <span>VolTogether</span>
           </Link>
 
-          {/* Desktop navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
             {isAuthenticated ? (
               <>
@@ -90,7 +84,6 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
                   Support
                 </Link>
                 
-                {/* Notification Bell */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="relative">
@@ -177,7 +170,6 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
             )}
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden">
             <Button
               variant="ghost"
@@ -191,7 +183,6 @@ const Navbar = ({ isAuthenticated = false, onLogout }: NavbarProps) => {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden absolute top-16 inset-x-0 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-lg animate-fade-in">
           <div className="pt-2 pb-4 space-y-1 px-4">

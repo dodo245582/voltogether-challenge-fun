@@ -4,32 +4,53 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import AuthForm from '@/components/auth/AuthForm';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signUp } = useAuth();
 
-  const handleRegister = (email: string, password: string) => {
+  const handleRegister = async (email: string, password: string) => {
     setIsLoading(true);
     
-    // In futuro, qui andrà la logica di Supabase per la registrazione
-    console.log('Register attempt with:', email, password);
-    
-    // Simula un ritardo per la registrazione
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error, success } = await signUp(email, password);
       
-      // Successo
+      if (success) {
+        toast({
+          title: 'Registrazione completata',
+          description: 'Account creato con successo',
+          variant: 'default',
+        });
+        
+        // Passa all'onboarding
+        navigate('/onboarding');
+      } else {
+        console.error("Registration error:", error);
+        let errorMessage = 'Si è verificato un errore durante la registrazione';
+        
+        if (error?.message.includes('already registered')) {
+          errorMessage = 'Questo indirizzo email è già registrato';
+        }
+        
+        toast({
+          title: 'Errore di registrazione',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error("Unexpected error during registration:", error);
       toast({
-        title: 'Registrazione completata',
-        description: 'Account creato con successo',
-        variant: 'default',
+        title: 'Errore di registrazione',
+        description: 'Si è verificato un errore imprevisto',
+        variant: 'destructive',
       });
-      
-      // Passa all'onboarding
-      navigate('/onboarding');
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
