@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import Stats from '@/components/profile/Stats';
 import Navbar from '@/components/layout/Navbar';
 
 const Dashboard = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { toast } = useToast()
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +51,7 @@ const Dashboard = () => {
     id: user?.id || '',
     email: user?.email || '',
     name: user?.user_metadata?.name || '',
-    created_at: user?.created_at || '', // Use created_at instead of createdAt
+    created_at: user?.created_at || '',
     city: user?.city || '',
     discovery_source: user?.discovery_source || '',
     selected_actions: user?.selected_actions || [],
@@ -124,12 +125,12 @@ const Dashboard = () => {
       // Update user stats
       const updatedUser = {
         ...userData,
-        completed_challenges: (userData.completed_challenges || 0) + 1, // Use snake_case
+        completed_challenges: (userData.completed_challenges || 0) + 1,
         total_points: (userData.total_points || 0) + pointsEarned,
         streak: (userData.streak || 0) + 1,
       };
 
-      await updateUser(updatedUser);
+      await updateProfile(updatedUser);
 
       toast({
         title: "Sfida completata!",
@@ -151,7 +152,7 @@ const Dashboard = () => {
         ...userData,
         discovery_source: source,
       };
-      await updateUser(updatedUser);
+      await updateProfile(updatedUser);
       toast({
         title: "Fonte di scoperta aggiornata!",
         description: `Hai aggiornato la tua fonte di scoperta a ${source}.`,
@@ -166,14 +167,14 @@ const Dashboard = () => {
     }
   };
 
-  const selectedActionsCount = userData.selected_actions?.length || 0; // Use snake_case
+  const selectedActionsCount = userData.selected_actions?.length || 0;
   const participatingChallengesCount = challenges.filter(c => c.participating).length;
   
-  const hasSelectedActions = userData.selected_actions && userData.selected_actions.length > 0; // Use snake_case
+  const hasSelectedActions = userData.selected_actions && userData.selected_actions.length > 0;
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar /> {/* Don't pass props to Navbar if it doesn't accept them */}
+      <Navbar />
       
       <div className="container mx-auto py-12">
         <h1 className="text-3xl font-semibold text-gray-800 mb-8">
