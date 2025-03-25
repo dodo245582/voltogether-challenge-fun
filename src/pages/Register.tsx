@@ -21,18 +21,21 @@ const Register = () => {
       if (success) {
         toast({
           title: 'Registrazione completata',
-          description: 'Account creato con successo',
+          description: 'Ti abbiamo inviato un\'email di conferma. Per favore, conferma il tuo indirizzo email prima di accedere.',
           variant: 'default',
         });
         
-        // Passa all'onboarding
-        navigate('/onboarding');
+        // Reindirizza alla pagina di login anziché all'onboarding
+        // così l'utente può controllare la sua email
+        navigate('/login');
       } else {
         console.error("Registration error:", error);
         let errorMessage = 'Si è verificato un errore durante la registrazione';
         
         if (error?.message.includes('already registered')) {
           errorMessage = 'Questo indirizzo email è già registrato';
+        } else if (error?.message) {
+          errorMessage = error.message;
         }
         
         toast({
@@ -64,6 +67,10 @@ const Register = () => {
             onSubmit={handleRegister} 
             isLoading={isLoading} 
           />
+          
+          <div className="mt-4 text-center text-sm text-gray-500">
+            <p className="italic">Dopo la registrazione, controlla la tua email per confermare il tuo account.</p>
+          </div>
         </div>
       </main>
       
