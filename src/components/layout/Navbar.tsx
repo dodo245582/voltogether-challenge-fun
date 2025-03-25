@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X } from 'lucide-react';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/context/AuthContext';
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const { user, signOut } = useAuth();
   
   // Check if the user is authenticated
