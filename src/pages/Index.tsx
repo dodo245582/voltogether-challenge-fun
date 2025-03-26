@@ -32,26 +32,18 @@ const Index = () => {
               VolTogether è la community che ti aiuta a ridurre i consumi energetici nelle ore di picco, contribuendo alla transizione energetica.
             </p>
             
-            {user ? (
-              <Link to="/dashboard">
-                <Button size="lg" className="font-medium">
-                  Vai alla Dashboard
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/register">
+                <Button size="lg" className="font-medium w-full sm:w-auto">
+                  Registrati
                 </Button>
               </Link>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/register">
-                  <Button size="lg" className="font-medium w-full sm:w-auto">
-                    Unisciti Ora
-                  </Button>
-                </Link>
-                <Link to="/login">
-                  <Button variant="outline" size="lg" className="font-medium w-full sm:w-auto">
-                    Accedi
-                  </Button>
-                </Link>
-              </div>
-            )}
+              <Link to="/login">
+                <Button variant="outline" size="lg" className="font-medium w-full sm:w-auto">
+                  Accedi
+                </Button>
+              </Link>
+            </div>
           </div>
         </section>
         
