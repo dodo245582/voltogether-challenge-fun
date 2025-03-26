@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from '@/types';
 import { Zap, Award, Calendar, TrendingUp } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface StatsProps {
   user: User;
@@ -35,12 +36,27 @@ const Stats = ({ user, totalChallenges }: StatsProps) => {
         trend={completedChallenges > 0 ? "up" : "neutral"}
       />
       
+      {streak === 2 && (
+        <Alert className="bg-amber-50 border-amber-200 text-amber-800">
+          <AlertDescription className="flex items-center">
+            <span className="font-medium">Possibilità di streak!</span>
+            <span className="ml-1">Se completi la prossima sfida hai 5 punti bonus!</span>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <StatsCard 
         title="Streak Attuale" 
         value={streak.toString()} 
-        description={streak >= 3 ? "Completa 3 sfide consecutive e ottieni +5 punti bonus!" : "Completa 3 sfide consecutive per ottenere punti bonus"}
+        description={
+          streak === 2 
+            ? "Completa la prossima sfida per ottenere +5 punti bonus!" 
+            : streak >= 3 
+              ? "Completa 3 sfide consecutive e ottieni +5 punti bonus!" 
+              : "Completa 3 sfide consecutive per ottenere punti bonus"
+        }
         icon={<TrendingUp className="h-5 w-5 text-orange-500" />} 
-        trend={streak >= 3 ? "up" : "neutral"}
+        trend={streak >= 3 ? "up" : (streak === 2 ? "up" : "neutral")}
       />
       
       <StatsCard 
