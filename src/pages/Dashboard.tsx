@@ -18,7 +18,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { notifications } = useNotifications();
   const [challengeStats, setChallengeStats] = useState({
-    totalChallenges: : 7,
+    totalChallenges: 7,
     completedChallenges: profile?.completed_challenges || 0,
     points: profile?.total_points || 0
   });
