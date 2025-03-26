@@ -35,15 +35,25 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Properly check profile validity - fixed the TypeError
+  // More reliable profile validation - check if name is a proper string value and not an object
   const hasValidProfile = !!profile && 
-                          typeof profile.name === 'string' && 
-                          profile.name.trim() !== '';
+    (
+      // Check if name is a simple string
+      (typeof profile.name === 'string' && profile.name.trim() !== '') ||
+      // Or if it's an object with certain properties (which seems to be happening sometimes)
+      (profile.name && typeof profile.name === 'object' && 
+       typeof profile.name.value !== 'undefined' && 
+       profile.name.value !== 'undefined' && 
+       profile.name.value !== null && 
+       profile.name.value !== '')
+    );
   
-  console.log("Profile validation check:", {
+  console.log("Enhanced profile validation check:", {
     profile,
     name: profile?.name,
     nameType: typeof profile?.name,
+    isObjectWithValue: profile?.name && typeof profile?.name === 'object',
+    nameValue: profile?.name && typeof profile?.name === 'object' ? profile.name.value : null,
     hasValidProfile,
     isOnboarding: location.pathname === '/onboarding'
   });

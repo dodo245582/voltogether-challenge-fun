@@ -22,14 +22,28 @@ export const fetchUserProfile = async (userId: string) => {
     }
     
     if (data) {
-      console.log("Service: User profile fetched successfully");
-      // Store the profile in localStorage as a fallback mechanism
+      console.log("Service: User profile fetched successfully", data);
+      
+      // Ensure data has proper structure (fix undefined values)
+      const sanitizedData = {
+        ...data,
+        // Convert any undefined or object-wrapped values to proper strings
+        name: typeof data.name === 'object' ? 
+              (data.name?.value !== 'undefined' ? data.name.value : '') : 
+              (data.name || ''),
+        city: typeof data.city === 'object' ? 
+              (data.city?.value !== 'undefined' ? data.city.value : '') : 
+              (data.city || '')
+      };
+      
+      // Store the sanitized profile in localStorage as a fallback mechanism
       try {
-        localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
+        localStorage.setItem(`profile_${userId}`, JSON.stringify(sanitizedData));
       } catch (e) {
         console.error("Error storing profile in localStorage:", e);
       }
-      return { data: data as UserType, error: null };
+      
+      return { data: sanitizedData as UserType, error: null };
     } else {
       console.log("Service: No user profile found");
       
