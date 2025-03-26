@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
