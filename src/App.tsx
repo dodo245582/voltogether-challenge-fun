@@ -13,6 +13,9 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
 import HowItWorks from "./pages/HowItWorks";
+import FAQ from "./pages/FAQ";
+import ChiSiamo from "./pages/ChiSiamo";
+import Privacy from "./pages/Privacy";
 import { NotificationProvider } from "./context/NotificationContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -48,6 +51,9 @@ const App = () => (
               />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/support" element={<Support />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/chi-siamo" element={<ChiSiamo />} />
+              <Route path="/privacy" element={<Privacy />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

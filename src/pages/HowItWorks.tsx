@@ -1,6 +1,7 @@
 
 import Navbar from '@/components/layout/Navbar';
 import { ArrowRight, Clock, Leaf, Zap, Users, CheckCircle } from 'lucide-react';
+import Footer from '@/components/layout/Footer';
 
 const HowItWorks = () => {
   return (
@@ -93,6 +94,8 @@ const HowItWorks = () => {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };
