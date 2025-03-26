@@ -32,7 +32,7 @@ export const NotificationModals = () => {
   // Ottieni le azioni selezionate dall'utente in fase di registrazione
   const userSelectedActions = JSON.parse(localStorage.getItem('userSelectedActions') || '[]');
   
-  // Ottieni tutte le azioni disponibili
+  // Ottieni tutte le azioni disponibili selezionate dall'utente
   const availableActions = SUSTAINABLE_ACTIONS.filter(action => 
     userSelectedActions.includes(action.id)
   );
@@ -43,14 +43,23 @@ export const NotificationModals = () => {
   ).slice(0, 3);
   
   // Combina le azioni per la visualizzazione
-  const allActions = [...availableActions, ...recommendedActions];
+  const allActions = [...availableActions, ...recommendedActions.slice(0, 3 - Math.min(3, availableActions.length))];
   
   const handleActionToggle = (actionId: string) => {
-    setSelectedActions(prev => 
-      prev.includes(actionId)
-        ? prev.filter(id => id !== actionId)
-        : [...prev, actionId]
-    );
+    if (actionId === 'none') {
+      // Se seleziono "non sono riuscito a partecipare", deseleziono tutte le altre opzioni
+      setSelectedActions(['none']);
+    } else {
+      // Se seleziono un'altra opzione, deseleziono "non sono riuscito a partecipare"
+      setSelectedActions(prev => {
+        if (prev.includes('none')) {
+          return [actionId];
+        }
+        return prev.includes(actionId)
+          ? prev.filter(id => id !== actionId)
+          : [...prev, actionId];
+      });
+    }
   };
   
   const handleSubmitActions = () => {
@@ -79,7 +88,10 @@ export const NotificationModals = () => {
             <div className="bg-gray-50 p-3 rounded-md border">
               <h4 className="font-medium text-sm mb-2">Azioni consigliate:</h4>
               <ul className="text-sm space-y-1.5">
-                {recommendedActions.slice(0, 3).map(action => (
+                {(userSelectedActions.length > 0 ? 
+                  SUSTAINABLE_ACTIONS.filter(action => userSelectedActions.includes(action.id)) : 
+                  recommendedActions
+                ).slice(0, 3).map(action => (
                   <li key={action.id} className="flex items-start gap-1.5">
                     <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                     <span>{action.label}</span>
@@ -94,7 +106,10 @@ export const NotificationModals = () => {
               <XCircle className="mr-2 h-4 w-4" />
               Non parteciperò
             </Button>
-            <Button onClick={() => respondToParticipation(currentChallengeId || 0, true)}>
+            <Button 
+              onClick={() => respondToParticipation(currentChallengeId || 0, true)}
+              className="bg-voltgreen-600 hover:bg-voltgreen-700"
+            >
               <CheckCircle className="mr-2 h-4 w-4" />
               Parteciperò
             </Button>
@@ -120,6 +135,7 @@ export const NotificationModals = () => {
                     id={`action-${action.id}`}
                     checked={selectedActions.includes(action.id)}
                     onCheckedChange={() => handleActionToggle(action.id)}
+                    disabled={selectedActions.includes('none')}
                   />
                   <div className="grid gap-1.5">
                     <label
@@ -139,9 +155,8 @@ export const NotificationModals = () => {
                   <Checkbox 
                     id="action-none"
                     checked={selectedActions.includes('none')}
-                    onCheckedChange={() => {
-                      setSelectedActions(['none']); // Reset and only select 'none'
-                    }}
+                    onCheckedChange={() => handleActionToggle('none')}
+                    disabled={selectedActions.length > 0 && !selectedActions.includes('none')}
                   />
                   <div className="grid gap-1">
                     <label
@@ -161,6 +176,7 @@ export const NotificationModals = () => {
             <Button 
               onClick={handleSubmitActions}
               disabled={selectedActions.length === 0}
+              className="bg-voltgreen-600 hover:bg-voltgreen-700"
             >
               Conferma
             </Button>

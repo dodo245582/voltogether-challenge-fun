@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -95,6 +96,9 @@ const Onboarding = () => {
     setIsLoading(true);
     
     try {
+      // Store user selected actions in localStorage for use in notifications
+      localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
+      
       const { error, success } = await updateProfile({
         name,
         city,

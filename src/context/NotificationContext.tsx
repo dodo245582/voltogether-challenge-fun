@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { format, parseISO, isToday, isBefore, isAfter, addHours } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -41,7 +42,7 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-// For testing - make sure challenges start immediately
+// For the current challenge
 const getCurrentChallengeId = () => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -185,9 +186,21 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const today20 = new Date(todayStr);
     today20.setHours(20, 0, 0, 0);
     
+    // Imposta orari per testing - REMOVE IN PRODUCTION
+    // For testing purposes, we're setting times closer to now
+    const testNow = new Date();
+    const today9AMtest = new Date(testNow);
+    today9AMtest.setMinutes(today9AMtest.getMinutes() - 2); // 2 minutes ago
+    
+    const today1855test = new Date(testNow);
+    today1855test.setMinutes(today1855test.getMinutes() - 1); // 1 minute ago
+    
+    const today20test = new Date(testNow);
+    today20test.setMinutes(today20test.getMinutes() - 0.5); // 30 seconds ago
+    
     // Se ora attuale è dopo le 9:00
-    if (now.getTime() >= today9AM.getTime()) {
-      
+    // if (now.getTime() >= today9AM.getTime()) {
+    if (now.getTime() >= today9AMtest.getTime()) { // FOR TESTING
       // Controlla se abbiamo già inviato questa notifica oggi
       const alreadySentParticipation = notifications.some(n => 
         n.type === 'participation-request' && 
@@ -210,8 +223,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
     
     // Se ora attuale è dopo le 18:55
-    if (now.getTime() >= today1855.getTime()) {
-      
+    // if (now.getTime() >= today1855.getTime()) {
+    if (now.getTime() >= today1855test.getTime()) { // FOR TESTING
       // Controlla se l'utente ha accettato di partecipare
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
@@ -236,8 +249,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
     
     // Se ora attuale è dopo le 20:00
-    if (now.getTime() >= today20.getTime()) {
-      
+    // if (now.getTime() >= today20.getTime()) {
+    if (now.getTime() >= today20test.getTime()) { // FOR TESTING
       // Controlla se l'utente ha accettato di partecipare
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
@@ -339,11 +352,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     
     // Calcola punti
     const pointsPerAction = 10;
-    const totalNewPoints = actionIds.length * pointsPerAction;
+    const totalNewPoints = actionIds.includes('none') ? 0 : actionIds.length * pointsPerAction;
     
     // Determina se l'utente ha una streak
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-    const newStreak = currentStreak + 1;
+    const newStreak = totalNewPoints > 0 ? currentStreak + 1 : 0; // Reset streak if no points earned
     const streakBonus = newStreak >= 3 ? 5 : 0;
     
     // Salva lo streak
@@ -362,10 +375,17 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
     
     // Messaggio di conferma
-    toast({
-      title: "Sfida completata",
-      description: `Hai guadagnato ${totalNewPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!`,
-    });
+    if (actionIds.includes('none')) {
+      toast({
+        title: "Sfida completata",
+        description: "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
+      });
+    } else {
+      toast({
+        title: "Sfida completata",
+        description: `Hai guadagnato ${totalNewPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!`,
+      });
+    }
   };
 
   const dismissParticipationModal = () => {
