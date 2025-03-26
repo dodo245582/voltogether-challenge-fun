@@ -29,10 +29,10 @@ export const fetchUserProfile = async (userId: string) => {
         ...data,
         // Convert any undefined or object-wrapped values to proper strings
         name: typeof data.name === 'object' ? 
-              (data.name?.value !== 'undefined' ? data.name?.value : '') : 
+              (data.name?.value !== 'undefined' ? data.name?.value || '' : '') : 
               (data.name || ''),
         city: typeof data.city === 'object' ? 
-              (data.city?.value !== 'undefined' ? data.city?.value : '') : 
+              (data.city?.value !== 'undefined' ? data.city?.value || '' : '') : 
               (data.city || '')
       };
       
