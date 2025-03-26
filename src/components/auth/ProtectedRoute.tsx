@@ -13,7 +13,8 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
       user: !!user, 
       loading, 
       path: location.pathname,
-      hasProfile: !!profile
+      hasProfile: !!profile,
+      profileName: profile?.name
     });
   }, [user, loading, location.pathname, profile]);
   
@@ -29,15 +30,15 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   // If user is not authenticated, redirect to login
   if (!user) {
     console.log("User not authenticated, redirecting to login");
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
   
   // Special case for onboarding page
   if (location.pathname === '/onboarding') {
-    // If user has a profile with name, they've completed onboarding
+    // If user has completed onboarding (has a profile with name)
     if (profile?.name) {
       console.log("User already completed onboarding, redirecting to dashboard");
-      return <Navigate to="/dashboard" />;
+      return <Navigate to="/dashboard" replace />;
     }
     return <>{children}</>;
   }
@@ -47,7 +48,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     // If user hasn't completed onboarding yet
     if (user && !profile?.name) {
       console.log("User needs to complete onboarding");
-      return <Navigate to="/onboarding" />;
+      return <Navigate to="/onboarding" replace />;
     }
   }
   

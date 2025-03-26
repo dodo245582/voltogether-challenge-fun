@@ -46,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isLoading = loading || profileLoading;
 
   useEffect(() => {
+    console.log("AuthProvider: Initializing auth state");
+    
     // Set up auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -57,7 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && session?.user) {
           setTimeout(async () => {
             try {
+              console.log("Creating profile if not exists for user:", session.user.id);
               await createUserProfileIfNotExists(session.user.id, session.user.email);
+              console.log("Fetching profile for user:", session.user.id);
               await fetchUserProfile(session.user.id);
             } catch (error) {
               console.error("Error in auth state change handler:", error);
@@ -73,12 +77,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log("Got existing session:", !!session);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         try {
+          console.log("Initial session: Creating profile if not exists");
           await createUserProfileIfNotExists(session.user.id, session.user.email);
+          console.log("Initial session: Fetching user profile");
           await fetchUserProfile(session.user.id);
         } catch (error) {
           console.error("Error during initial session check:", error);
@@ -98,6 +105,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
+      
+      if (!error && data.user) {
+        // Create a profile immediately after signup
+        setTimeout(async () => {
+          try {
+            await createUserProfileIfNotExists(data.user.id, data.user.email);
+          } catch (createError) {
+            console.error("Error creating initial profile:", createError);
+          }
+        }, 0);
+      }
       
       return { 
         error, 
@@ -147,7 +165,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
     
-    return await updateUserProfile(user.id, data);
+    console.log("Updating profile with data:", data);
+    const result = await updateUserProfile(user.id, data);
+    
+    // If successful, immediately force a profile refresh
+    if (result.success) {
+      console.log("Profile update successful, refreshing profile data");
+      setTimeout(async () => {
+        await fetchUserProfile(user.id);
+      }, 0);
+    }
+    
+    return result;
   };
 
   const value = {

@@ -18,6 +18,8 @@ const ProfileStep = ({ name, setName }: ProfileStepProps) => {
           placeholder="Inserisci il tuo nome"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          autoFocus
+          required
         />
         <p className="text-sm text-gray-500">
           Utilizzeremo il tuo nome per personalizzare l'esperienza nella piattaforma.

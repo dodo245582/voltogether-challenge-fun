@@ -18,6 +18,8 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
           placeholder="Es. Milano, Roma, Napoli..."
           value={city}
           onChange={(e) => setCity(e.target.value)}
+          autoFocus
+          required
         />
         <p className="text-sm text-gray-500">
           Utilizziamo questa informazione per personalizzare le tue sfide e calcolare l'impatto ambientale locale.

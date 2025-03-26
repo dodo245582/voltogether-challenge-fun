@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +15,7 @@ import SummaryStep from '@/components/onboarding/steps/SummaryStep';
 const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, profile } = useAuth();
   
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -24,6 +23,24 @@ const Onboarding = () => {
   const [discoverySource, setDiscoverySource] = useState<DiscoverySource | ''>('');
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  
+  useEffect(() => {
+    if (profile) {
+      if (profile.name) setName(profile.name);
+      if (profile.city) setCity(profile.city);
+      if (profile.discovery_source) setDiscoverySource(profile.discovery_source as DiscoverySource);
+      if (profile.selected_actions) setSelectedActions(profile.selected_actions);
+    }
+  }, [profile]);
+  
+  useEffect(() => {
+    if (profile?.name && !redirectAttempted) {
+      console.log("User already has a profile, redirecting to dashboard");
+      setRedirectAttempted(true);
+      navigate('/dashboard', { replace: true });
+    }
+  }, [profile, navigate, redirectAttempted]);
   
   const nextStep = () => {
     if (step === 1 && !name) {
@@ -99,7 +116,6 @@ const Onboarding = () => {
     try {
       console.log("Starting onboarding completion process");
       
-      // Store user selected actions in localStorage for use in notifications
       localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
       
       const { error, success } = await updateProfile({
@@ -122,13 +138,7 @@ const Onboarding = () => {
           variant: "default",
         });
         
-        // Delay redirect to ensure profile is updated in the context
-        setTimeout(() => {
-          console.log("Navigating to dashboard");
-          // Use direct window location change instead of router navigation
-          // This forces a full page reload which helps with auth state consistency
-          window.location.href = '/dashboard';
-        }, 1000); // Longer delay to ensure profile update is processed
+        window.location.href = '/dashboard';
       }
     } catch (error: any) {
       console.error("Error updating user profile:", error);
@@ -137,17 +147,18 @@ const Onboarding = () => {
         description: error.message || "Si è verificato un errore durante il salvataggio del profilo",
         variant: "destructive",
       });
-      
-      // Even with an error, try to navigate after a delay
-      // This handles cases where the UI update succeeded but DB update failed
-      setTimeout(() => {
-        console.log("Forcing navigation to dashboard despite error");
-        window.location.href = '/dashboard';
-      }, 2000);
     } finally {
       setIsLoading(false);
     }
   };
+  
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-voltgreen-600 rounded-full"></div>
+      </div>
+    );
+  }
   
   const renderStepContent = () => {
     switch(step) {
