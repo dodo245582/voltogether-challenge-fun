@@ -19,7 +19,6 @@ const Dashboard = () => {
   const { profile, user, signOut } = useAuth();
   const navigate = useNavigate();
   const { notifications } = useNotifications();
-  const [isLoading, setIsLoading] = useState(true);
   const [challengeStats, setChallengeStats] = useState({
     totalChallenges: 7,
     completedChallenges: profile?.completed_challenges || 0,
@@ -54,13 +53,6 @@ const Dashboard = () => {
     if (user && !profile?.name) {
       navigate('/onboarding');
     }
-
-    // Impostiamo un tempo minimo di caricamento per evitare flickering
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 600);
-
-    return () => clearTimeout(timer);
   }, [user, profile, navigate]);
 
   useEffect(() => {
@@ -89,7 +81,7 @@ const Dashboard = () => {
     navigate('/');
   };
 
-  if (!user || isLoading || challengeLoading) {
+  if (!user) {
     return <DashboardLoadingState />;
   }
 

@@ -4,19 +4,13 @@ import { Challenge } from '@/types';
 
 export const useChallengeData = (initialChallengeData: Challenge) => {
   const [challengeData, setChallengeData] = useState<Challenge>(initialChallengeData);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Simuliamo il caricamento dei dati della sfida
   useEffect(() => {
-    setIsLoading(true);
-    
-    // Timeout minimo per garantire stabilità
-    const timer = setTimeout(() => {
-      setChallengeData(initialChallengeData);
-      setIsLoading(false);
-    }, 300);
-    
-    return () => clearTimeout(timer);
+    // Initialize with the data we already have
+    setChallengeData(initialChallengeData);
+    setIsLoading(false);
   }, [initialChallengeData]);
 
   const handleParticipateInChallenge = useCallback((challengeId: number, participating: boolean) => {
