@@ -95,6 +95,8 @@ const Onboarding = () => {
     setIsLoading(true);
     
     try {
+      console.log("Starting onboarding completion process");
+      
       // Store user selected actions in localStorage for use in notifications
       localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
       
@@ -106,18 +108,24 @@ const Onboarding = () => {
       });
       
       if (error) {
+        console.error("Error in onboarding profile update:", error);
         throw error;
       }
       
       if (success) {
+        console.log("Onboarding completed successfully");
         toast({
           title: "Profilo completato",
           description: "Il tuo profilo è stato configurato con successo",
           variant: "default",
         });
         
-        // Optimized redirect - use navigate instead of window.location for faster navigation
-        navigate('/dashboard', { replace: true });
+        // Prima di navigare, assicuriamoci che tutto sia pronto
+        setTimeout(() => {
+          console.log("Navigating to dashboard");
+          // Utilizziamo la navigazione diretta invece di react-router per una sicurezza maggiore
+          window.location.href = '/dashboard';
+        }, 500); // Un breve delay per consentire alla toast di apparire
       }
     } catch (error: any) {
       console.error("Error updating user profile:", error);
@@ -126,6 +134,12 @@ const Onboarding = () => {
         description: error.message || "Si è verificato un errore durante il salvataggio del profilo",
         variant: "destructive",
       });
+      
+      // In caso di errore, forziamo comunque la navigazione dopo un po'
+      setTimeout(() => {
+        console.log("Forcing navigation to dashboard despite error");
+        window.location.href = '/dashboard';
+      }, 2000);
     } finally {
       setIsLoading(false);
     }

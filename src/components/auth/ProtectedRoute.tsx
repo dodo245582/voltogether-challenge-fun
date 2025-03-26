@@ -1,10 +1,21 @@
 
-import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { ReactNode, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Logging to debug authentication state
+    console.log("ProtectedRoute state:", { 
+      user: !!user, 
+      loading, 
+      path: location.pathname,
+      hasProfile: !!profile
+    });
+  }, [user, loading, location.pathname, profile]);
   
   // Show loading state while checking authentication
   if (loading) {
@@ -17,7 +28,27 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   
   // If user is not authenticated, redirect to login
   if (!user) {
+    console.log("User not authenticated, redirecting to login");
     return <Navigate to="/login" />;
+  }
+  
+  // Special case for onboarding page
+  if (location.pathname === '/onboarding') {
+    // If user has a profile with name, they've completed onboarding
+    if (profile?.name) {
+      console.log("User already completed onboarding, redirecting to dashboard");
+      return <Navigate to="/dashboard" />;
+    }
+    return <>{children}</>;
+  }
+  
+  // Special case for dashboard
+  if (location.pathname === '/dashboard') {
+    // If user hasn't completed onboarding yet
+    if (user && !profile?.name) {
+      console.log("User needs to complete onboarding");
+      return <Navigate to="/onboarding" />;
+    }
   }
   
   // If user is authenticated, show the protected content
