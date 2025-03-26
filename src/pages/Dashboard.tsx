@@ -7,6 +7,7 @@ import Stats from '@/components/profile/Stats';
 import { useNotifications } from '@/context/NotificationContext';
 import Footer from '@/components/layout/Footer';
 import { SUSTAINABLE_ACTIONS, CHALLENGE_DATES } from '@/types';
+import { Bell, BellDot } from 'lucide-react';
 
 const Dashboard = () => {
   const { profile, user } = useAuth();
@@ -83,6 +84,8 @@ const Dashboard = () => {
     }));
   };
 
+  const hasUnreadNotifications = notifications.some(n => !n.read);
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <header className="bg-white shadow-sm border-b border-gray-200">
@@ -96,14 +99,24 @@ const Dashboard = () => {
             <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
           </div>
           
-          {user && (
-            <div className="flex items-center">
-              <div className="mr-4 text-right hidden sm:block">
+          <div className="flex items-center space-x-4">
+            {/* Notification bell */}
+            <div className="text-gray-600 hover:text-gray-900 cursor-pointer">
+              {hasUnreadNotifications ? (
+                <BellDot className="h-6 w-6 text-voltgreen-600" />
+              ) : (
+                <Bell className="h-6 w-6" />
+              )}
+            </div>
+            
+            {/* User info */}
+            {user && (
+              <div className="text-right hidden sm:block">
                 <p className="font-medium text-gray-900">{profile?.name || user.email}</p>
                 <p className="text-sm text-gray-500">{challengeStats.points} punti</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </header>
       

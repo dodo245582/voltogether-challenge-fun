@@ -2,15 +2,10 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { Bell, BellDot } from 'lucide-react';
-import { useNotifications } from '@/context/NotificationContext';
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
-  const { notifications } = useNotifications();
-  
-  const hasUnreadNotifications = notifications.some(n => !n.read);
 
   return (
     <header className="bg-white shadow-sm p-4">
@@ -42,13 +37,6 @@ const Navbar = () => {
         <div className="flex items-center space-x-4">
           {user ? (
             <>
-              <Link to="/dashboard" className="text-gray-600 hover:text-gray-900">
-                {hasUnreadNotifications ? (
-                  <BellDot className="h-6 w-6 text-voltgreen-600" />
-                ) : (
-                  <Bell className="h-6 w-6" />
-                )}
-              </Link>
               <Button variant="ghost" onClick={signOut}>Esci</Button>
             </>
           ) : (
