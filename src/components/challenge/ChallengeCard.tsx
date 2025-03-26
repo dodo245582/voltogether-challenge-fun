@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,14 +39,10 @@ const ChallengeCard = ({
   const showParticipationQuestion = isChallengeFuture && 
     (now >= new Date(startTime.getTime() - 3 * 60 * 60 * 1000)); // 3 hours before
   
-  const showCompletionQuestion = isChallengeOver && !challenge.completed;
+  const showCompletionQuestion = isChallengeOver && !challenge.completed && challenge.participating;
 
   const formattedDate = format(challengeDate, 'EEEE d MMMM yyyy', { locale: it });
   const formattedTimeRange = `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}`;
-
-  // Calculate total points from completed actions
-  const totalPointsEarned = challenge.completed && challenge.userActions ? 
-    challenge.userActions.length * 10 : 0;
 
   const handleActionToggle = (actionId: string) => {
     setSelectedActions((prev) =>
@@ -89,13 +84,13 @@ const ChallengeCard = ({
             </Badge>
           ) : isChallengeActive ? (
             <Badge className="bg-voltgreen-500 animate-pulse">In corso</Badge>
-          ) : (isDayInPast && !challenge.participating) ? (
-            <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-              <XCircle className="mr-1 h-3 w-3" /> Persa
-            </Badge>
           ) : (isDayInPast && challenge.participating) ? (
             <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
               <Clock className="mr-1 h-3 w-3" /> In attesa
+            </Badge>
+          ) : (isDayInPast && !challenge.participating) ? (
+            <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+              <XCircle className="mr-1 h-3 w-3" /> Persa
             </Badge>
           ) : null}
         </div>
@@ -148,7 +143,6 @@ const ChallengeCard = ({
             <div className="space-y-2 mt-3">
               {[...userActions, ...recommendedActions]
                 .filter((action, index, self) => 
-                  // Remove duplicates
                   index === self.findIndex((a) => a.id === action.id)
                 )
                 .map((action) => (
@@ -213,13 +207,13 @@ const ChallengeCard = ({
             startTime={startTime} 
             endTime={endTime} 
             isActive={isChallengeActive}
-            isPast={isDayInPast}
+            isPast={isDayInPast && !challenge.participating}
           />
         </div>
         
-        {challenge.completed && (
+        {challenge.completed && challenge.userActions && (
           <div className="flex items-center text-voltgreen-700">
-            <span className="font-medium">+{totalPointsEarned} punti</span>
+            <span className="font-medium">+{challenge.userActions.length * 10} punti</span>
           </div>
         )}
       </CardFooter>

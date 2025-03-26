@@ -1,11 +1,23 @@
 
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { SUSTAINABLE_ACTIONS } from '@/types';
+import { SUSTAINABLE_ACTIONS, CHALLENGE_DATES } from '@/types';
 import { CheckCircle } from 'lucide-react';
+import { format, addDays } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 const NextEvents = () => {
   // Getting random recommended actions for the next day
   const recommendedActions = SUSTAINABLE_ACTIONS.slice(0, 3);
+  
+  // Get tomorrow's date for the next event
+  const today = new Date();
+  const tomorrow = addDays(today, 1);
+  const tomorrowFormatted = format(tomorrow, 'EEEE d MMMM', { locale: it });
+  
+  // Get date for special challenge (this weekend)
+  const weekend = new Date(today);
+  weekend.setDate(today.getDate() + (6 - today.getDay()));
+  const weekendFormatted = format(weekend, 'EEEE d MMMM', { locale: it });
 
   return (
     <Card className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
@@ -16,7 +28,7 @@ const NextEvents = () => {
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
               <div>
                 <p className="font-medium">Sfida Giornaliera</p>
-                <p className="text-sm text-gray-500">Domani, 19:00 - 20:00</p>
+                <p className="text-sm text-gray-500">{tomorrowFormatted}, 19:00 - 20:00</p>
               </div>
               <span className="text-xs font-medium px-2 py-1 bg-voltgreen-100 text-voltgreen-700 rounded-full">
                 +10 punti per azione
@@ -39,7 +51,7 @@ const NextEvents = () => {
           <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
             <div>
               <p className="font-medium">Sfida Energetica Speciale</p>
-              <p className="text-sm text-gray-500">Questo weekend</p>
+              <p className="text-sm text-gray-500">{weekendFormatted}</p>
             </div>
             <span className="text-xs font-medium px-2 py-1 bg-voltgreen-100 text-voltgreen-700 rounded-full">
               +20 punti per azione

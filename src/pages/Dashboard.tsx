@@ -16,7 +16,7 @@ const NextEvents = lazy(() => import('@/components/dashboard/NextEvents'));
 const CommunityStats = lazy(() => import('@/components/dashboard/CommunityStats'));
 
 const Dashboard = () => {
-  const { profile, user, signOut } = useAuth();
+  const { profile, user, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { notifications } = useNotifications();
   const [challengeStats, setChallengeStats] = useState({
@@ -65,6 +65,30 @@ const Dashboard = () => {
     }
   }, [profile]);
 
+  // Update stats after challenge completion
+  const onCompleteChallenge = async (challengeId: number, actionIds: string[]) => {
+    // First call the original handler
+    await handleCompleteChallenge(challengeId, actionIds);
+    
+    // Then refresh the profile to get updated stats
+    if (user) {
+      console.log("Refreshing profile after challenge completion");
+      await refreshProfile(user.id);
+    }
+  };
+
+  // Update stats after challenge participation
+  const onParticipateInChallenge = async (challengeId: number, participating: boolean) => {
+    // First call the original handler
+    await handleParticipateInChallenge(challengeId, participating);
+    
+    // Then refresh the profile to get updated stats
+    if (user) {
+      console.log("Refreshing profile after participation update");
+      await refreshProfile(user.id);
+    }
+  };
+
   useEffect(() => {
     document.body.classList.add('bg-white');
     return () => {
@@ -102,8 +126,8 @@ const Dashboard = () => {
               challenge={todayChallengeData}
               recommendedActions={SUSTAINABLE_ACTIONS.slice(0, 3)}
               userActions={userActions}
-              onParticipate={handleParticipateInChallenge}
-              onCompleteChallenge={handleCompleteChallenge}
+              onParticipate={onParticipateInChallenge}
+              onCompleteChallenge={onCompleteChallenge}
             />
             
             <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>

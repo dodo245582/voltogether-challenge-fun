@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { format, parseISO, isToday, isBefore, isAfter, addHours } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -6,6 +5,8 @@ import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // Notification types
 type NotificationType = 
@@ -52,6 +53,7 @@ const getCurrentChallengeId = () => {
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
+  const { user, profile, refreshProfile, updateProfile } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showParticipationModal, setShowParticipationModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -300,7 +302,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const respondToParticipation = (challengeId: number, participating: boolean) => {
+  const respondToParticipation = async (challengeId: number, participating: boolean) => {
     // Salva la risposta
     localStorage.setItem(`challenge_${challengeId}_participating`, participating.toString());
     
@@ -332,9 +334,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         description: "Grazie per averci fatto sapere. Ti aspettiamo per la prossima sfida!",
       });
     }
+
+    // Refresh profile data to update UI
+    if (user) {
+      await refreshProfile(user.id);
+    }
   };
 
-  const completeChallengeActions = (challengeId: number, actionIds: string[]) => {
+  const completeChallengeActions = async (challengeId: number, actionIds: string[]) => {
     // Salva le azioni completate
     localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
     
@@ -373,6 +380,26 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     
     // Segna la sfida come completata
     localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
+    
+    // Update user profile in database
+    if (user && profile) {
+      console.log("Updating profile after challenge completion");
+      
+      // Calculate new values
+      const updatedCompletedChallenges = (profile.completed_challenges || 0) + 1;
+      const updatedTotalPoints = (profile.total_points || 0) + totalNewPoints + streakBonus;
+      const updatedStreak = newStreak;
+      
+      // Update profile in database
+      await updateProfile({
+        completed_challenges: updatedCompletedChallenges,
+        total_points: updatedTotalPoints,
+        streak: updatedStreak
+      });
+      
+      // Refresh profile to ensure UI is updated
+      await refreshProfile(user.id);
+    }
     
     // Messaggio di conferma
     if (actionIds.includes('none')) {
