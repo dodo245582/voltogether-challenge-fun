@@ -14,10 +14,10 @@ const Support = () => {
             <p className="text-lg">
               Stai riscontrando problemi? Mandaci una mail a{' '}
               <a 
-                href="mailto:team@voltogether.com?subject=Supporto" 
+                href="mailto:team@voltogether.it?subject=Supporto" 
                 className="text-voltgreen-600 hover:underline font-medium"
               >
-                team@voltogether.com
+                team@voltogether.it
               </a>{' '}
               con come oggetto "Supporto" e spiegaci cosa non va.
             </p>
