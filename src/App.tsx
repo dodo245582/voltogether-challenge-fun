@@ -11,6 +11,8 @@ import Register from "./pages/Register";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import Support from "./pages/Support";
+import HowItWorks from "./pages/HowItWorks";
 import { NotificationProvider } from "./context/NotificationContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -44,8 +46,8 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              <Route path="/how-it-works" element={<NotFound />} />
-              <Route path="/support" element={<NotFound />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/support" element={<Support />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
