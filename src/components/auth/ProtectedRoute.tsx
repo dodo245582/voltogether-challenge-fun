@@ -19,32 +19,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     });
   }, [user, loading, location.pathname, profile]);
   
-  // Quick return for authenticated users
-  if (user && !loading) {
-    // Special case for onboarding page
-    if (location.pathname === '/onboarding') {
-      // If user has completed onboarding (has a profile with name)
-      if (profile?.name) {
-        console.log("User already completed onboarding, redirecting to dashboard");
-        return <Navigate to="/dashboard" replace />;
-      }
-      return <>{children}</>;
-    }
-    
-    // Special case for dashboard
-    if (location.pathname === '/dashboard') {
-      // If user hasn't completed onboarding yet
-      if (user && !profile?.name) {
-        console.log("User needs to complete onboarding");
-        return <Navigate to="/onboarding" replace />;
-      }
-    }
-    
-    // Show content for authenticated users
-    return <>{children}</>;
-  }
-  
-  // Show loading state for a very short time while checking authentication
+  // Show loading state while checking authentication
   if (loading) {
     return <DashboardLoadingState />;
   }
@@ -55,6 +30,18 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Fallback case - should never reach here
+  // If user is authenticated but hasn't completed onboarding yet
+  if (location.pathname !== '/onboarding' && !profile?.name) {
+    console.log("User needs to complete onboarding, redirecting");
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // If user is authenticated and has completed onboarding, but tries to access onboarding page again
+  if (location.pathname === '/onboarding' && profile?.name) {
+    console.log("User already completed onboarding, redirecting to dashboard");
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // Show content for authenticated users
   return <>{children}</>;
 };
