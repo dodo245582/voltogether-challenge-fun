@@ -35,16 +35,30 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Important fix: Make sure we're checking if the profile.name is a string and not undefined
-  // If user is authenticated but hasn't completed onboarding yet (no name in profile or name is undefined)
-  if (location.pathname !== '/onboarding' && (!profile || !profile.name || typeof profile.name !== 'string')) {
-    console.log("User needs to complete onboarding, redirecting", { profile, profileName: profile?.name, nameType: typeof profile?.name });
+  // Check if profile exists and has valid name field
+  // A valid profile must have a name property that is a non-empty string
+  const hasValidProfile = profile && 
+                          profile.name && 
+                          typeof profile.name === 'string' && 
+                          profile.name.trim() !== '';
+  
+  // If user is authenticated but hasn't completed onboarding (no valid profile)
+  if (location.pathname !== '/onboarding' && !hasValidProfile) {
+    console.log("User needs to complete onboarding, redirecting", { 
+      profile, 
+      profileName: profile?.name, 
+      nameType: typeof profile?.name,
+      hasValidProfile 
+    });
     return <Navigate to="/onboarding" replace />;
   }
   
   // If user is authenticated and has completed onboarding, but tries to access onboarding page again
-  if (location.pathname === '/onboarding' && profile?.name && typeof profile.name === 'string') {
-    console.log("User already completed onboarding, redirecting to dashboard", { profileName: profile.name });
+  if (location.pathname === '/onboarding' && hasValidProfile) {
+    console.log("User already completed onboarding, redirecting to dashboard", { 
+      profileName: profile.name,
+      hasValidProfile
+    });
     return <Navigate to="/dashboard" replace />;
   }
   

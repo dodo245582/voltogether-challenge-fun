@@ -26,6 +26,7 @@ export interface NotificationContextType {
   showCompletionModal: boolean;
   currentChallengeId: number | null;
   markAsRead: (id: string) => void;
+  markAllRelatedNotificationsAsRead: (challengeId: number) => void;
   respondToParticipation: (challengeId: number, participating: boolean) => void;
   completeChallengeActions: (challengeId: number, actionIds: string[]) => void;
   dismissParticipationModal: () => void;

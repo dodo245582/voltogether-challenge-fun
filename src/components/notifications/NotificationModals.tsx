@@ -18,7 +18,8 @@ export const NotificationModals = () => {
     respondToParticipation,
     completeChallengeActions,
     dismissParticipationModal,
-    dismissCompletionModal
+    dismissCompletionModal,
+    markAllRelatedNotificationsAsRead
   } = useNotifications();
   
   const { user, refreshProfile } = useAuth();
@@ -68,11 +69,25 @@ export const NotificationModals = () => {
     if (currentChallengeId !== null) {
       await completeChallengeActions(currentChallengeId, selectedActions);
       
+      // Mark all related notifications as read
+      if (currentChallengeId) {
+        markAllRelatedNotificationsAsRead(currentChallengeId);
+      }
+      
       // Forza l'aggiornamento del profilo per aggiornare l'UI
       if (user && refreshProfile) {
         console.log("Refreshing profile after challenge completion via notification");
         await refreshProfile(user.id);
       }
+    }
+  };
+
+  const handleParticipationResponse = async (challengeId: number, participating: boolean) => {
+    await respondToParticipation(challengeId, participating);
+    
+    // Mark all related notifications as read
+    if (challengeId) {
+      markAllRelatedNotificationsAsRead(challengeId);
     }
   };
   
@@ -110,12 +125,12 @@ export const NotificationModals = () => {
           </div>
           
           <DialogFooter className="flex sm:justify-between">
-            <Button variant="outline" onClick={() => respondToParticipation(currentChallengeId || 0, false)}>
+            <Button variant="outline" onClick={() => handleParticipationResponse(currentChallengeId || 0, false)}>
               <XCircle className="mr-2 h-4 w-4" />
               Non parteciperò
             </Button>
             <Button 
-              onClick={() => respondToParticipation(currentChallengeId || 0, true)}
+              onClick={() => handleParticipationResponse(currentChallengeId || 0, true)}
               className="bg-voltgreen-600 hover:bg-voltgreen-700"
             >
               <CheckCircle className="mr-2 h-4 w-4" />
