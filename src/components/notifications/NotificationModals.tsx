@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { SUSTAINABLE_ACTIONS } from '@/types';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export const NotificationModals = () => {
   const { 
@@ -20,6 +21,7 @@ export const NotificationModals = () => {
     dismissCompletionModal
   } = useNotifications();
   
+  const { user, refreshProfile } = useAuth();
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   
   // Reset selected actions when modal opens
@@ -62,9 +64,15 @@ export const NotificationModals = () => {
     }
   };
   
-  const handleSubmitActions = () => {
+  const handleSubmitActions = async () => {
     if (currentChallengeId !== null) {
-      completeChallengeActions(currentChallengeId, selectedActions);
+      await completeChallengeActions(currentChallengeId, selectedActions);
+      
+      // Forza l'aggiornamento del profilo per aggiornare l'UI
+      if (user && refreshProfile) {
+        console.log("Refreshing profile after challenge completion via notification");
+        await refreshProfile(user.id);
+      }
     }
   };
   

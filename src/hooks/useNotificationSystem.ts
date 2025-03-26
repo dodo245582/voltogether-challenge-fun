@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
@@ -259,16 +260,19 @@ export const useNotificationSystem = () => {
       console.log("Updating profile after challenge completion");
       
       const updatedCompletedChallenges = (profile.completed_challenges || 0) + 1;
-      const updatedTotalPoints = (profile.total_points || 0) + totalPoints;
+      const updatedTotalPoints = (profile.total_points || 0) + totalPoints + streakBonus;
       const updatedStreak = newStreak;
       
+      // Update profile in database and wait for it to complete
       await updateProfile({
         completed_challenges: updatedCompletedChallenges,
         total_points: updatedTotalPoints,
         streak: updatedStreak
       });
       
+      // Force refresh profile to update UI immediately
       if (refreshProfile) {
+        console.log("Refreshing profile to update UI stats after challenge completion");
         await refreshProfile(user.id);
       }
     }

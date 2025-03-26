@@ -125,29 +125,33 @@ export const useChallengeData = (initialChallenge: Challenge) => {
         userActions: actionIds
       }));
       
-      toast({
-        title: "Sfida completata",
-        description: totalPoints > 0 
-          ? `Hai guadagnato ${actionsPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!` 
-          : "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
-      });
-      
       // Update user profile in the database
       if (user && profile) {
+        console.log("Updating profile after challenge completion");
+        
         const updatedCompletedChallenges = (profile.completed_challenges || 0) + 1;
         const updatedTotalPoints = (profile.total_points || 0) + totalPoints;
         
+        // Update profile in database and wait for it to complete
         await updateProfile({
           completed_challenges: updatedCompletedChallenges,
           total_points: updatedTotalPoints,
           streak: newStreak
         });
         
-        // Refresh profile to update UI
+        // Force refresh profile from database to update UI
         if (refreshProfile) {
+          console.log("Refreshing profile data to update UI stats");
           await refreshProfile(user.id);
         }
       }
+      
+      toast({
+        title: "Sfida completata",
+        description: totalPoints > 0 
+          ? `Hai guadagnato ${actionsPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!` 
+          : "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
+      });
       
     } catch (error) {
       console.error("Error completing challenge:", error);
