@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Challenge } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -9,32 +9,33 @@ export const useChallengeData = (initialChallenge: Challenge) => {
   const [challengeData, setChallengeData] = useState<Challenge>(initialChallenge);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    // Get challenge data from localStorage
-    const loadChallengeData = () => {
-      const participating = localStorage.getItem(`challenge_${initialChallenge.id}_participating`);
-      const completed = localStorage.getItem(`challenge_${initialChallenge.id}_completed`) === 'true';
-      const userActionsStr = localStorage.getItem(`challenge_${initialChallenge.id}_actions`);
-      
-      let userActions = undefined;
-      if (userActionsStr) {
-        try {
-          userActions = JSON.parse(userActionsStr);
-        } catch (e) {
-          console.error("Error parsing user actions:", e);
-        }
-      }
-      
-      setChallengeData({
-        ...initialChallenge,
-        participating: participating === 'true' ? true : participating === 'false' ? false : undefined,
-        completed,
-        userActions
-      });
-    };
+  // Use useCallback to avoid recreating the function on every render
+  const loadChallengeData = useCallback(() => {
+    const participating = localStorage.getItem(`challenge_${initialChallenge.id}_participating`);
+    const completed = localStorage.getItem(`challenge_${initialChallenge.id}_completed`) === 'true';
+    const userActionsStr = localStorage.getItem(`challenge_${initialChallenge.id}_actions`);
     
-    loadChallengeData();
+    let userActions = undefined;
+    if (userActionsStr) {
+      try {
+        userActions = JSON.parse(userActionsStr);
+      } catch (e) {
+        console.error("Error parsing user actions:", e);
+      }
+    }
+    
+    setChallengeData({
+      ...initialChallenge,
+      participating: participating === 'true' ? true : participating === 'false' ? false : undefined,
+      completed,
+      userActions
+    });
   }, [initialChallenge]);
+  
+  // Load challenge data once on mount
+  useEffect(() => {
+    loadChallengeData();
+  }, [loadChallengeData]);
 
   const handleParticipateInChallenge = async (challengeId: number, participating: boolean) => {
     setIsLoading(true);
@@ -75,7 +76,9 @@ export const useChallengeData = (initialChallenge: Challenge) => {
         });
         
         // Refresh profile to update UI
-        await refreshProfile(user.id);
+        if (refreshProfile) {
+          await refreshProfile(user.id);
+        }
       }
       
     } catch (error) {
@@ -141,7 +144,9 @@ export const useChallengeData = (initialChallenge: Challenge) => {
         });
         
         // Refresh profile to update UI
-        await refreshProfile(user.id);
+        if (refreshProfile) {
+          await refreshProfile(user.id);
+        }
       }
       
     } catch (error) {

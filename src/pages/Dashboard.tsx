@@ -21,8 +21,8 @@ const Dashboard = () => {
   const { notifications } = useNotifications();
   const [challengeStats, setChallengeStats] = useState({
     totalChallenges: 7,
-    completedChallenges: profile?.completed_challenges || 0,
-    points: profile?.total_points || 0
+    completedChallenges: 0,
+    points: 0
   });
 
   const initialChallengeData = {
@@ -55,6 +55,7 @@ const Dashboard = () => {
     }
   }, [user, profile, navigate]);
 
+  // Update stats when profile changes
   useEffect(() => {
     if (profile) {
       setChallengeStats({
@@ -71,7 +72,7 @@ const Dashboard = () => {
     await handleCompleteChallenge(challengeId, actionIds);
     
     // Then refresh the profile to get updated stats
-    if (user) {
+    if (user && refreshProfile) {
       console.log("Refreshing profile after challenge completion");
       await refreshProfile(user.id);
     }
@@ -83,7 +84,7 @@ const Dashboard = () => {
     await handleParticipateInChallenge(challengeId, participating);
     
     // Then refresh the profile to get updated stats
-    if (user) {
+    if (user && refreshProfile) {
       console.log("Refreshing profile after participation update");
       await refreshProfile(user.id);
     }

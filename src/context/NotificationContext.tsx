@@ -336,7 +336,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Refresh profile data to update UI
-    if (user) {
+    if (user && refreshProfile) {
       await refreshProfile(user.id);
     }
   };
@@ -359,11 +359,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     
     // Calcola punti
     const pointsPerAction = 10;
-    const totalNewPoints = actionIds.includes('none') ? 0 : actionIds.length * pointsPerAction;
+    const totalPoints = actionIds.includes('none') ? 0 : actionIds.length * pointsPerAction;
     
     // Determina se l'utente ha una streak
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-    const newStreak = totalNewPoints > 0 ? currentStreak + 1 : 0; // Reset streak if no points earned
+    const newStreak = totalPoints > 0 ? currentStreak + 1 : 0; // Reset streak if no points earned
     const streakBonus = newStreak >= 3 ? 5 : 0;
     
     // Salva lo streak
@@ -371,7 +371,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     
     // Aggiorna punti totali
     const currentPoints = parseInt(localStorage.getItem('totalPoints') || '0');
-    const newTotalPoints = currentPoints + totalNewPoints + streakBonus;
+    const newTotalPoints = currentPoints + totalPoints + streakBonus;
     localStorage.setItem('totalPoints', newTotalPoints.toString());
     
     // Aggiorna il contatore delle sfide completate
@@ -387,7 +387,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       
       // Calculate new values
       const updatedCompletedChallenges = (profile.completed_challenges || 0) + 1;
-      const updatedTotalPoints = (profile.total_points || 0) + totalNewPoints + streakBonus;
+      const updatedTotalPoints = (profile.total_points || 0) + totalPoints;
       const updatedStreak = newStreak;
       
       // Update profile in database
@@ -398,7 +398,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       });
       
       // Refresh profile to ensure UI is updated
-      await refreshProfile(user.id);
+      if (refreshProfile) {
+        await refreshProfile(user.id);
+      }
     }
     
     // Messaggio di conferma
@@ -410,7 +412,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     } else {
       toast({
         title: "Sfida completata",
-        description: `Hai guadagnato ${totalNewPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!`,
+        description: `Hai guadagnato ${totalPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!`,
       });
     }
   };

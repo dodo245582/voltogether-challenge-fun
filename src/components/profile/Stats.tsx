@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from '@/types';
 import { Zap, Award, Calendar, TrendingUp } from 'lucide-react';
@@ -17,7 +18,7 @@ const Stats = ({ user, totalChallenges }: StatsProps) => {
     : 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <StatsCard 
         title="Punti Totali" 
         value={totalPoints.toString()} 
