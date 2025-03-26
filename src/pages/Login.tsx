@@ -24,7 +24,8 @@ const Login = () => {
           description: 'Hai effettuato l\'accesso con successo',
           variant: 'default',
         });
-        navigate('/dashboard');
+        // Force immediate redirect to dashboard
+        window.location.href = '/dashboard';
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';

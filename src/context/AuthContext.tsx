@@ -1,4 +1,3 @@
-
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -32,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   const navigate = useNavigate();
   
   const { 
@@ -40,63 +40,97 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUserProfile, 
     createUserProfileIfNotExists, 
     updateProfile: updateUserProfile,
+    setProfile
   } = useUserProfile();
 
-  // Combine loading states
-  const isLoading = loading || profileLoading;
+  // Combine loading states but give priority to auth loading
+  const isLoading = (loading || (profileLoading && initialCheckDone === false));
 
   useEffect(() => {
     console.log("AuthProvider: Initializing auth state");
+    let isSubscribed = true;
     
-    // Set up auth state change listener FIRST
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!isSubscribed) return;
+        
         console.log("Auth state change event:", event);
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Use setTimeout to prevent Supabase auth deadlocks
+        // Try to get cached profile immediately from localStorage
+        if (session?.user) {
+          try {
+            const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
+            if (cachedProfile) {
+              setProfile(JSON.parse(cachedProfile));
+            }
+          } catch (e) {
+            console.error("Error retrieving cached profile:", e);
+          }
+        }
+        
         if (event === 'SIGNED_IN' && session?.user) {
+          // Create profile without blocking UI
           setTimeout(async () => {
             try {
-              console.log("Creating profile if not exists for user:", session.user.id);
+              if (!isSubscribed) return;
               await createUserProfileIfNotExists(session.user.id, session.user.email);
-              console.log("Fetching profile for user:", session.user.id);
-              await fetchUserProfile(session.user.id);
+              if (isSubscribed) await fetchUserProfile(session.user.id);
             } catch (error) {
               console.error("Error in auth state change handler:", error);
             }
           }, 0);
-        } else if (event === 'SIGNED_OUT') {
-          // No profile when signed out
         }
         
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
+    // Check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isSubscribed) return;
+      
       console.log("Got existing session:", !!session);
       setSession(session);
       setUser(session?.user ?? null);
       
+      // First try to get cached profile from localStorage
       if (session?.user) {
         try {
-          console.log("Initial session: Creating profile if not exists");
-          await createUserProfileIfNotExists(session.user.id, session.user.email);
-          console.log("Initial session: Fetching user profile");
-          await fetchUserProfile(session.user.id);
-        } catch (error) {
-          console.error("Error during initial session check:", error);
+          const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
+          if (cachedProfile) {
+            setProfile(JSON.parse(cachedProfile));
+          }
+        } catch (e) {
+          console.error("Error retrieving cached profile:", e);
         }
+        
+        // Then try to get from DB but don't block UI
+        setTimeout(async () => {
+          try {
+            if (!isSubscribed) return;
+            await createUserProfileIfNotExists(session.user.id, session.user.email);
+            if (isSubscribed) await fetchUserProfile(session.user.id);
+          } catch (error) {
+            console.error("Error during initial session check:", error);
+          } finally {
+            if (isSubscribed) setInitialCheckDone(true);
+          }
+        }, 0);
+      } else {
+        setInitialCheckDone(true);
       }
       
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, [fetchUserProfile, createUserProfileIfNotExists]);
+    return () => {
+      isSubscribed = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchUserProfile, createUserProfileIfNotExists, setProfile]);
 
   const signUp = async (email: string, password: string) => {
     try {
