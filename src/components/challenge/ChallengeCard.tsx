@@ -45,6 +45,10 @@ const ChallengeCard = ({
   const formattedDate = format(challengeDate, 'EEEE d MMMM yyyy', { locale: it });
   const formattedTimeRange = `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}`;
 
+  // Calculate total points from completed actions
+  const totalPointsEarned = challenge.completed && challenge.userActions ? 
+    challenge.userActions.length * 10 : 0;
+
   const handleActionToggle = (actionId: string) => {
     setSelectedActions((prev) =>
       prev.includes(actionId)
@@ -85,9 +89,13 @@ const ChallengeCard = ({
             </Badge>
           ) : isChallengeActive ? (
             <Badge className="bg-voltgreen-500 animate-pulse">In corso</Badge>
-          ) : isDayInPast ? (
+          ) : (isDayInPast && !challenge.participating) ? (
             <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
               <XCircle className="mr-1 h-3 w-3" /> Persa
+            </Badge>
+          ) : (isDayInPast && challenge.participating) ? (
+            <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+              <Clock className="mr-1 h-3 w-3" /> In attesa
             </Badge>
           ) : null}
         </div>
@@ -153,9 +161,10 @@ const ChallengeCard = ({
                     <div className="grid gap-1">
                       <label
                         htmlFor={`action-${action.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
                       >
                         {action.label}
+                        <Badge className="ml-2 bg-green-100 text-green-800 hover:bg-green-200">+10 punti</Badge>
                       </label>
                       <p className="text-xs text-gray-500">{action.description}</p>
                     </div>
@@ -210,7 +219,7 @@ const ChallengeCard = ({
         
         {challenge.completed && (
           <div className="flex items-center text-voltgreen-700">
-            <span className="font-medium">+{challenge.userActions?.length ?? 0 * 10} punti</span>
+            <span className="font-medium">+{totalPointsEarned} punti</span>
           </div>
         )}
       </CardFooter>

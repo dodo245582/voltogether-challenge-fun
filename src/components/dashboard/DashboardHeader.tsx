@@ -1,7 +1,8 @@
 
-import { Bell, BellDot, LogOut } from 'lucide-react';
+import { Bell, BellDot, LogOut, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@/types';
+import { Link } from 'react-router-dom';
 
 interface DashboardHeaderProps {
   profile: User | null;
@@ -31,6 +32,13 @@ const DashboardHeader = ({
         </div>
         
         <div className="flex items-center space-x-4">
+          <Link to="/how-it-works">
+            <Button variant="ghost" size="sm" className="flex items-center">
+              <HelpCircle className="h-4 w-4 mr-1" />
+              <span>Come Funziona</span>
+            </Button>
+          </Link>
+          
           <div className="text-gray-600 hover:text-gray-900 cursor-pointer">
             {hasUnreadNotifications ? (
               <BellDot className="h-6 w-6 text-voltgreen-600" />
@@ -42,7 +50,6 @@ const DashboardHeader = ({
           {username && (
             <div className="text-right hidden sm:block">
               <p className="font-medium text-gray-900">{username}</p>
-              <p className="text-sm text-gray-500">{points} punti</p>
             </div>
           )}
           
