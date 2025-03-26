@@ -25,14 +25,14 @@ const Dashboard = () => {
     points: 0
   });
 
-  const initialChallengeData = {
+  const initialChallengeData = useMemo(() => ({
     id: 1,
     date: CHALLENGE_DATES[0],
     startTime: '19:00',
     endTime: '20:00',
     completed: false,
     participating: undefined
-  };
+  }), []);
 
   const { 
     challengeData: todayChallengeData,
@@ -58,6 +58,11 @@ const Dashboard = () => {
   // Update stats when profile changes
   useEffect(() => {
     if (profile) {
+      console.log("Updating dashboard stats from profile:", {
+        completedChallenges: profile.completed_challenges || 0,
+        points: profile.total_points || 0
+      });
+      
       setChallengeStats({
         totalChallenges: 7,
         completedChallenges: profile.completed_challenges || 0,
