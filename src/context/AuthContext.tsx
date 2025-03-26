@@ -23,6 +23,7 @@ type AuthContextType = {
     error: any | null;
     success: boolean;
   }>;
+  refreshProfile: (userId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,14 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile
   } = useUserProfile();
 
-  // Combine loading states but give priority to auth loading
   const isLoading = (loading || (profileLoading && initialCheckDone === false));
 
   useEffect(() => {
     console.log("AuthProvider: Initializing auth state");
     let isSubscribed = true;
     
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isSubscribed) return;
@@ -59,7 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Try to get cached profile immediately from localStorage
         if (session?.user) {
           try {
             const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
@@ -72,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // Create profile without blocking UI
           setTimeout(async () => {
             try {
               if (!isSubscribed) return;
@@ -88,7 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!isSubscribed) return;
       
@@ -96,7 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       
-      // First try to get cached profile from localStorage
       if (session?.user) {
         try {
           const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
@@ -107,7 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("Error retrieving cached profile:", e);
         }
         
-        // Then try to get from DB but don't block UI
         setTimeout(async () => {
           try {
             if (!isSubscribed) return;
@@ -141,7 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (!error && data.user) {
-        // Create a profile immediately after signup
         setTimeout(async () => {
           try {
             await createUserProfileIfNotExists(data.user.id, data.user.email);
@@ -202,7 +195,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("Updating profile with data:", data);
     const result = await updateUserProfile(user.id, data);
     
-    // If successful, immediately force a profile refresh
     if (result.success) {
       console.log("Profile update successful, refreshing profile data");
       setTimeout(async () => {
@@ -211,6 +203,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     return result;
+  };
+
+  const refreshProfile = async (userId: string) => {
+    if (!userId) return;
+    console.log("AuthProvider: Refreshing profile for user:", userId);
+    return fetchUserProfile(userId);
   };
 
   const value = {
@@ -222,6 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     loading: isLoading,
     updateProfile,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
