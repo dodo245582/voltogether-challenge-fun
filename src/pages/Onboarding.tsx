@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -117,8 +116,8 @@ const Onboarding = () => {
           variant: "default",
         });
         
-        // Force a redirect to the dashboard after successful profile update
-        window.location.href = '/dashboard';
+        // Optimized redirect - use navigate instead of window.location for faster navigation
+        navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
       console.error("Error updating user profile:", error);

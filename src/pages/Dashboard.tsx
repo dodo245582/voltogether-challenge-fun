@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import ChallengeCard from '@/components/challenge/ChallengeCard';
@@ -20,30 +20,33 @@ const Dashboard = () => {
     points: profile?.total_points || 0
   });
 
-  // Generate challenge data for display
-  const [todayChallengeData, setTodayChallengeData] = useState({
+  // Generate challenge data for display - moved to useMemo for optimization
+  const todayChallengeData = useMemo(() => ({
     id: 1,
     date: CHALLENGE_DATES[0],
     startTime: '19:00',
     endTime: '20:00',
     completed: false,
     participating: undefined
-  });
+  }), []);
 
-  const [userActions, setUserActions] = useState(
+  // Optimize by using useMemo for userActions calculation
+  const userActions = useMemo(() => 
     profile?.selected_actions 
       ? SUSTAINABLE_ACTIONS.filter(action => 
           profile.selected_actions?.includes(action.id)
         )
       : SUSTAINABLE_ACTIONS.slice(0, 3)
-  );
+  , [profile?.selected_actions]);
 
+  // Redirect to onboarding if needed
   useEffect(() => {
     if (user && !profile?.name) {
       navigate('/onboarding');
     }
   }, [user, profile, navigate]);
 
+  // Update stats when profile changes
   useEffect(() => {
     if (profile) {
       setChallengeStats({
@@ -51,14 +54,6 @@ const Dashboard = () => {
         completedChallenges: profile.completed_challenges || 0,
         points: profile.total_points || 0
       });
-
-      setUserActions(
-        profile.selected_actions 
-          ? SUSTAINABLE_ACTIONS.filter(action => 
-              profile.selected_actions?.includes(action.id)
-            )
-          : SUSTAINABLE_ACTIONS.slice(0, 3)
-      );
     }
   }, [profile]);
 
@@ -71,6 +66,7 @@ const Dashboard = () => {
   }, []);
 
   const handleParticipateInChallenge = (challengeId: number, participating: boolean) => {
+    // Use functional state update for better performance
     setTodayChallengeData(prev => ({
       ...prev,
       participating
@@ -78,6 +74,7 @@ const Dashboard = () => {
   };
 
   const handleCompleteChallenge = (challengeId: number, actionIds: string[]) => {
+    // Use functional state update for better performance
     setTodayChallengeData(prev => ({
       ...prev,
       completed: true,
@@ -85,12 +82,26 @@ const Dashboard = () => {
     }));
   };
 
-  const hasUnreadNotifications = notifications.some(n => !n.read);
+  const hasUnreadNotifications = useMemo(() => 
+    notifications.some(n => !n.read)
+  , [notifications]);
   
   const handleLogout = async () => {
     await signOut();
     navigate('/');
   };
+
+  // Early return while loading
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-voltgreen-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Caricamento dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
