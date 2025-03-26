@@ -17,9 +17,9 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
       hasProfile: !!profile,
       profileDetails: profile ? {
         id: profile.id,
-        name: profile.name,
+        name: profile.name || "",
         completed_challenges: profile.completed_challenges,
-        city: profile.city
+        city: profile.city || ""
       } : null
     });
   }, [user, loading, location.pathname, profile]);
@@ -35,25 +35,15 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // More reliable profile validation - check if name is a proper string value and not an object
+  // Simple profile validation - check if name is a proper string value
   const hasValidProfile = !!profile && 
-    (
-      // Check if name is a simple string
-      (typeof profile?.name === 'string' && profile?.name?.trim() !== '') ||
-      // Or if it's an object with certain properties (which seems to be happening sometimes)
-      (profile?.name && typeof profile?.name === 'object' && 
-       typeof profile?.name?.value !== 'undefined' && 
-       profile?.name?.value !== 'undefined' && 
-       profile?.name?.value !== null && 
-       profile?.name?.value !== '')
-    );
+    (typeof profile.name === 'string' && profile.name.trim() !== '') && 
+    (typeof profile.city === 'string' && profile.city.trim() !== '');
   
-  console.log("Enhanced profile validation check:", {
+  console.log("Profile validation check:", {
     profile,
-    name: profile?.name,
-    nameType: typeof profile?.name,
-    isObjectWithValue: profile?.name && typeof profile?.name === 'object',
-    nameValue: profile?.name && typeof profile?.name === 'object' ? profile.name?.value : null,
+    hasName: profile && typeof profile.name === 'string' && profile.name.trim() !== '',
+    hasCity: profile && typeof profile.city === 'string' && profile.city.trim() !== '',
     hasValidProfile,
     isOnboarding: location.pathname === '/onboarding'
   });

@@ -21,11 +21,11 @@ const Register = () => {
       if (success) {
         toast({
           title: 'Registrazione completata',
-          description: 'Ti abbiamo inviato un\'email di conferma. Per favore, conferma il tuo indirizzo email prima di accedere.',
+          description: 'Ti abbiamo inviato un\'email di conferma. Procedi ora a completare il tuo profilo.',
           variant: 'default',
         });
         
-        // Passa all'onboarding
+        // Redirect to onboarding for new users to complete their profile
         navigate('/onboarding');
       } else {
         console.error("Registration error:", error);

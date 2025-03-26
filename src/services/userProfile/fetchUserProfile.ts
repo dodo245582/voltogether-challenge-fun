@@ -28,12 +28,12 @@ export const fetchUserProfile = async (userId: string) => {
       const sanitizedData = {
         ...data,
         // Convert any undefined or object-wrapped values to proper strings
-        name: typeof data?.name === 'object' ? 
-              (data?.name?.value !== 'undefined' ? data?.name?.value || '' : '') : 
-              (data?.name || ''),
-        city: typeof data?.city === 'object' ? 
-              (data?.city?.value !== 'undefined' ? data?.city?.value || '' : '') : 
-              (data?.city || '')
+        name: typeof data.name === 'object' ? 
+              (data.name?.value !== 'undefined' ? data.name?.value || '' : '') : 
+              (data.name || ''),
+        city: typeof data.city === 'object' ? 
+              (data.city?.value !== 'undefined' ? data.city?.value || '' : '') : 
+              (data.city || '')
       };
       
       // Store the sanitized profile in localStorage as a fallback mechanism

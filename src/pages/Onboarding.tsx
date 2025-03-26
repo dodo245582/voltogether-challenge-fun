@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,17 +26,28 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
+  // If profile exists, populate form fields
   useEffect(() => {
     if (profile) {
-      if (profile.name) setName(profile.name);
-      if (profile.city) setCity(profile.city);
-      if (profile.discovery_source) setDiscoverySource(profile.discovery_source as DiscoverySource);
-      if (profile.selected_actions) setSelectedActions(profile.selected_actions);
+      // Only set values if they exist and are valid strings
+      if (profile.name && typeof profile.name === 'string') {
+        setName(profile.name);
+      }
+      if (profile.city && typeof profile.city === 'string') {
+        setCity(profile.city);
+      }
+      if (profile.discovery_source) {
+        setDiscoverySource(profile.discovery_source as DiscoverySource);
+      }
+      if (profile.selected_actions && Array.isArray(profile.selected_actions)) {
+        setSelectedActions(profile.selected_actions);
+      }
     }
   }, [profile]);
   
+  // If user already has a profile, redirect to dashboard
   useEffect(() => {
-    if (profile?.name && !redirectAttempted) {
+    if (profile && typeof profile.name === 'string' && profile.name.trim() !== '' && !redirectAttempted) {
       console.log("User already has a profile, redirecting to dashboard");
       setRedirectAttempted(true);
       navigate('/dashboard', { replace: true });
@@ -108,6 +120,16 @@ const Onboarding = () => {
         variant: "destructive",
       });
       navigate('/login');
+      return;
+    }
+    
+    // Validate all required fields one last time
+    if (!name || !city || !discoverySource || selectedActions.length === 0) {
+      toast({
+        title: "Campi obbligatori mancanti",
+        description: "Tutti i campi del profilo sono obbligatori",
+        variant: "destructive",
+      });
       return;
     }
     
