@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import ChallengeCard from '@/components/challenge/ChallengeCard';
@@ -8,15 +8,18 @@ import { useNotifications } from '@/context/NotificationContext';
 import Footer from '@/components/layout/Footer';
 import { SUSTAINABLE_ACTIONS, CHALLENGE_DATES } from '@/types';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import NextEvents from '@/components/dashboard/NextEvents';
-import CommunityStats from '@/components/dashboard/CommunityStats';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 import { useChallengeData } from '@/hooks/useChallengeData';
+
+// Lazy load components that aren't immediately visible
+const NextEvents = lazy(() => import('@/components/dashboard/NextEvents'));
+const CommunityStats = lazy(() => import('@/components/dashboard/CommunityStats'));
 
 const Dashboard = () => {
   const { profile, user, signOut } = useAuth();
   const navigate = useNavigate();
   const { notifications } = useNotifications();
+  const [isLoading, setIsLoading] = useState(true);
   const [challengeStats, setChallengeStats] = useState({
     totalChallenges: 7,
     completedChallenges: profile?.completed_challenges || 0,
@@ -33,7 +36,8 @@ const Dashboard = () => {
   };
 
   const { 
-    challengeData: todayChallengeData, 
+    challengeData: todayChallengeData,
+    isLoading: challengeLoading,
     handleParticipateInChallenge, 
     handleCompleteChallenge 
   } = useChallengeData(initialChallengeData);
@@ -50,6 +54,13 @@ const Dashboard = () => {
     if (user && !profile?.name) {
       navigate('/onboarding');
     }
+
+    // Impostiamo un tempo minimo di caricamento per evitare flickering
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+
+    return () => clearTimeout(timer);
   }, [user, profile, navigate]);
 
   useEffect(() => {
@@ -78,7 +89,7 @@ const Dashboard = () => {
     navigate('/');
   };
 
-  if (!user) {
+  if (!user || isLoading || challengeLoading) {
     return <DashboardLoadingState />;
   }
 
@@ -103,7 +114,9 @@ const Dashboard = () => {
               onCompleteChallenge={handleCompleteChallenge}
             />
             
-            <NextEvents />
+            <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
+              <NextEvents />
+            </Suspense>
           </div>
           
           <div className="space-y-6">
@@ -114,7 +127,9 @@ const Dashboard = () => {
               />
             )}
             
-            <CommunityStats />
+            <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
+              <CommunityStats />
+            </Suspense>
           </div>
         </div>
       </main>
