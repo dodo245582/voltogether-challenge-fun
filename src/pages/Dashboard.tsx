@@ -6,32 +6,59 @@ import ChallengeCard from '@/components/challenge/ChallengeCard';
 import Stats from '@/components/profile/Stats';
 import { useNotifications } from '@/context/NotificationContext';
 import Footer from '@/components/layout/Footer';
+import { SUSTAINABLE_ACTIONS, CHALLENGE_DATES } from '@/types';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { profile, user } = useAuth();
   const navigate = useNavigate();
   const { notifications } = useNotifications();
   const [challengeStats, setChallengeStats] = useState({
     totalChallenges: 7,
-    completedChallenges: user?.profile?.challenges_participated || 0,
-    points: user?.profile?.points || 0
+    completedChallenges: profile?.completed_challenges || 0,
+    points: profile?.total_points || 0
   });
 
-  useEffect(() => {
-    if (user && !user.profile?.onboarding_completed) {
-      navigate('/onboarding');
-    }
-  }, [user, navigate]);
+  // Generate challenge data for display
+  const [todayChallengeData, setTodayChallengeData] = useState({
+    id: 1,
+    date: CHALLENGE_DATES[0],
+    startTime: '19:00',
+    endTime: '20:00',
+    completed: false,
+    participating: undefined
+  });
+
+  const [userActions, setUserActions] = useState(
+    profile?.selected_actions 
+      ? SUSTAINABLE_ACTIONS.filter(action => 
+          profile.selected_actions?.includes(action.id)
+        )
+      : SUSTAINABLE_ACTIONS.slice(0, 3)
+  );
 
   useEffect(() => {
-    if (user && user.profile) {
+    if (user && !profile?.name) {
+      navigate('/onboarding');
+    }
+  }, [user, profile, navigate]);
+
+  useEffect(() => {
+    if (profile) {
       setChallengeStats({
         totalChallenges: 7,
-        completedChallenges: user.profile.challenges_participated || 0,
-        points: user.profile.points || 0
+        completedChallenges: profile.completed_challenges || 0,
+        points: profile.total_points || 0
       });
+
+      setUserActions(
+        profile.selected_actions 
+          ? SUSTAINABLE_ACTIONS.filter(action => 
+              profile.selected_actions?.includes(action.id)
+            )
+          : SUSTAINABLE_ACTIONS.slice(0, 3)
+      );
     }
-  }, [user]);
+  }, [profile]);
 
   // Always render with white background
   useEffect(() => {
@@ -40,6 +67,21 @@ const Dashboard = () => {
       document.body.classList.remove('bg-white');
     };
   }, []);
+
+  const handleParticipateInChallenge = (challengeId: number, participating: boolean) => {
+    setTodayChallengeData(prev => ({
+      ...prev,
+      participating
+    }));
+  };
+
+  const handleCompleteChallenge = (challengeId: number, actionIds: string[]) => {
+    setTodayChallengeData(prev => ({
+      ...prev,
+      completed: true,
+      userActions: actionIds
+    }));
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -57,7 +99,7 @@ const Dashboard = () => {
           {user && (
             <div className="flex items-center">
               <div className="mr-4 text-right hidden sm:block">
-                <p className="font-medium text-gray-900">{user.profile?.name || user.email}</p>
+                <p className="font-medium text-gray-900">{profile?.name || user.email}</p>
                 <p className="text-sm text-gray-500">{challengeStats.points} punti</p>
               </div>
             </div>
@@ -68,7 +110,13 @@ const Dashboard = () => {
       <main className="flex-1 max-w-5xl mx-auto w-full p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <ChallengeCard />
+            <ChallengeCard
+              challenge={todayChallengeData}
+              recommendedActions={SUSTAINABLE_ACTIONS.slice(0, 3)}
+              userActions={userActions}
+              onParticipate={handleParticipateInChallenge}
+              onCompleteChallenge={handleCompleteChallenge}
+            />
             
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
               <h2 className="text-xl font-semibold mb-4">Prossimi Eventi</h2>
@@ -97,11 +145,12 @@ const Dashboard = () => {
           </div>
           
           <div className="space-y-6">
-            <Stats 
-              challengesParticipated={challengeStats.completedChallenges}
-              totalChallenges={challengeStats.totalChallenges}
-              points={challengeStats.points}
-            />
+            {profile && (
+              <Stats
+                user={profile}
+                totalChallenges={challengeStats.totalChallenges}
+              />
+            )}
             
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
               <h2 className="text-xl font-semibold mb-4">Community</h2>
