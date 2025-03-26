@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 
 const Navbar = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
 
   return (
@@ -36,9 +36,9 @@ const Navbar = () => {
         
         <div className="flex items-center space-x-4">
           {user ? (
-            <>
-              <Button variant="ghost" onClick={signOut}>Esci</Button>
-            </>
+            <Link to="/dashboard">
+              <Button>Dashboard</Button>
+            </Link>
           ) : (
             <>
               <Link to="/login">

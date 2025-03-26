@@ -117,7 +117,8 @@ const Onboarding = () => {
           variant: "default",
         });
         
-        navigate('/dashboard');
+        // Force a redirect to the dashboard after successful profile update
+        window.location.href = '/dashboard';
       }
     } catch (error: any) {
       console.error("Error updating user profile:", error);

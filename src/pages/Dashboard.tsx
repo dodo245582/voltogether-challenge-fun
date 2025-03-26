@@ -7,10 +7,11 @@ import Stats from '@/components/profile/Stats';
 import { useNotifications } from '@/context/NotificationContext';
 import Footer from '@/components/layout/Footer';
 import { SUSTAINABLE_ACTIONS, CHALLENGE_DATES } from '@/types';
-import { Bell, BellDot } from 'lucide-react';
+import { Bell, BellDot, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
-  const { profile, user } = useAuth();
+  const { profile, user, signOut } = useAuth();
   const navigate = useNavigate();
   const { notifications } = useNotifications();
   const [challengeStats, setChallengeStats] = useState({
@@ -85,6 +86,11 @@ const Dashboard = () => {
   };
 
   const hasUnreadNotifications = notifications.some(n => !n.read);
+  
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -116,6 +122,17 @@ const Dashboard = () => {
                 <p className="text-sm text-gray-500">{challengeStats.points} punti</p>
               </div>
             )}
+            
+            {/* Logout button */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleLogout}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <LogOut className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Esci</span>
+            </Button>
           </div>
         </div>
       </header>
