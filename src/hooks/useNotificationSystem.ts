@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
@@ -5,6 +6,7 @@ import type { Notification, NotificationType } from '@/types/notifications';
 import { getCurrentChallengeId } from '@/types/notifications';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { isToday, parseISO } from 'date-fns';
 
 export const useNotificationSystem = () => {
   const { toast } = useToast();
