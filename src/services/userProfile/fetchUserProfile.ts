@@ -24,17 +24,17 @@ export const fetchUserProfile = async (userId: string) => {
     if (data) {
       console.log("Service: User profile fetched successfully", data);
       
-      // Ensure data has proper structure (fix undefined values)
+      // Ensure data has proper structure - using explicit type assertions to handle potential nulls
       const sanitizedData = {
         ...data,
-        // Convert any undefined or object-wrapped values to proper strings
-        // Use type assertions to handle null values
-        name: typeof data.name === 'object' ? 
-              ((data.name as any)?.value !== 'undefined' ? (data.name as any)?.value || '' : '') : 
-              (data.name || ''),
-        city: typeof data.city === 'object' ? 
-              ((data.city as any)?.value !== 'undefined' ? (data.city as any)?.value || '' : '') : 
-              (data.city || '')
+        // Ensure non-null values by defaulting to empty strings
+        name: data.name || '',
+        city: data.city || '',
+        completed_challenges: data.completed_challenges || 0,
+        total_points: data.total_points || 0,
+        streak: data.streak || 0,
+        discovery_source: data.discovery_source || '',
+        selected_actions: data.selected_actions || []
       };
       
       // Store the sanitized profile in localStorage as a fallback mechanism
