@@ -39,13 +39,13 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const hasValidProfile = !!profile && 
     (
       // Check if name is a simple string
-      (typeof profile.name === 'string' && profile.name?.trim() !== '') ||
+      (typeof profile?.name === 'string' && profile?.name?.trim() !== '') ||
       // Or if it's an object with certain properties (which seems to be happening sometimes)
-      (profile.name && typeof profile.name === 'object' && 
-       typeof profile.name?.value !== 'undefined' && 
-       profile.name?.value !== 'undefined' && 
-       profile.name?.value !== null && 
-       profile.name?.value !== '')
+      (profile?.name && typeof profile?.name === 'object' && 
+       typeof profile?.name?.value !== 'undefined' && 
+       profile?.name?.value !== 'undefined' && 
+       profile?.name?.value !== null && 
+       profile?.name?.value !== '')
     );
   
   console.log("Enhanced profile validation check:", {
