@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { User as UserType } from '@/types';
 import { 
   fetchUserProfile as fetchUserProfileService, 
   createUserProfileIfNotExists as createUserProfileService, 
   updateUserProfile as updateUserProfileService 
-} from '@/services/userProfileService';
+} from '@/services/userProfile';
 
 export const useUserProfile = () => {
   const [profile, setProfile] = useState<UserType | null>(null);

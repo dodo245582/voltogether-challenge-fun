@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react';
-import { format, parseISO, isToday, isBefore, isAfter, addHours } from 'date-fns';
-import { it } from 'date-fns/locale';
-import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
-import { Notification, NotificationType, getCurrentChallengeId } from '@/types/notifications';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
+import type { Notification, NotificationType } from '@/types/notifications';
+import { getCurrentChallengeId } from '@/types/notifications';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useNotificationSystem = () => {
@@ -17,12 +15,10 @@ export const useNotificationSystem = () => {
   const [currentChallengeId, setCurrentChallengeId] = useState<number | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
-  // Funzione per controllare se le notifiche sono abilitate nel browser
   const areNotificationsEnabled = () => {
     return 'Notification' in window && Notification.permission === 'granted';
   };
 
-  // Richiedi permesso notifiche
   const enableNotifications = () => {
     if (!('Notification' in window)) {
       toast({
@@ -41,7 +37,6 @@ export const useNotificationSystem = () => {
           description: "Riceverai notifiche per le prossime sfide",
         });
         
-        // Demo notification
         new Notification('VolTogether - Notifiche attivate', {
           body: 'Riceverai notifiche per le prossime sfide di risparmio energetico',
           icon: '/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png'
@@ -56,7 +51,6 @@ export const useNotificationSystem = () => {
     });
   };
 
-  // Funzione per creare notifiche
   const createNotification = (
     type: NotificationType,
     title: string,
@@ -77,14 +71,12 @@ export const useNotificationSystem = () => {
     
     setNotifications(prev => [newNotification, ...prev]);
     
-    // Mostro toast per tutte le notifiche
     toast({
       title: newNotification.title,
       description: newNotification.message,
       variant: "default",
     });
     
-    // Mostro notifica push se abilitate
     if (areNotificationsEnabled()) {
       new Notification(newNotification.title, {
         body: newNotification.message,
@@ -92,7 +84,6 @@ export const useNotificationSystem = () => {
       });
     }
     
-    // Mostro modal appropriata se richiesto
     if (type === 'participation-request') {
       setCurrentChallengeId(challengeId || null);
       setShowParticipationModal(true);
@@ -104,7 +95,6 @@ export const useNotificationSystem = () => {
     return newNotification;
   };
 
-  // Controlla e crea notifiche appropriate in base all'ora del giorno
   const checkForScheduledNotifications = () => {
     const now = new Date();
     const challengeId = getCurrentChallengeId();
@@ -112,7 +102,6 @@ export const useNotificationSystem = () => {
     
     if (challengeId === null || !CHALLENGE_DATES.includes(todayStr)) return;
     
-    // Crea oggetti Date per i momenti chiave
     const today9AM = new Date(todayStr);
     today9AM.setHours(9, 0, 0, 0);
     
@@ -122,29 +111,23 @@ export const useNotificationSystem = () => {
     const today20 = new Date(todayStr);
     today20.setHours(20, 0, 0, 0);
     
-    // Imposta orari per testing - REMOVE IN PRODUCTION
-    // For testing purposes, we're setting times closer to now
     const testNow = new Date();
     const today9AMtest = new Date(testNow);
-    today9AMtest.setMinutes(today9AMtest.getMinutes() - 2); // 2 minutes ago
+    today9AMtest.setMinutes(today9AMtest.getMinutes() - 2);
     
     const today1855test = new Date(testNow);
-    today1855test.setMinutes(today1855test.getMinutes() - 1); // 1 minute ago
+    today1855test.setMinutes(today1855test.getMinutes() - 1);
     
     const today20test = new Date(testNow);
-    today20test.setMinutes(today20test.getMinutes() - 0.5); // 30 seconds ago
+    today20test.setMinutes(today20test.getMinutes() - 0.5);
     
-    // Se ora attuale è dopo le 9:00
-    // if (now.getTime() >= today9AM.getTime()) {
-    if (now.getTime() >= today9AMtest.getTime()) { // FOR TESTING
-      // Controlla se abbiamo già inviato questa notifica oggi
+    if (now.getTime() >= today9AMtest.getTime()) {
       const alreadySentParticipation = notifications.some(n => 
         n.type === 'participation-request' && 
         n.challengeId === challengeId &&
         isToday(parseISO(n.timestamp))
       );
       
-      // Controlla se l'utente ha già risposto alla richiesta di partecipazione
       const hasResponded = localStorage.getItem(`challenge_${challengeId}_participating`) !== null;
       
       if (!alreadySentParticipation && !hasResponded) {
@@ -158,14 +141,10 @@ export const useNotificationSystem = () => {
       }
     }
     
-    // Se ora attuale è dopo le 18:55
-    // if (now.getTime() >= today1855.getTime()) {
-    if (now.getTime() >= today1855test.getTime()) { // FOR TESTING
-      // Controlla se l'utente ha accettato di partecipare
+    if (now.getTime() >= today1855test.getTime()) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
       if (participationResponse === 'true') {
-        // Controlla se abbiamo già inviato questa notifica oggi
         const alreadySentReminder = notifications.some(n => 
           n.type === 'challenge-reminder' && 
           n.challengeId === challengeId &&
@@ -184,21 +163,16 @@ export const useNotificationSystem = () => {
       }
     }
     
-    // Se ora attuale è dopo le 20:00
-    // if (now.getTime() >= today20.getTime()) {
-    if (now.getTime() >= today20test.getTime()) { // FOR TESTING
-      // Controlla se l'utente ha accettato di partecipare
+    if (now.getTime() >= today20test.getTime()) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
       if (participationResponse === 'true') {
-        // Controlla se abbiamo già inviato questa notifica oggi
         const alreadySentCompletion = notifications.some(n => 
           n.type === 'challenge-completion' && 
           n.challengeId === challengeId &&
           isToday(parseISO(n.timestamp))
         );
         
-        // Controlla se la sfida è già stata completata
         const hasCompleted = localStorage.getItem(`challenge_${challengeId}_completed`) === 'true';
         
         if (!alreadySentCompletion && !hasCompleted) {
@@ -221,13 +195,8 @@ export const useNotificationSystem = () => {
   };
 
   const respondToParticipation = async (challengeId: number, participating: boolean) => {
-    // Salva la risposta
     localStorage.setItem(`challenge_${challengeId}_participating`, participating.toString());
-    
-    // Chiudi il modal
     setShowParticipationModal(false);
-    
-    // Aggiorna lo stato delle notifiche relative a questa sfida
     setNotifications(prev => 
       prev.map(n => 
         n.challengeId === challengeId && n.type === 'participation-request'
@@ -236,14 +205,12 @@ export const useNotificationSystem = () => {
       )
     );
     
-    // Messaggio di conferma
     if (participating) {
       toast({
         title: "Partecipazione confermata",
         description: "Riceverai una notifica poco prima dell'inizio della sfida",
       });
       
-      // Incrementa il contatore delle sfide partecipate
       const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0');
       localStorage.setItem('completedChallenges', (completedChallenges + 1).toString());
     } else {
@@ -252,21 +219,15 @@ export const useNotificationSystem = () => {
         description: "Grazie per averci fatto sapere. Ti aspettiamo per la prossima sfida!",
       });
     }
-
-    // Refresh profile data to update UI
+    
     if (user && refreshProfile) {
       await refreshProfile(user.id);
     }
   };
 
   const completeChallengeActions = async (challengeId: number, actionIds: string[]) => {
-    // Salva le azioni completate
     localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
-    
-    // Chiudi il modal
     setShowCompletionModal(false);
-    
-    // Aggiorna lo stato delle notifiche relative a questa sfida
     setNotifications(prev => 
       prev.map(n => 
         n.challengeId === challengeId && n.type === 'challenge-completion'
@@ -275,53 +236,42 @@ export const useNotificationSystem = () => {
       )
     );
     
-    // Calcola punti
     const pointsPerAction = 10;
     const totalPoints = actionIds.includes('none') ? 0 : actionIds.length * pointsPerAction;
     
-    // Determina se l'utente ha una streak
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-    const newStreak = totalPoints > 0 ? currentStreak + 1 : 0; // Reset streak if no points earned
+    const newStreak = totalPoints > 0 ? currentStreak + 1 : 0;
     const streakBonus = newStreak >= 3 ? 5 : 0;
     
-    // Salva lo streak
     localStorage.setItem('streak', newStreak.toString());
     
-    // Aggiorna punti totali
     const currentPoints = parseInt(localStorage.getItem('totalPoints') || '0');
     const newTotalPoints = currentPoints + totalPoints + streakBonus;
     localStorage.setItem('totalPoints', newTotalPoints.toString());
     
-    // Aggiorna il contatore delle sfide completate
     const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0');
     localStorage.setItem('completedChallenges', (completedChallenges + 1).toString());
     
-    // Segna la sfida come completata
     localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
     
-    // Update user profile in database
     if (user && profile) {
       console.log("Updating profile after challenge completion");
       
-      // Calculate new values
       const updatedCompletedChallenges = (profile.completed_challenges || 0) + 1;
       const updatedTotalPoints = (profile.total_points || 0) + totalPoints;
       const updatedStreak = newStreak;
       
-      // Update profile in database
       await updateProfile({
         completed_challenges: updatedCompletedChallenges,
         total_points: updatedTotalPoints,
         streak: updatedStreak
       });
       
-      // Refresh profile to ensure UI is updated
       if (refreshProfile) {
         await refreshProfile(user.id);
       }
     }
     
-    // Messaggio di conferma
     if (actionIds.includes('none')) {
       toast({
         title: "Sfida completata",
@@ -343,16 +293,12 @@ export const useNotificationSystem = () => {
     setShowCompletionModal(false);
   };
   
-  // Verifica immediata delle notifiche all'avvio
   useEffect(() => {
     const challengeId = getCurrentChallengeId();
     if (challengeId !== null) {
-      // Verifica se l'utente ha già risposto alla partecipazione per questa sfida
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
-      // Se non ha ancora risposto, mostra la notifica di partecipazione
       if (participationResponse === null) {
-        // Verifica se abbiamo già inviato questa notifica oggi per evitare duplicati
         const alreadySentParticipation = notifications.some(n => 
           n.type === 'participation-request' && 
           n.challengeId === challengeId &&
@@ -372,18 +318,16 @@ export const useNotificationSystem = () => {
     }
   }, []);
 
-  // Controlla le notifiche ogni 30 secondi
   useEffect(() => {
-    checkForScheduledNotifications(); // Controlla subito
+    checkForScheduledNotifications();
     
     const interval = setInterval(() => {
       checkForScheduledNotifications();
-    }, 30000); // Controlla ogni 30 secondi
+    }, 30000);
     
     return () => clearInterval(interval);
   }, [notifications]);
 
-  // Controlla se le notifiche erano state già abilitate
   useEffect(() => {
     setNotificationsEnabled(areNotificationsEnabled());
   }, []);
