@@ -120,12 +120,13 @@ const Onboarding = () => {
           variant: "default",
         });
         
-        // Prima di navigare, assicuriamoci che tutto sia pronto
+        // Delay redirect to ensure profile is updated in the context
         setTimeout(() => {
           console.log("Navigating to dashboard");
-          // Utilizziamo la navigazione diretta invece di react-router per una sicurezza maggiore
+          // Use direct window location change instead of router navigation
+          // This forces a full page reload which helps with auth state consistency
           window.location.href = '/dashboard';
-        }, 500); // Un breve delay per consentire alla toast di apparire
+        }, 1000); // Longer delay to ensure profile update is processed
       }
     } catch (error: any) {
       console.error("Error updating user profile:", error);
@@ -135,7 +136,8 @@ const Onboarding = () => {
         variant: "destructive",
       });
       
-      // In caso di errore, forziamo comunque la navigazione dopo un po'
+      // Even with an error, try to navigate after a delay
+      // This handles cases where the UI update succeeded but DB update failed
       setTimeout(() => {
         console.log("Forcing navigation to dashboard despite error");
         window.location.href = '/dashboard';

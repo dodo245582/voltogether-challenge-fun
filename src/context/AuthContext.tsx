@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Set up auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state change event:", event);
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Get initial session
+    // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -255,7 +256,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Signing out user");
       await supabase.auth.signOut();
       setProfile(null);
-      navigate('/');
+      setUser(null);
+      setSession(null);
+      navigate('/', { replace: true });
     } catch (error) {
       console.error("Exception in signOut:", error);
     }
