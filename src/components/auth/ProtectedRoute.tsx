@@ -35,15 +35,15 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // If user is authenticated but hasn't completed onboarding yet (no name in profile)
-  // We check for profile AND profile.name because profile might exist but be incomplete
-  if (location.pathname !== '/onboarding' && (!profile || !profile.name)) {
-    console.log("User needs to complete onboarding, redirecting", { profile });
+  // Important fix: Make sure we're checking if the profile.name is a string and not undefined
+  // If user is authenticated but hasn't completed onboarding yet (no name in profile or name is undefined)
+  if (location.pathname !== '/onboarding' && (!profile || !profile.name || typeof profile.name !== 'string')) {
+    console.log("User needs to complete onboarding, redirecting", { profile, profileName: profile?.name, nameType: typeof profile?.name });
     return <Navigate to="/onboarding" replace />;
   }
   
   // If user is authenticated and has completed onboarding, but tries to access onboarding page again
-  if (location.pathname === '/onboarding' && profile?.name) {
+  if (location.pathname === '/onboarding' && profile?.name && typeof profile.name === 'string') {
     console.log("User already completed onboarding, redirecting to dashboard", { profileName: profile.name });
     return <Navigate to="/dashboard" replace />;
   }
