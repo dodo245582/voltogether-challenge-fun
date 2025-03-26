@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -20,17 +19,15 @@ const Dashboard = () => {
     points: profile?.total_points || 0
   });
 
-  // Generate challenge data for display - moved to useMemo for optimization
-  const todayChallengeData = useMemo(() => ({
+  const [todayChallengeData, setTodayChallengeData] = useState({
     id: 1,
     date: CHALLENGE_DATES[0],
     startTime: '19:00',
     endTime: '20:00',
     completed: false,
     participating: undefined
-  }), []);
+  });
 
-  // Optimize by using useMemo for userActions calculation
   const userActions = useMemo(() => 
     profile?.selected_actions 
       ? SUSTAINABLE_ACTIONS.filter(action => 
@@ -39,14 +36,12 @@ const Dashboard = () => {
       : SUSTAINABLE_ACTIONS.slice(0, 3)
   , [profile?.selected_actions]);
 
-  // Redirect to onboarding if needed
   useEffect(() => {
     if (user && !profile?.name) {
       navigate('/onboarding');
     }
   }, [user, profile, navigate]);
 
-  // Update stats when profile changes
   useEffect(() => {
     if (profile) {
       setChallengeStats({
@@ -57,7 +52,6 @@ const Dashboard = () => {
     }
   }, [profile]);
 
-  // Always render with white background
   useEffect(() => {
     document.body.classList.add('bg-white');
     return () => {
@@ -66,7 +60,6 @@ const Dashboard = () => {
   }, []);
 
   const handleParticipateInChallenge = (challengeId: number, participating: boolean) => {
-    // Use functional state update for better performance
     setTodayChallengeData(prev => ({
       ...prev,
       participating
@@ -74,7 +67,6 @@ const Dashboard = () => {
   };
 
   const handleCompleteChallenge = (challengeId: number, actionIds: string[]) => {
-    // Use functional state update for better performance
     setTodayChallengeData(prev => ({
       ...prev,
       completed: true,
@@ -91,7 +83,6 @@ const Dashboard = () => {
     navigate('/');
   };
 
-  // Early return while loading
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -117,7 +108,6 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Notification bell */}
             <div className="text-gray-600 hover:text-gray-900 cursor-pointer">
               {hasUnreadNotifications ? (
                 <BellDot className="h-6 w-6 text-voltgreen-600" />
@@ -126,7 +116,6 @@ const Dashboard = () => {
               )}
             </div>
             
-            {/* User info */}
             {user && (
               <div className="text-right hidden sm:block">
                 <p className="font-medium text-gray-900">{profile?.name || user.email}</p>
@@ -134,7 +123,6 @@ const Dashboard = () => {
               </div>
             )}
             
-            {/* Logout button */}
             <Button 
               variant="ghost" 
               size="sm" 
