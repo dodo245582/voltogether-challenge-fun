@@ -21,7 +21,7 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
       .from('Users')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle(); // Cambiato da .single() a .maybeSingle() per evitare errori se non viene trovato
     
     if (lookupError && lookupError.code !== 'PGRST116') {
       // Real error (not just "not found")
@@ -32,7 +32,7 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
     // If profile already exists, return success
     if (existingProfile) {
       console.log("Service: Profile already exists, no need to create");
-      return { error: null, success: true };
+      return { error: null, success: true, data: existingProfile };
     }
     
     // Create profile if it doesn't exist
@@ -53,6 +53,12 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
     
     if (insertError) {
       console.error("Service: Error creating profile:", insertError);
+      
+      // Se l'errore è di violazione RLS, potrebbe essere perché l'utente non è autenticato correttamente
+      if (insertError.code === '42501') {
+        console.error("RLS policy violation - make sure user is authenticated");
+      }
+      
       return { error: insertError, success: false };
     }
     
@@ -71,7 +77,7 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
       console.error("Error storing profile in localStorage:", e);
     }
     
-    return { error: null, success: true };
+    return { error: null, success: true, data: newProfile?.[0] || null };
   } catch (error) {
     console.error("Service: Exception in createUserProfileIfNotExists:", error);
     return { error, success: false };

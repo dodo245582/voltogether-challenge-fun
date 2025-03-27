@@ -91,8 +91,17 @@ export const useUserProfile = () => {
       
       const result = await createUserProfileService(userId, email);
       
-      // Only fetch if necessary
-      if (result.success && !hasCache) {
+      // Aggiornamento: se abbiamo dati dal servizio, aggiorna il profilo
+      if (result.success && result.data) {
+        setProfile(result.data);
+        try {
+          localStorage.setItem(`profile_${userId}`, JSON.stringify(result.data));
+        } catch (e) {
+          console.error("Error updating localStorage:", e);
+        }
+      }
+      // Solo fetch se necessario e non abbiamo dati dalla creazione
+      else if (result.success && !result.data && !hasCache) {
         await fetchUserProfile(userId);
       } else {
         setLoading(false);
