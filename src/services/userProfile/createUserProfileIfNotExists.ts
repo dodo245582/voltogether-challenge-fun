@@ -78,8 +78,8 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
           user_email: email
         };
         
-        // Use a properly typed RPC call without specifying generic types
-        // Let TypeScript infer the return type instead of explicitly setting it
+        // Fix: Use the rpc method without explicit type parameters
+        // The Supabase client will handle the types correctly
         const { data: directInsertData, error: directInsertError } = await supabase
           .rpc('create_user_profile', params);
           
