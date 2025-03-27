@@ -9,28 +9,30 @@ const Onboarding = () => {
   const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
   
-  // Handle redirection for already authenticated users with completed profiles
+  // Simplified redirection logic
   useEffect(() => {
-    if (!loading && !user) {
-      // If no user is authenticated, redirect to login
+    if (loading) return; // Wait until loading is complete
+    
+    if (!user) {
+      console.log("Not authenticated, redirecting to login");
       navigate('/login', { replace: true });
-    } else if (!loading && profile?.profile_completed) {
-      // If profile is already completed, redirect to dashboard
+    } else if (profile?.profile_completed) {
+      console.log("Profile already completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     }
   }, [user, loading, profile, navigate]);
   
-  // Show loading state while checking authentication
+  // Show loading state while checking auth
   if (loading) {
     return <DashboardLoadingState />;
   }
   
-  // If user is authenticated but profile is not completed, show onboarding
+  // If all checks pass, show onboarding
   if (user && (!profile || !profile.profile_completed)) {
     return <OnboardingContainer />;
   }
   
-  // Fallback loading state (this should rarely be shown)
+  // Fallback loading state
   return <DashboardLoadingState />;
 };
 

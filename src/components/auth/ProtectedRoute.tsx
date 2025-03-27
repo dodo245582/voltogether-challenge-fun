@@ -8,21 +8,23 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
   
-  // If user exists but profile is not complete, redirect to onboarding
+  // Simplified logic for redirection to onboarding
   useEffect(() => {
     if (!loading && user && profile && !profile.profile_completed) {
+      console.log("User profile not complete, redirecting to onboarding");
+      // Using replace to avoid navigation history issues
       navigate('/onboarding', { replace: true });
     }
   }, [user, loading, profile, navigate]);
   
-  // Show minimal loading state only when absolutely necessary
+  // Show loading state only when checking auth
   if (loading) {
     return <DashboardLoadingState />;
   }
   
   // Fast path - if no user, redirect to login immediately
   if (!user) {
-    console.log("ProtectedRoute: No user, redirecting to login");
+    console.log("No authenticated user, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   

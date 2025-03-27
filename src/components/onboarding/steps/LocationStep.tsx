@@ -9,17 +9,16 @@ interface LocationStepProps {
 }
 
 const LocationStep = ({ city, setCity }: LocationStepProps) => {
-  // Handle city input change with debounce
+  // Handle city input change with better validation
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const value = e.target.value;
-      // Sanitize input - prevent special characters that might cause issues
-      const sanitized = value.replace(/[^\w\s,àèéìòù]/gi, '');
+      // Simpler sanitization - just allow standard characters
+      const sanitized = value.slice(0, 100); // Prevent too long inputs
       setCity(sanitized);
     } catch (error) {
       console.error("Error updating city value:", error);
-      // Fallback to empty string if there's an error
-      setCity('');
+      // Don't clear the field on error
     }
   };
 

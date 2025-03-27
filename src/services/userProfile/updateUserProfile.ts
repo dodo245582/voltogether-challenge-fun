@@ -6,7 +6,12 @@ import { User as UserType } from '@/types';
  * Updates a user profile
  */
 export const updateUserProfile = async (userId: string, data: Partial<UserType>) => {
-  console.log("Tentativo aggiornamento profilo per userId:", userId, "con dati:", data);
+  console.log("Updating profile for userId:", userId, "with data:", data);
+
+  if (!userId) {
+    console.error("Missing userId in updateUserProfile");
+    return { success: false, error: new Error("Missing userId") };
+  }
 
   try {
     // Create a clean data object without any undefined values
@@ -19,7 +24,13 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
       }
     });
     
-    console.log("Dati puliti per aggiornamento:", cleanData);
+    console.log("Clean data for update:", cleanData);
+
+    // Simple validation to prevent errors
+    if (Object.keys(cleanData).length === 0) {
+      console.log("No valid data to update");
+      return { success: true, error: null }; // Not an error, just nothing to do
+    }
 
     const { error } = await supabase
       .from('Users')
@@ -27,14 +38,14 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
       .eq('id', userId);
 
     if (error) {
-      console.error("Errore nell'aggiornamento profilo Supabase:", error);
+      console.error("Error updating profile in Supabase:", error);
       return { success: false, error };
     }
 
-    console.log("Profilo aggiornato correttamente su Supabase");
+    console.log("Profile successfully updated in Supabase");
     return { success: true, error: null };
   } catch (err) {
-    console.error("Eccezione durante l'aggiornamento del profilo:", err);
+    console.error("Exception during profile update:", err);
     return { success: false, error: err };
   }
 };
