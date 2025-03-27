@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
@@ -8,13 +8,13 @@ interface ProfileStepProps {
   setName: (name: string) => void;
 }
 
-// Using memo to prevent unnecessary re-renders with a custom comparison function
+// Using memo with useCallback to ensure maximum efficiency
 const ProfileStep = memo(
   ({ name, setName }: ProfileStepProps) => {
-    // Define onChange handler outside of render to avoid recreating on each render
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Use useCallback to prevent recreating function on each render
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
       setName(e.target.value);
-    };
+    }, [setName]);
     
     return (
       <div className="space-y-4">

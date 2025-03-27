@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User as UserType } from '@/types';
 
 /**
- * Updates a user profile with streamlined error handling and timeouts
+ * Updates a user profile with improved error handling and shorter timeouts
  */
 export const updateUserProfile = async (userId: string, data: Partial<UserType>) => {
   if (!userId) {
@@ -30,9 +30,9 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
     }
   });
 
-  // Use an even shorter timeout to prevent hanging (1.5 seconds)
+  // Use an even shorter timeout (1 second) to prevent hanging
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 1500);
+  const timeoutId = setTimeout(() => controller.abort(), 1000);
 
   try {
     console.log("Attempting to update profile with data:", cleanData);

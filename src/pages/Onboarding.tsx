@@ -9,11 +9,15 @@ const Onboarding = () => {
   const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
   const [isReady, setIsReady] = useState(false);
+  const [hasCheckedRedirect, setHasCheckedRedirect] = useState(false);
   
   // Simple redirect check that only runs once when component is mounted
   useEffect(() => {
-    // Wait until loading is complete
-    if (loading) return;
+    // Skip if we've already checked or still loading
+    if (hasCheckedRedirect || loading) return;
+    
+    // Mark as checked to prevent multiple runs
+    setHasCheckedRedirect(true);
 
     // If no user, redirect to login
     if (!user) {
@@ -31,7 +35,7 @@ const Onboarding = () => {
     
     // Ready to show onboarding
     setIsReady(true);
-  }, [user, loading, profile, navigate]);
+  }, [user, loading, profile, navigate, hasCheckedRedirect]);
   
   // Show loading while auth check is happening
   if (loading || !isReady) {

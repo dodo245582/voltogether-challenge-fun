@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DiscoverySource, User } from '@/types';
 
 export const useOnboardingState = (profile: User | null) => {
@@ -33,12 +33,12 @@ export const useOnboardingState = (profile: User | null) => {
     }
   }, [profile, hasInitialized]);
 
-  // Simplified safe setters
-  const safeSetName = (value: string) => setName(value.slice(0, 50));
-  const safeSetCity = (value: string) => setCity(value.slice(0, 50));
+  // Simplified safe setters with useCallback to prevent recreation
+  const safeSetName = useCallback((value: string) => setName(value.slice(0, 50)), []);
+  const safeSetCity = useCallback((value: string) => setCity(value.slice(0, 50)), []);
   
   // Properly typed setSelectedActions to handle both direct arrays and callback functions
-  const safeSetSelectedActions = (
+  const safeSetSelectedActions = useCallback((
     value: string[] | ((prev: string[]) => string[])
   ) => {
     if (typeof value === 'function') {
@@ -50,14 +50,14 @@ export const useOnboardingState = (profile: User | null) => {
           return Array.isArray(result) ? result.slice(0, 20) : [];
         } catch (e) {
           console.error("Error updating selectedActions:", e);
-          return prev;
+          return prev; // Return previous state if there's an error
         }
       });
     } else {
       // Handle direct array assignment
       setSelectedActions(Array.isArray(value) ? value.slice(0, 20) : []);
     }
-  };
+  }, []);
 
   return {
     step,

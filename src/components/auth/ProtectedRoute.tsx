@@ -8,13 +8,15 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   const [isReady, setIsReady] = useState(false);
+  const [hasCheckedProtection, setHasCheckedProtection] = useState(false);
   
-  // Only check protection logic once fully loaded
+  // Only check protection logic once fully loaded and only once
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !hasCheckedProtection) {
+      setHasCheckedProtection(true);
       setIsReady(true);
     }
-  }, [loading]);
+  }, [loading, hasCheckedProtection]);
   
   // Only perform navigation when all data is ready
   if (!isReady || loading) {
