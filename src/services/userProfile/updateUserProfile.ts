@@ -14,8 +14,17 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
   // Prepare the data for update
   const updateData: Record<string, any> = {};
   
-  // Only allow certain fields
-  const safeKeys = ['name', 'city', 'discovery_source', 'selected_actions', 'profile_completed'];
+  // Allow all valid profile fields
+  const safeKeys = [
+    'name', 
+    'city', 
+    'discovery_source', 
+    'selected_actions', 
+    'profile_completed',
+    'completed_challenges',
+    'total_points',
+    'streak'
+  ];
   
   // Simple validation
   Object.entries(data).forEach(([key, value]) => {

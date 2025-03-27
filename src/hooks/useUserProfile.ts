@@ -163,8 +163,9 @@ export const useUserProfile = () => {
         }
       }
       
-      // Update in database
+      // Update in database with verbose logging
       setLoading(true);
+      console.log("useUserProfile: Sending profile update to database:", data);
       const { error, success } = await updateUserProfileService(userId, data);
       
       if (error) {
