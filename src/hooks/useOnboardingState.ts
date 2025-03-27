@@ -51,7 +51,17 @@ export const useOnboardingState = (profile: User | null) => {
     discoverySource,
     setDiscoverySource,
     selectedActions,
-    setSelectedActions: (actions: string[]) => setSelectedActions(actions.slice(0, 20)),
+    // Fix the type here to make it clear it accepts both string[] and a function that returns string[]
+    setSelectedActions: (value: string[] | ((prev: string[]) => string[])) => {
+      if (typeof value === 'function') {
+        setSelectedActions(current => {
+          const result = value(current);
+          return Array.isArray(result) ? result.slice(0, 20) : [];
+        });
+      } else {
+        setSelectedActions(Array.isArray(value) ? value.slice(0, 20) : []);
+      }
+    },
     isLoading,
     setIsLoading,
     redirectAttempted,

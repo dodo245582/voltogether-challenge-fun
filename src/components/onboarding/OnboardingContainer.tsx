@@ -146,11 +146,13 @@ const OnboardingContainer = () => {
   };
   
   const toggleAction = (actionId: string) => {
-    setSelectedActions((prev) =>
-      prev.includes(actionId)
-        ? prev.filter((id) => id !== actionId)
-        : [...prev, actionId]
-    );
+    setSelectedActions((prev: string[]) => {
+      if (prev.includes(actionId)) {
+        return prev.filter((id) => id !== actionId);
+      } else {
+        return [...prev, actionId];
+      }
+    });
   };
   
   const completeOnboarding = async () => {
