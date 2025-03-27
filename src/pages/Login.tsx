@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -27,6 +28,7 @@ const Login = () => {
           variant: 'default',
         });
         
+        // Immediate redirect without timeout
         navigate('/dashboard', { replace: true });
       } else {
         console.error("Login error:", error);

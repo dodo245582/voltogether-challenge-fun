@@ -9,25 +9,16 @@ export const fetchUserProfile = async (userId: string) => {
   try {
     console.log("Service: Fetching user profile for ID:", userId);
     
-    // First try to get from localStorage
+    // Check localStorage first for immediate response
     try {
       const cachedProfile = localStorage.getItem(`profile_${userId}`);
       if (cachedProfile) {
-        console.log("Service: Found cached profile, using it");
+        console.log("Service: Using cached profile");
         const profileData = JSON.parse(cachedProfile) as UserType;
         
-        // Start DB fetch in the background without awaiting it
+        // Fetch fresh data in background without blocking
         setTimeout(() => {
-          supabase
-            .from('Users')
-            .select('*')
-            .eq('id', userId)
-            .single()
-            .then(({ data, error }) => {
-              if (!error && data) {
-                localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
-              }
-            });
+          fetchProfileFromDatabase(userId);
         }, 0);
         
         return { data: profileData, error: null };
@@ -36,7 +27,17 @@ export const fetchUserProfile = async (userId: string) => {
       console.error("Error retrieving profile from localStorage:", e);
     }
     
-    // Fetch from database if not in localStorage
+    // If no cache, fetch directly from database
+    return await fetchProfileFromDatabase(userId);
+  } catch (error) {
+    console.error("Service: Exception in fetchUserProfile:", error);
+    return { data: null, error };
+  }
+};
+
+// Separate function to fetch from database and update localStorage
+const fetchProfileFromDatabase = async (userId: string) => {
+  try {
     const { data, error } = await supabase
       .from('Users')
       .select('*')
@@ -49,9 +50,9 @@ export const fetchUserProfile = async (userId: string) => {
     }
     
     if (data) {
-      console.log("Service: User profile fetched successfully");
+      console.log("Service: User profile fetched successfully from DB");
       
-      // Ensure data has proper structure
+      // Sanitize data
       const sanitizedData = {
         ...data,
         name: data.name || '',
@@ -63,7 +64,7 @@ export const fetchUserProfile = async (userId: string) => {
         selected_actions: data.selected_actions || []
       };
       
-      // Store in localStorage for faster future access
+      // Update cache
       try {
         localStorage.setItem(`profile_${userId}`, JSON.stringify(sanitizedData));
       } catch (e) {
@@ -76,7 +77,7 @@ export const fetchUserProfile = async (userId: string) => {
       return { data: null, error: new Error("No user profile found") };
     }
   } catch (error) {
-    console.error("Service: Exception in fetchUserProfile:", error);
+    console.error("Service: Database fetch error:", error);
     return { data: null, error };
   }
 };

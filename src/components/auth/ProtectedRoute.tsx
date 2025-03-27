@@ -8,24 +8,18 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   
+  // Abbreviate logging to reduce processing overhead
   useEffect(() => {
-    // Logging to debug authentication state
-    console.log("ProtectedRoute state:", { 
-      user: !!user, 
-      loading, 
+    console.log("ProtectedRoute:", { 
       path: location.pathname,
-      hasProfile: !!profile,
-      profileDetails: profile ? {
-        id: profile.id,
-        name: profile.name || "",
-        completed_challenges: profile.completed_challenges,
-        city: profile.city || ""
-      } : null
+      hasUser: !!user, 
+      loading,
+      hasProfile: !!profile
     });
   }, [user, loading, location.pathname, profile]);
   
-  // Show loading state while checking authentication
-  if (loading) {
+  // Show loading state only if necessary
+  if (loading && !profile) {
     return <DashboardLoadingState />;
   }
   
@@ -35,33 +29,17 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Fixed profile validation - check if profile exists, has an ID
-  // AND at least one of the essential fields is populated (name or city)
+  // Basic profile validation - optimized to reduce computations
   const hasValidProfile = !!profile && 
     !!profile.id && 
-    (
-      (profile.name && profile.name.trim() !== '') || 
-      (profile.city && profile.city.trim() !== '')
-    );
+    (!!profile.name || !!profile.city);
   
-  console.log("Improved profile validation check:", {
-    hasProfile: !!profile,
-    hasId: profile ? !!profile.id : false,
-    hasName: profile ? !!profile.name && profile.name.trim() !== '' : false,
-    hasCity: profile ? !!profile.city && profile.city.trim() !== '' : false,
-    hasValidProfile,
-    isOnboarding: location.pathname === '/onboarding'
-  });
-  
-  // If user is authenticated but hasn't completed onboarding (no valid profile)
+  // Handle routing based on profile status
   if (location.pathname !== '/onboarding' && !hasValidProfile) {
-    console.log("User needs to complete onboarding, redirecting");
     return <Navigate to="/onboarding" replace />;
   }
   
-  // If user is authenticated and has completed onboarding, but tries to access onboarding page again
   if (location.pathname === '/onboarding' && hasValidProfile) {
-    console.log("User already completed onboarding, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
   

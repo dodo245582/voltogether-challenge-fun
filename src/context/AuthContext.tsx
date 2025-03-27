@@ -1,4 +1,3 @@
-
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -33,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
   const navigate = useNavigate();
   
   const { 
@@ -45,14 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile
   } = useUserProfile();
 
-  // Simplify loading state to minimize UI flicker
-  const isLoading = loading || (profileLoading && !initialCheckDone);
-
   useEffect(() => {
     console.log("AuthProvider: Initializing auth state");
     let mounted = true;
     
-    // Initialize with cached profile if available
+    // Try to use cached profile immediately
     if (mounted && user) {
       try {
         const cachedProfile = localStorage.getItem(`profile_${user.id}`);
@@ -64,24 +59,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
         
         console.log("Auth state change event:", event);
-        setSession(session);
-        setUser(session?.user ?? null);
         
         if (session?.user) {
+          setSession(session);
+          setUser(session.user);
+          
+          // Use cached profile if available for immediate UI display
           try {
             const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
             if (cachedProfile) {
               setProfile(JSON.parse(cachedProfile));
+              setLoading(false); // Reduce loading time by using cache
             }
           } catch (e) {
             console.error("Error retrieving cached profile:", e);
           }
           
+          // Fetch fresh profile data in background (non-blocking)
           if (event === 'SIGNED_IN') {
             setTimeout(async () => {
               if (!mounted) return;
@@ -93,54 +93,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             }, 0);
           }
+        } else {
+          setSession(null);
+          setUser(null);
         }
-        
-        // Don't set loading to false here to prevent UI flicker
-        // We'll set it after getSession completes
       }
     );
 
-    // Get session only once at initialization
+    // Then check for existing session (once)
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
       
       console.log("Got existing session:", !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
       
       if (session?.user) {
+        setSession(session);
+        setUser(session.user);
+        
+        // Try to use cached profile immediately
         try {
           const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
           if (cachedProfile) {
             setProfile(JSON.parse(cachedProfile));
+            setLoading(false); // Reduce loading time by using cache
           }
-          
-          setTimeout(async () => {
-            if (!mounted) return;
-            try {
-              await createUserProfileIfNotExists(session.user.id, session.user.email);
-              if (mounted) await fetchUserProfile(session.user.id);
-            } catch (error) {
-              console.error("Error during initial session check:", error);
-            } finally {
-              if (mounted) {
-                setInitialCheckDone(true);
-                setLoading(false);
-              }
-            }
-          }, 0);
         } catch (e) {
-          console.error("Error retrieving/setting cached profile:", e);
-          if (mounted) {
-            setInitialCheckDone(true);
-            setLoading(false);
+          console.error("Error retrieving cached profile:", e);
+        }
+        
+        // Fetch fresh profile in background (non-blocking)
+        setTimeout(async () => {
+          if (!mounted) return;
+          try {
+            await createUserProfileIfNotExists(session.user.id, session.user.email);
+            if (mounted) await fetchUserProfile(session.user.id);
+          } finally {
+            if (mounted) setLoading(false);
           }
-        }
+        }, 0);
       } else {
-        if (mounted) {
-          setInitialCheckDone(true);
-          setLoading(false);
-        }
+        if (mounted) setLoading(false);
       }
     });
 
@@ -148,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserProfile, createUserProfileIfNotExists, setProfile]);
+  }, [fetchUserProfile, createUserProfileIfNotExists, setProfile, user]);
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -242,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp,
     signIn,
     signOut,
-    loading: isLoading,
+    loading: loading && profileLoading && !profile,
     updateProfile,
     refreshProfile,
   };
