@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -16,8 +17,8 @@ import HowItWorks from "./pages/HowItWorks";
 import FAQ from "./pages/FAQ";
 import ChiSiamo from "./pages/ChiSiamo";
 import Privacy from "./pages/Privacy";
-import { NotificationProvider } from "./context/NotificationContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import NotificationModals from "./components/notifications/NotificationModals";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <NotificationModals />
           </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>

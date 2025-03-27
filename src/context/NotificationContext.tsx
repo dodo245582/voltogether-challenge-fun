@@ -9,13 +9,6 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const notificationSystem = useNotificationSystem();
   
-  // DEBUG: Log notification system values
-  console.log("NotificationProvider rendering with values:", {
-    showParticipationModal: notificationSystem.showParticipationModal,
-    shouldShowParticipationBox: notificationSystem.shouldShowParticipationBox,
-    currentChallengeId: notificationSystem.currentChallengeId
-  });
-  
   return (
     <NotificationContext.Provider value={notificationSystem}>
       {children}
@@ -29,10 +22,6 @@ export const useNotifications = () => {
   if (context === undefined) {
     throw new Error('useNotifications must be used within a NotificationProvider');
   }
-  
-  // DEBUG: Log what's being used from the context
-  console.log("useNotifications called, returning context with shouldShowParticipationBox:", 
-    context.shouldShowParticipationBox);
   
   return context;
 };

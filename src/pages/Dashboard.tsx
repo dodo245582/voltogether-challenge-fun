@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -9,7 +8,6 @@ import { SUSTAINABLE_ACTIONS, CHALLENGE_DATES } from '@/types';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 import { useChallengeData } from '@/hooks/useChallengeData';
-import NotificationModals from '@/components/notifications/NotificationModals';
 import DashboardContent from '@/components/dashboard/DashboardContent';
 
 const CommunityStats = lazy(() => import('@/components/dashboard/CommunityStats'));
@@ -27,7 +25,7 @@ const Dashboard = () => {
     getParticipationDeadline,
     getCompletionDeadline
   } = useNotifications();
-  
+
   console.log("Dashboard rendering with notificationChallengeId:", notificationChallengeId);
   console.log("shouldShowParticipationBox:", shouldShowParticipationBox);
   console.log("shouldShowCompletionBox:", shouldShowCompletionBox);
@@ -77,11 +75,6 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (profile) {
-      console.log("Updating dashboard stats from profile:", {
-        completedChallenges: profile.completed_challenges || 0,
-        points: profile.total_points || 0
-      });
-      
       setChallengeStats({
         totalChallenges: 7,
         completedChallenges: profile.completed_challenges || 0,
@@ -94,7 +87,6 @@ const Dashboard = () => {
     await handleCompleteChallenge(challengeId, actionIds);
     
     if (user && refreshProfile) {
-      console.log("Refreshing profile after challenge completion");
       await refreshProfile(user.id);
     }
   };
@@ -103,13 +95,11 @@ const Dashboard = () => {
     await handleParticipateInChallenge(challengeId, participating);
     
     if (user && refreshProfile) {
-      console.log("Refreshing profile after participation update");
       await refreshProfile(user.id);
     }
   };
 
   const handleParticipationResponse = async (participating: boolean) => {
-    console.log("Responding to participation with:", participating, "for challenge:", notificationChallengeId);
     if (notificationChallengeId !== null) {
       await respondToParticipation(notificationChallengeId, participating);
       
@@ -214,7 +204,6 @@ const Dashboard = () => {
         </div>
       </main>
       
-      <NotificationModals />
       <Footer />
     </div>
   );
