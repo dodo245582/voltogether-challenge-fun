@@ -29,22 +29,17 @@ export const useNotificationSystem = () => {
     return format(deadline, "HH:mm 'di domani'", { locale: it });
   };
 
-  // Function to check if a notification is still valid based on its deadline
   const isNotificationValid = (notification: Notification): boolean => {
-    // Se la notifica non ha una scadenza, è sempre valida
     if (!notification.deadline) return true;
     
-    // Verifica se la notifica è ancora valida rispetto alla sua scadenza
     const now = new Date();
     return isBefore(now, notification.deadline);
   };
 
-  // Funzione per ottenere solo le notifiche valide
   const getValidNotifications = useMemo(() => {
     return notifications.filter(isNotificationValid);
   }, [notifications]);
 
-  // Updated logic for participation box visibility
   const shouldShowParticipationBox = useMemo(() => {
     const challengeId = getCurrentChallengeId();
     if (!challengeId) return false;
@@ -56,13 +51,11 @@ export const useNotificationSystem = () => {
     const today = new Date(now);
     const participationDeadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
 
-    // Show participation box from 9:00 AM to 18:54 PM
     const participationStartTime = set(today, { hours: 9, minutes: 0, seconds: 0 });
     
     return isAfter(now, participationStartTime) && isBefore(now, participationDeadline);
   }, [notifications]);
 
-  // Updated logic for completion box visibility
   const shouldShowCompletionBox = useMemo(() => {
     const challengeId = getCurrentChallengeId();
     if (!challengeId) return false;
@@ -129,7 +122,6 @@ export const useNotificationSystem = () => {
   ) => {
     let deadline: Date | undefined;
     
-    // Set proper deadlines for each notification type
     if (type === 'participation-request') {
       const today = new Date();
       deadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
@@ -153,7 +145,6 @@ export const useNotificationSystem = () => {
       deadline
     };
     
-    // Check if the notification would be valid before adding it
     if (isNotificationValid(newNotification)) {
       setNotifications(prev => [newNotification, ...prev]);
       
@@ -181,15 +172,13 @@ export const useNotificationSystem = () => {
       return newNotification;
     }
     
-    // If notification would not be valid, don't add it
     return null;
   };
 
-  // Filter expired notifications more frequently
   useEffect(() => {
     const interval = setInterval(() => {
       setNotifications(prev => prev.filter(isNotificationValid));
-    }, 30000); // Check every 30 seconds
+    }, 30000);
     
     return () => clearInterval(interval);
   }, []);
@@ -210,7 +199,6 @@ export const useNotificationSystem = () => {
     const today20 = new Date(todayStr);
     today20.setHours(20, 0, 0, 0);
     
-    // For testing purposes
     const testNow = new Date();
     const today9AMtest = new Date(testNow);
     today9AMtest.setMinutes(today9AMtest.getMinutes() - 2);
@@ -221,7 +209,6 @@ export const useNotificationSystem = () => {
     const today20test = new Date(testNow);
     today20test.setMinutes(today20test.getMinutes() - 0.5);
     
-    // Check if it's time for the 9:00 AM notification
     if (now.getTime() >= today9AM.getTime()) {
       const alreadySentParticipation = notifications.some(n => 
         n.type === 'participation-request' && 
@@ -231,7 +218,6 @@ export const useNotificationSystem = () => {
       
       const hasResponded = localStorage.getItem(`challenge_${challengeId}_participating`) !== null;
       
-      // Only send if not already sent and user hasn't responded
       if (!alreadySentParticipation && !hasResponded) {
         createNotification(
           'participation-request',
@@ -243,11 +229,9 @@ export const useNotificationSystem = () => {
       }
     }
     
-    // Check if it's time for the 18:55 notification
     if (now.getTime() >= today1855.getTime()) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
-      // Only send reminder if user explicitly chose to participate
       if (participationResponse === 'true') {
         const alreadySentReminder = notifications.some(n => 
           n.type === 'challenge-reminder' && 
@@ -267,11 +251,9 @@ export const useNotificationSystem = () => {
       }
     }
     
-    // Check if it's time for the 20:00 notification
     if (now.getTime() >= today20.getTime()) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
-      // Only send completion notification if user explicitly chose to participate
       if (participationResponse === 'true') {
         const alreadySentCompletion = notifications.some(n => 
           n.type === 'challenge-completion' && 
@@ -313,21 +295,17 @@ export const useNotificationSystem = () => {
     localStorage.setItem(`challenge_${challengeId}_participating`, participating.toString());
     setShowParticipationModal(false);
     
-    // Immediately remove all participation notifications related to this challenge
     setNotifications(prev => 
       prev.filter(n => !(n.type === 'participation-request' && n.challengeId === challengeId))
     );
     
-    // Mark as read other notifications related to this challenge
     markAllRelatedNotificationsAsRead(challengeId);
     
-    // Mark as lost if the user responded "No"
     if (!participating) {
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
       const challengeDate = CHALLENGE_DATES[challengeId - 1];
       
-      // If this is today's challenge or a past challenge, mark it as completed but with no points
       if (challengeDate <= todayStr) {
         localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
         localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(['none']));
@@ -356,12 +334,10 @@ export const useNotificationSystem = () => {
     localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
     setShowCompletionModal(false);
     
-    // Immediately remove all completion notifications related to this challenge
     setNotifications(prev => 
       prev.filter(n => !(n.type === 'challenge-completion' && n.challengeId === challengeId))
     );
     
-    // Mark as read other notifications related to this challenge
     markAllRelatedNotificationsAsRead(challengeId);
     
     const pointsPerAction = 10;
@@ -427,7 +403,6 @@ export const useNotificationSystem = () => {
     setShowCompletionModal(false);
   };
   
-  // Initial check for participation notification on mount
   useEffect(() => {
     const challengeId = getCurrentChallengeId();
     if (challengeId !== null) {
@@ -438,7 +413,6 @@ export const useNotificationSystem = () => {
         const today = new Date(now);
         const participationDeadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
         
-        // Only show if it's still before the deadline
         if (isBefore(now, participationDeadline)) {
           const alreadySentParticipation = notifications.some(n => 
             n.type === 'participation-request' && 
@@ -456,7 +430,6 @@ export const useNotificationSystem = () => {
             );
           }
         } else {
-          // If past deadline and no response, mark as not participating
           localStorage.setItem(`challenge_${challengeId}_participating`, 'false');
           localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
           localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(['none']));

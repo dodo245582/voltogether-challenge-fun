@@ -8,7 +8,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   
-  // Show loading only when truly necessary (initial auth check)
+  // Simplified loading - show only when truly necessary
   if (loading && !user) {
     return <DashboardLoadingState />;
   }
@@ -18,7 +18,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Simplified profile validation with early return
+  // Simplified profile validation
   const hasValidProfile = !!profile && !!profile.id && (!!profile.name || !!profile.city);
   
   // Fast path for dashboard when profile exists
