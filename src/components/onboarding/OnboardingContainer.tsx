@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,17 +31,16 @@ const OnboardingContainer = () => {
   const [refreshError, setRefreshError] = useState(false);
   const [refreshTimeout, setRefreshTimeout] = useState(false);
   const [updateAttempts, setUpdateAttempts] = useState(0);
+  const [refreshAttempts, setRefreshAttempts] = useState(0);
   
-  // Check profile status on component mount with retry mechanism
   useEffect(() => {
     if (!user || redirectAttempted) return;
     
     console.log("OnboardingContainer: Checking profile status for user:", user.id);
     
-    let refreshTimeoutId: number | undefined;
+    let refreshTimeoutId: ReturnType<typeof setTimeout> | undefined;
     let mounted = true;
     
-    // Set a timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
       if (mounted) {
         console.log("OnboardingContainer: Profile refresh timeout reached");
@@ -63,14 +61,13 @@ const OnboardingContainer = () => {
         .catch(error => {
           console.error("OnboardingContainer: Error refreshing profile:", error);
           
-          // Implement retry with exponential backoff
           if (mounted && refreshAttempts < 3) {
             const retryDelay = Math.pow(2, refreshAttempts) * 1000; // Exponential backoff
             console.log(`OnboardingContainer: Retrying profile refresh in ${retryDelay}ms (attempt ${refreshAttempts + 1})`);
             
             refreshTimeoutId = setTimeout(() => {
               if (mounted) {
-                setUpdateAttempts(prev => prev + 1);
+                setRefreshAttempts(prev => prev + 1);
                 attemptRefresh();
               }
             }, retryDelay);
@@ -90,7 +87,6 @@ const OnboardingContainer = () => {
     };
   }, [user, redirectAttempted, refreshProfile, refreshAttempts]);
   
-  // Handle redirect if profile is already complete
   useEffect(() => {
     if (profile && profile.profile_completed === true && !redirectAttempted) {
       console.log("User already has a completed profile, redirecting to dashboard");
@@ -179,11 +175,9 @@ const OnboardingContainer = () => {
     
     setIsLoading(true);
     
-    // Cache data in localStorage immediately for responsive UI
     try {
       localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
       
-      // Also pre-cache the update in profile cache
       if (user.id) {
         const cachedProfile = localStorage.getItem(`profile_${user.id}`);
         if (cachedProfile) {
@@ -212,7 +206,6 @@ const OnboardingContainer = () => {
     
     console.log("Profile data being submitted:", profileData);
     
-    // Set a timeout to prevent infinite loading
     const updateTimeoutId = setTimeout(() => {
       console.log("Profile update timeout reached");
       setIsLoading(false);
@@ -222,12 +215,10 @@ const OnboardingContainer = () => {
         variant: "default",
       });
       
-      // Force redirect to dashboard even if we got a timeout
       navigate('/dashboard', { replace: true });
-    }, 8000); // 8 second timeout
+    }, 8000);
     
     try {
-      // Make update attempt with retry logic
       const attemptUpdate = async (attempt = 1): Promise<any> => {
         try {
           console.log(`Calling updateProfile with data (attempt ${attempt}):`, profileData);
@@ -237,8 +228,7 @@ const OnboardingContainer = () => {
             console.error(`Error in onboarding profile update (attempt ${attempt}):`, result.error);
             
             if (attempt < 3) {
-              // Retry with exponential backoff
-              const retryDelay = Math.pow(2, attempt) * 500; // 500ms, 1s, 2s
+              const retryDelay = Math.pow(2, attempt) * 500;
               console.log(`Retrying update after ${retryDelay}ms`);
               await new Promise(resolve => setTimeout(resolve, retryDelay));
               return attemptUpdate(attempt + 1);
@@ -261,7 +251,6 @@ const OnboardingContainer = () => {
       
       const { error, success } = await attemptUpdate();
       
-      // Clear the timeout as we got a response
       clearTimeout(updateTimeoutId);
       
       if (error) {
@@ -276,7 +265,6 @@ const OnboardingContainer = () => {
           variant: "default",
         });
         
-        // Force redirect to dashboard
         navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
@@ -289,8 +277,6 @@ const OnboardingContainer = () => {
         variant: "destructive",
       });
       
-      // Even if there was an error, we'll redirect after a short delay
-      // since the data is already cached locally
       setTimeout(() => {
         setIsLoading(false);
         navigate('/dashboard', { replace: true });
@@ -325,7 +311,6 @@ const OnboardingContainer = () => {
     }
   };
   
-  // Loading state for initial render
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -337,7 +322,6 @@ const OnboardingContainer = () => {
     );
   }
   
-  // Show error state if profile refresh failed
   if (refreshError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -355,7 +339,6 @@ const OnboardingContainer = () => {
     );
   }
   
-  // Show timeout message if profile refresh is taking too long
   if (refreshTimeout) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
