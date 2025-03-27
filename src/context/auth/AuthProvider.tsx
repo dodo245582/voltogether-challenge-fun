@@ -1,5 +1,5 @@
+
 import { useState, useEffect, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { User as UserType } from '@/types';
@@ -10,7 +10,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
   
   const { 
     profile, 
@@ -132,7 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
-      navigate('/', { replace: true });
+      // Navigate in the component where this function is called
+      window.location.href = '/';
     } catch (error) {
       console.error("Exception in signOut:", error);
     }

@@ -9,6 +9,20 @@ interface LocationStepProps {
 }
 
 const LocationStep = ({ city, setCity }: LocationStepProps) => {
+  // Handle city input change with debounce
+  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const value = e.target.value;
+      // Sanitize input - prevent special characters that might cause issues
+      const sanitized = value.replace(/[^\w\s,àèéìòù]/gi, '');
+      setCity(sanitized);
+    } catch (error) {
+      console.error("Error updating city value:", error);
+      // Fallback to empty string if there's an error
+      setCity('');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -16,12 +30,13 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
         <Input
           id="city"
           placeholder="Es. Milano, Roma, Napoli..."
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
+          value={city || ''}
+          onChange={handleCityChange}
           autoFocus
-          required
+          maxLength={100}
+          aria-describedby="city-description"
         />
-        <p className="text-sm text-gray-500">
+        <p id="city-description" className="text-sm text-gray-500">
           Utilizziamo questa informazione per personalizzare le tue sfide e calcolare l'impatto ambientale locale.
         </p>
       </div>
