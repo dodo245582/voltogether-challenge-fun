@@ -25,7 +25,9 @@ export const useUserProfile = () => {
         // Don't show loading state if we have cached data
         if (!loading) {
           // Fetch fresh data in background
-          fetchFromService(userId);
+          setTimeout(() => {
+            fetchFromService(userId);
+          }, 0);
           return cachedProfile;
         }
       }

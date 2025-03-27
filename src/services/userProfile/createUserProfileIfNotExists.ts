@@ -4,7 +4,7 @@ import { User as UserType } from '@/types';
 
 /**
  * Creates a user profile if it doesn't exist
- * Simplified with better error handling
+ * Ottimizzato con migliore gestione degli errori e performance
  */
 export const createUserProfileIfNotExists = async (userId: string, email: string | undefined) => {
   if (!userId || !email) {
@@ -15,7 +15,38 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
   try {
     console.log("Service: Checking if profile exists for:", userId);
     
-    // First check if the profile already exists
+    // Prima verifico se c'è già un profilo in localStorage
+    try {
+      const cachedProfile = localStorage.getItem(`profile_${userId}`);
+      if (cachedProfile) {
+        // Se c'è un profilo in cache, lo aggiorno in background senza bloccare
+        setTimeout(() => {
+          checkAndCreateProfileInDb(userId, email);
+        }, 0);
+        
+        return { 
+          success: true, 
+          data: JSON.parse(cachedProfile) as UserType,
+          message: 'Using cached profile while verifying in database' 
+        };
+      }
+    } catch (e) {
+      console.error("Error checking localStorage:", e);
+    }
+    
+    return await checkAndCreateProfileInDb(userId, email);
+  } catch (error) {
+    console.error("Exception in createUserProfileIfNotExists:", error);
+    return { success: false, error };
+  }
+};
+
+/**
+ * Helper function to check and create profile in database
+ */
+async function checkAndCreateProfileInDb(userId: string, email: string) {
+  try {
+    // Verifica se il profilo esiste già
     const { data: existingProfile, error: fetchError } = await supabase
       .from('Users')
       .select('*')
@@ -27,9 +58,17 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
       return { success: false, error: fetchError };
     }
     
-    // If profile exists, return success
+    // Se esiste già, restituisco il profilo
     if (existingProfile) {
       console.log("Service: Profile already exists for:", userId);
+      
+      // Aggiorno la cache
+      try {
+        localStorage.setItem(`profile_${userId}`, JSON.stringify(existingProfile));
+      } catch (e) {
+        console.error("Error updating localStorage:", e);
+      }
+      
       return { 
         success: true, 
         data: existingProfile as UserType,
@@ -39,7 +78,7 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
     
     console.log("Service: Creating new profile for:", userId);
     
-    // Create a new profile if it doesn't exist
+    // Creo un nuovo profilo
     const { data: newProfile, error: createError } = await supabase
       .from('Users')
       .insert([
@@ -58,7 +97,7 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
     if (createError) {
       console.error("Error creating profile:", createError);
       
-      // If this was a duplicate error, the profile may have been created by another request
+      // Se c'è un errore di duplicazione, potrebbe essere stato creato da un'altra richiesta
       if (createError.code === '23505') {
         console.log("Profile may have been created by another request, fetching...");
         const { data: retryProfile, error: retryError } = await supabase
@@ -73,6 +112,13 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
         }
         
         if (retryProfile) {
+          // Aggiorno la cache
+          try {
+            localStorage.setItem(`profile_${userId}`, JSON.stringify(retryProfile));
+          } catch (e) {
+            console.error("Error updating localStorage:", e);
+          }
+          
           return { 
             success: true, 
             data: retryProfile as UserType,
@@ -85,13 +131,21 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
     }
     
     console.log("Service: New profile created successfully");
+    
+    // Aggiorno la cache con il nuovo profilo
+    try {
+      localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile));
+    } catch (e) {
+      console.error("Error updating localStorage:", e);
+    }
+    
     return { 
       success: true, 
       data: newProfile as UserType,
       message: 'Profile created successfully' 
     };
   } catch (error) {
-    console.error("Exception in createUserProfileIfNotExists:", error);
+    console.error("Error in checkAndCreateProfileInDb:", error);
     return { success: false, error };
   }
-};
+}

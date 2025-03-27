@@ -1,4 +1,3 @@
-
 import { useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -36,14 +35,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(session);
           setUser(session.user);
           
-          // Use setTimeout to prevent any potential deadlocks
-          setTimeout(() => {
-            if (mounted && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-              console.log("Processing post-login tasks for user:", session.user.id);
-              createUserProfileIfNotExists(session.user.id, session.user.email);
-              fetchUserProfile(session.user.id);
-            }
-          }, 0);
+          // Rimosso setTimeout - causa di lentezza
+          if (mounted && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+            console.log("Processing post-login tasks for user:", session.user.id);
+            // Eseguo operazioni in parallelo invece che in sequenza
+            Promise.all([
+              createUserProfileIfNotExists(session.user.id, session.user.email),
+              fetchUserProfile(session.user.id)
+            ]).catch(error => {
+              console.error("Error in post-login tasks:", error);
+            });
+          }
         } else {
           console.log("No authenticated user");
           setSession(null);
@@ -66,21 +68,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session.user);
         
-        // Use setTimeout to prevent any deadlocks
-        setTimeout(() => {
+        // Ottimizzazione: eseguo operazioni in parallelo e rimuovo setTimeout
+        Promise.all([
+          createUserProfileIfNotExists(session.user.id, session.user.email),
+          fetchUserProfile(session.user.id)
+        ])
+        .catch(err => {
+          console.error("Error initializing user profile:", err);
+        })
+        .finally(() => {
           if (mounted) {
-            console.log("Processing existing session for user:", session.user.id);
-            createUserProfileIfNotExists(session.user.id, session.user.email)
-              .then(() => {
-                return fetchUserProfile(session.user.id);
-              })
-              .finally(() => {
-                if (mounted) {
-                  setAuthInitialized(true);
-                }
-              });
+            setAuthInitialized(true);
+            setLoading(false);
           }
-        }, 0);
+        });
       } else {
         setAuthInitialized(true);
         setLoading(false);
@@ -106,16 +107,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!error && data.user) {
         console.log("Signup successful for user ID:", data.user.id);
         
-        // Wait a short moment to ensure auth state has updated
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Ensure profile is created after signup
-        const result = await createUserProfileIfNotExists(data.user.id, data.user.email);
-        console.log("Profile creation completed for user ID:", data.user.id, "Result:", result);
-        
-        // Fetch profile data 
-        const profileResult = await fetchUserProfile(data.user.id);
-        console.log("Profile fetch result:", profileResult);
+        // Ridotto il ritardo e migliorata la sincronizzazione
+        try {
+          // Creo il profilo immediatamente dopo la registrazione
+          const profileResult = await createUserProfileIfNotExists(data.user.id, data.user.email);
+          console.log("Profile creation result:", profileResult);
+          
+          // Carico il profilo
+          await fetchUserProfile(data.user.id);
+        } catch (err) {
+          console.error("Error creating user profile after signup:", err);
+        }
       } else if (error) {
         console.error("Signup error:", error);
         setLoading(false);
@@ -135,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Signing in user:", email);
-      setLoading(true); // Set loading state during sign in
+      setLoading(true); 
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -144,15 +146,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (error) {
         console.error("Sign in error:", error);
-        setLoading(false); // Reset loading if there's an error
+        setLoading(false);
       } else if (data.user) {
         console.log("Sign in successful for user ID:", data.user.id);
         
-        // Wait a short moment to ensure auth state has updated
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Ensure profile exists
-        await createUserProfileIfNotExists(data.user.id, data.user.email);
+        try {
+          // Creo/verifico il profilo immediatamente
+          await createUserProfileIfNotExists(data.user.id, data.user.email);
+        } catch (err) {
+          console.error("Error ensuring profile exists:", err);
+        }
       }
       
       return { 
@@ -161,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     } catch (error) {
       console.error("Exception in signIn:", error);
-      setLoading(false); // Reset loading if there's an exception
+      setLoading(false);
       return { error, success: false };
     }
   };
@@ -215,8 +218,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async (userId: string) => {
     if (!userId) return { success: false, error: "No user ID provided" };
     console.log("AuthProvider: Refreshing profile for user:", userId);
-    const result = await fetchUserProfile(userId);
-    return { success: !!result, error: result ? null : "Failed to fetch profile" };
+    
+    try {
+      const result = await fetchUserProfile(userId);
+      return { success: !!result, error: result ? null : "Failed to fetch profile" };
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
+      return { success: false, error: error?.message || "Unknown error" };
+    }
   };
 
   const value = {
