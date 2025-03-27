@@ -20,5 +20,9 @@ export type AuthContextType = {
     error: any | null;
     success: boolean;
   }>;
-  refreshProfile: (userId: string) => Promise<void>;
+  refreshProfile: (userId: string) => Promise<{
+    success: boolean;
+    error: string | null;
+  }>;
+  authInitialized: boolean;
 };
