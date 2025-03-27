@@ -18,10 +18,10 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Simplified profile validation
-  const hasValidProfile = !!profile && !!profile.id && (!!profile.name || !!profile.city);
+  // Check if profile exists and is completed
+  const hasValidProfile = !!profile && !!profile.id && profile.profile_completed === true;
   
-  // Fast path for dashboard when profile exists
+  // Fast path for dashboard when profile exists and is completed
   if (location.pathname === '/dashboard' && hasValidProfile) {
     return <>{children}</>;
   }

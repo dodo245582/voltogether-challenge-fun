@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -28,7 +27,8 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Immediate redirect without timeout
+        // Let the protected route handle the redirection
+        // It will check profile_completed and redirect accordingly
         navigate('/dashboard', { replace: true });
       } else {
         console.error("Login error:", error);

@@ -19,6 +19,7 @@ export type Database = {
           id: string
           name: string | null
           password: string
+          profile_completed: boolean | null
           selected_actions: string[] | null
           streak: number | null
           total_points: number | null
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           name?: string | null
           password?: string
+          profile_completed?: boolean | null
           selected_actions?: string[] | null
           streak?: number | null
           total_points?: number | null
@@ -45,6 +47,7 @@ export type Database = {
           id?: string
           name?: string | null
           password?: string
+          profile_completed?: boolean | null
           selected_actions?: string[] | null
           streak?: number | null
           total_points?: number | null

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,8 +44,8 @@ const Onboarding = () => {
   }, [profile]);
   
   useEffect(() => {
-    if (profile && typeof profile.name === 'string' && profile.name.trim() !== '' && !redirectAttempted) {
-      console.log("User already has a profile, redirecting to dashboard");
+    if (profile && profile.profile_completed && !redirectAttempted) {
+      console.log("User already has a completed profile, redirecting to dashboard");
       setRedirectAttempted(true);
       navigate('/dashboard', { replace: true });
     }
@@ -142,6 +143,7 @@ const Onboarding = () => {
         city,
         discovery_source: discoverySource,
         selected_actions: selectedActions,
+        profile_completed: true // Set profile as completed
       };
       
       console.log("Profile data being submitted:", profileData);

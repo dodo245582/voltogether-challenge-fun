@@ -10,6 +10,7 @@ export interface User {
   completed_challenges?: number;
   total_points?: number;
   streak?: number;
+  profile_completed?: boolean;
   // Add any user metadata fields
   user_metadata?: {
     name?: string;
