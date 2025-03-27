@@ -27,7 +27,7 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Immediate redirect to dashboard
+        // Immediate redirect to dashboard without any additional checks
         navigate('/dashboard', { replace: true });
       } else {
         console.error("Login error:", error);
