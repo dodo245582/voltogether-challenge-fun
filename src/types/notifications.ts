@@ -34,7 +34,7 @@ export interface NotificationContextType {
   dismissCompletionModal: () => void;
   notificationsEnabled: boolean;
   enableNotifications: () => void;
-  // Add these properties for box visibility control
+  // Box visibility control properties
   shouldShowParticipationBox: boolean;
   shouldShowCompletionBox: boolean;
   getParticipationDeadline: () => string;
@@ -46,5 +46,6 @@ export const getCurrentChallengeId = () => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
   const index = CHALLENGE_DATES.indexOf(todayStr);
+  console.log("getCurrentChallengeId called with today:", todayStr, "index:", index);
   return index !== -1 ? index + 1 : null;
 };

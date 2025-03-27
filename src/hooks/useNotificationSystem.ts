@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentChallengeId } from '@/types/notifications';
 import { parseISO, isToday, isBefore, set } from 'date-fns';
@@ -18,6 +18,14 @@ import {
 
 export const useNotificationSystem = () => {
   const { user, profile, refreshProfile } = useAuth();
+  const [currentChallenge, setCurrentChallenge] = useState<number | null>(null);
+  
+  // Initialize the current challenge ID
+  useEffect(() => {
+    const challengeId = getCurrentChallengeId();
+    console.log("Current challenge ID:", challengeId);
+    setCurrentChallenge(challengeId);
+  }, []);
   
   const {
     notifications,
@@ -52,20 +60,27 @@ export const useNotificationSystem = () => {
   );
   
   const shouldShowParticipationBox = useMemo(() => {
-    const challengeId = getCurrentChallengeId();
-    return checkShouldShowParticipationBox(challengeId, notifications);
-  }, [notifications]);
+    // Use the current challenge from state instead of getting it each time
+    console.log("Checking if participation box should show for challenge:", currentChallenge || getCurrentChallengeId());
+    return checkShouldShowParticipationBox(currentChallenge || getCurrentChallengeId(), notifications);
+  }, [currentChallenge, notifications]);
 
   const shouldShowCompletionBox = useMemo(() => {
-    const challengeId = getCurrentChallengeId();
-    return checkShouldShowCompletionBox(challengeId, notifications);
-  }, [notifications]);
+    console.log("Checking if completion box should show for challenge:", currentChallenge || getCurrentChallengeId());
+    return checkShouldShowCompletionBox(currentChallenge || getCurrentChallengeId(), notifications);
+  }, [currentChallenge, notifications]);
   
   // Check for initial participation notification
   useEffect(() => {
-    const challengeId = getCurrentChallengeId();
+    const challengeId = currentChallenge || getCurrentChallengeId();
+    console.log("Scheduling initial notification check for challenge:", challengeId);
+    
     if (challengeId !== null) {
+      // Set the current challenge ID in the notification manager
+      setCurrentChallengeId(challengeId);
+      
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
+      console.log("Initial participation response:", participationResponse);
       
       if (participationResponse === null) {
         const now = new Date();
@@ -80,6 +95,7 @@ export const useNotificationSystem = () => {
           );
           
           if (!alreadySentParticipation) {
+            console.log("Creating initial participation notification for challenge:", challengeId);
             createNotification(
               'participation-request',
               'Sfida di oggi',
@@ -95,7 +111,7 @@ export const useNotificationSystem = () => {
         }
       }
     }
-  }, []);
+  }, [currentChallenge, notifications]);
 
   return {
     notifications,

@@ -34,6 +34,10 @@ const Dashboard = () => {
     getCompletionDeadline
   } = useNotifications();
   
+  console.log("Dashboard rendering with notificationChallengeId:", notificationChallengeId);
+  console.log("shouldShowParticipationBox:", shouldShowParticipationBox);
+  console.log("shouldShowCompletionBox:", shouldShowCompletionBox);
+
   const [challengeStats, setChallengeStats] = useState({
     totalChallenges: 7,
     completedChallenges: 0,
@@ -111,6 +115,7 @@ const Dashboard = () => {
   };
 
   const handleParticipationResponse = async (participating: boolean) => {
+    console.log("Responding to participation with:", participating, "for challenge:", notificationChallengeId);
     if (notificationChallengeId !== null) {
       await respondToParticipation(notificationChallengeId, participating);
       

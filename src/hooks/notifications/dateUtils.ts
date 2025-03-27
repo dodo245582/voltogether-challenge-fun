@@ -32,18 +32,12 @@ export const shouldShowParticipationBox = (
   const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
   if (participationResponse !== null) return false; // Already responded
 
-  // Always show participation box if it's today and before the deadline
-  const now = new Date();
-  const today = new Date(now);
-  const participationDeadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
+  // DEBUG: Always return true for testing
+  console.log("shouldShowParticipationBox called with challengeId:", challengeId);
+  console.log("Participation response from localStorage:", participationResponse);
   
-  // Show from 9:00 to 18:54
-  const participationStartTime = set(today, { hours: 9, minutes: 0, seconds: 0 });
-  
-  // For testing/debugging, always return true - then after testing, use the correct condition
-  return true; // Temporary override to ensure the box shows
-  // Comment the line above and uncomment the line below after testing
-  // return isAfter(now, participationStartTime) && isBefore(now, participationDeadline);
+  // FORCE TRUE FOR TESTING - comment this line after testing is complete
+  return true;
 };
 
 export const shouldShowCompletionBox = (
