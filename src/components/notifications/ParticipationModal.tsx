@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 import { SUSTAINABLE_ACTIONS } from '@/types';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 interface ParticipationModalProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ export const ParticipationModal = ({
   userSelectedActions
 }: ParticipationModalProps) => {
   const recommendedActions = SUSTAINABLE_ACTIONS.slice(0, 3);
+  const today = format(new Date(), 'EEEE d MMMM', { locale: it });
 
   const handleParticipationResponse = async (participating: boolean) => {
     if (challengeId !== null) {
@@ -35,7 +38,7 @@ export const ParticipationModal = ({
         <DialogHeader>
           <DialogTitle>Parteciperai alla sfida di oggi?</DialogTitle>
           <DialogDescription>
-            Oggi dalle 19:00 alle 20:00 riduci i tuoi consumi energetici e partecipa alla sfida!
+            Oggi {today} dalle 19:00 alle 20:00 riduci i tuoi consumi energetici e partecipa alla sfida!
           </DialogDescription>
         </DialogHeader>
         

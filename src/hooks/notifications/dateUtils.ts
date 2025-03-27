@@ -1,5 +1,5 @@
 
-import { set, addDays, format, isAfter, isBefore, parseISO } from 'date-fns';
+import { set, addDays, format, isAfter, isBefore, parseISO, isToday } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { CHALLENGE_DATES } from '@/types';
 
@@ -42,12 +42,23 @@ export const shouldShowParticipationBox = (
     return false; // Already responded
   }
   
-  // Uncomment this in production
-  return true;
+  // Check if this is today's challenge
+  const today = new Date();
+  const todayStr = format(today, 'yyyy-MM-dd');
+  const challengeDate = CHALLENGE_DATES[challengeId - 1];
   
-  // FORCE TRUE FOR TESTING - uncomment this line after testing is complete
-  // console.log("shouldShowParticipationBox: Forcing true for testing purposes");
-  // return true;
+  // Only show participation box for today's challenge and if it's after 9:00 AM
+  const isCurrentChallenge = challengeDate === todayStr;
+  const isAfter9AM = today.getHours() >= 9;
+  
+  // Check if before 18:54 (participation deadline)
+  const participationDeadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
+  const isBeforeDeadline = isBefore(today, participationDeadline);
+  
+  console.log("shouldShowParticipationBox: isCurrentChallenge:", isCurrentChallenge, 
+              "isAfter9AM:", isAfter9AM, "isBeforeDeadline:", isBeforeDeadline);
+  
+  return isCurrentChallenge && isAfter9AM && isBeforeDeadline;
 };
 
 export const shouldShowCompletionBox = (
@@ -67,8 +78,18 @@ export const shouldShowCompletionBox = (
   const completionCutoff = set(tomorrow, { hours: 8, minutes: 59, seconds: 0 });
   
   const today = new Date(now);
-  const challengeDay = parseISO(CHALLENGE_DATES[challengeId - 1]);
-  const challengeEndTime = set(challengeDay, { hours: 20, minutes: 0, seconds: 0 });
+  const challengeDate = CHALLENGE_DATES[challengeId - 1];
+  if (!challengeDate) return false;
+  
+  const challengeDateTime = parseISO(challengeDate);
+  const isTodayOrYesterday = isToday(challengeDateTime) || 
+                             (challengeDateTime.getDate() === today.getDate() - 1 && 
+                              challengeDateTime.getMonth() === today.getMonth() &&
+                              challengeDateTime.getFullYear() === today.getFullYear());
+                              
+  if (!isTodayOrYesterday) return false;
+  
+  const challengeEndTime = set(parseISO(challengeDate), { hours: 20, minutes: 0, seconds: 0 });
 
   return isAfter(now, challengeEndTime) && isBefore(now, completionCutoff);
 };

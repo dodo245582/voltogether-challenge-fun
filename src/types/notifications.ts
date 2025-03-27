@@ -1,5 +1,5 @@
-
 import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
+import { parseISO, isToday, format } from 'date-fns';
 
 // Notification types
 export type NotificationType = 
@@ -44,8 +44,31 @@ export interface NotificationContextType {
 // For the current challenge
 export const getCurrentChallengeId = () => {
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  // Use the date in the format YYYY-MM-DD
+  const todayStr = format(today, 'yyyy-MM-dd');
+  
+  // Find the index of today's date in the CHALLENGE_DATES array
   const index = CHALLENGE_DATES.indexOf(todayStr);
-  console.log("getCurrentChallengeId called with today:", todayStr, "index:", index);
-  return index !== -1 ? index + 1 : null;
+  
+  // If today's date is in the array, return the challenge ID (index + 1)
+  // Otherwise, find the next upcoming challenge date
+  if (index !== -1) {
+    console.log("Found today's date in challenge dates:", todayStr, "index:", index);
+    return index + 1;
+  } else {
+    // Find the next future challenge
+    const upcomingIndex = CHALLENGE_DATES.findIndex(date => {
+      return parseISO(date) > today;
+    });
+    
+    if (upcomingIndex !== -1) {
+      console.log("Found next upcoming challenge date:", CHALLENGE_DATES[upcomingIndex], "index:", upcomingIndex);
+      return upcomingIndex + 1;
+    } else {
+      // If no future challenges, return the last challenge
+      const lastIndex = CHALLENGE_DATES.length - 1;
+      console.log("No upcoming challenges found, using last challenge:", CHALLENGE_DATES[lastIndex], "index:", lastIndex);
+      return lastIndex >= 0 ? lastIndex + 1 : null;
+    }
+  }
 };

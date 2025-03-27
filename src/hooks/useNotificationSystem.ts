@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentChallengeId } from '@/types/notifications';
-import { parseISO, isToday, isBefore, set } from 'date-fns';
+import { parseISO, isToday, isBefore, set, format } from 'date-fns';
 
 import { useNotificationManager } from './notifications/useNotificationManager';
 import { useParticipationManager } from './notifications/useParticipationManager';
@@ -111,9 +111,17 @@ export const useNotificationSystem = () => {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       console.log("Initial participation response from localStorage:", participationResponse);
       
-      if (participationResponse === null) {
+      // Get today's date in the correct format to compare with challenge dates
+      const today = new Date();
+      const todayStr = format(today, 'yyyy-MM-dd');
+      const challengeDate = CHALLENGE_DATES[challengeId - 1];
+      
+      // Check if this challenge is for today and the current time is after 9AM
+      const isCurrentChallenge = challengeDate === todayStr;
+      const isAfter9AM = today.getHours() >= 9;
+      
+      if (participationResponse === null && isCurrentChallenge && isAfter9AM) {
         const now = new Date();
-        const today = new Date(now);
         const participationDeadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
         
         if (isBefore(now, participationDeadline)) {
@@ -124,7 +132,7 @@ export const useNotificationSystem = () => {
           );
           
           if (!alreadySentParticipation) {
-            console.log("Creating initial participation notification for challenge:", challengeId);
+            console.log("Creating initial participation notification for today's challenge:", challengeId);
             createNotification(
               'participation-request',
               'Sfida di oggi',
@@ -134,6 +142,8 @@ export const useNotificationSystem = () => {
             );
           }
         } else {
+          // After the participation deadline, mark as not participating
+          console.log("Past participation deadline, marking as not participating");
           localStorage.setItem(`challenge_${challengeId}_participating`, 'false');
           localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
           localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(['none']));

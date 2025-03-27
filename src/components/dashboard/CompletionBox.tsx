@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Clock } from 'lucide-react';
 import { SustainableAction } from '@/types';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 interface CompletionBoxProps {
   userActions: SustainableAction[];
@@ -21,6 +23,8 @@ const CompletionBox = ({
   selectedCompletionActions,
   handleActionToggle
 }: CompletionBoxProps) => {
+  const today = format(new Date(), 'EEEE d MMMM', { locale: it });
+
   return (
     <Card className="border-voltgreen-200 bg-voltgreen-50 shadow-sm">
       <CardHeader>
@@ -28,7 +32,7 @@ const CompletionBox = ({
       </CardHeader>
       <CardContent>
         <p className="text-voltgreen-700 mb-4">
-          Quali azioni hai fatto per ridurre i consumi energetici?
+          Quali azioni hai fatto oggi {today} per ridurre i consumi energetici?
         </p>
         <div className="bg-white rounded-md p-3 border border-voltgreen-200 mb-4">
           <div className="flex items-center text-amber-800 mb-2">

@@ -2,6 +2,8 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, XCircle, CheckCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 interface ParticipationBoxProps {
   getParticipationDeadline: () => string;
@@ -12,6 +14,8 @@ const ParticipationBox = ({
   getParticipationDeadline, 
   handleParticipationResponse 
 }: ParticipationBoxProps) => {
+  const today = format(new Date(), 'EEEE d MMMM', { locale: it });
+
   return (
     <Card className="border-amber-200 bg-amber-50 shadow-sm animate-pulse-soft">
       <CardHeader>
@@ -19,7 +23,7 @@ const ParticipationBox = ({
       </CardHeader>
       <CardContent>
         <p className="text-amber-700 mb-4">
-          Oggi dalle 19:00 alle 20:00 riduci i tuoi consumi energetici e partecipa alla sfida!
+          Oggi {today} dalle 19:00 alle 20:00 riduci i tuoi consumi energetici e partecipa alla sfida!
         </p>
         <div className="bg-white rounded-md p-3 border border-amber-200 mb-4">
           <div className="flex items-center text-amber-800 mb-2">
