@@ -27,12 +27,15 @@ const Register = () => {
         
         toast({
           title: 'Registrazione completata',
-          description: 'Ti abbiamo inviato un\'email di conferma. Procedi ora a completare il tuo profilo.',
+          description: 'Procedi ora a completare il tuo profilo.',
           variant: 'default',
         });
         
-        // Redirect to onboarding for new users to complete their profile
-        navigate('/onboarding');
+        // Add a short delay before redirecting to ensure profile is initialized
+        setTimeout(() => {
+          // Redirect to onboarding for new users to complete their profile
+          navigate('/onboarding', { replace: true });
+        }, 500);
       } else {
         console.error("Registration error:", error);
         let errorMessage = 'Si è verificato un errore durante la registrazione';
@@ -79,7 +82,7 @@ const Register = () => {
           />
           
           <div className="mt-4 text-center text-sm text-gray-500">
-            <p className="italic">Dopo la registrazione, controlla la tua email per confermare il tuo account.</p>
+            <p className="italic">Dopo la registrazione, potrai completare il tuo profilo.</p>
           </div>
         </div>
       </main>

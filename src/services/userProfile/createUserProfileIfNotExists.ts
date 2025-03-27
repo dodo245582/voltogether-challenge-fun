@@ -18,38 +18,36 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
   console.log("Checking/creating profile for user:", userId);
 
   try {
-    // Try to fetch the profile first to avoid unnecessary API calls
-    const { data: existingProfile, error: fetchError } = await supabase
-      .from('Users')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (fetchError && fetchError.code !== "PGRST116") {
-      console.error("Error checking for existing profile:", fetchError);
-      // Continue despite error - we'll try to create the profile anyway
-    }
-
-    // If profile exists, return it
-    if (existingProfile) {
-      console.log("Profile already exists in database:", existingProfile);
-      
-      // Update localStorage cache for immediate UI updates
-      try {
-        localStorage.setItem(`profile_${userId}`, JSON.stringify(existingProfile));
-      } catch (e) {
-        console.error("Error updating localStorage:", e);
+    // First check if profile exists in local storage
+    try {
+      const cachedProfile = localStorage.getItem(`profile_${userId}`);
+      if (cachedProfile) {
+        console.log("Found profile in localStorage, checking if it exists in database");
+        const profileData = JSON.parse(cachedProfile);
+        
+        // Verify against database
+        const { data: existingProfile, error: fetchError } = await supabase
+          .from('Users')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+          
+        if (existingProfile) {
+          console.log("Profile exists in database");
+          return { 
+            success: true, 
+            data: existingProfile as UserType, 
+            error: null,
+            existing: true 
+          };
+        }
       }
-      
-      return { 
-        success: true, 
-        data: existingProfile as UserType, 
-        error: null,
-        existing: true 
-      };
+    } catch (e) {
+      console.error("Error checking localStorage:", e);
+      // Continue with creation
     }
 
-    // Try the edge function first (most reliable, bypasses RLS)
+    // Try the edge function to create the profile
     try {
       console.log("Calling edge function to create profile");
       const response = await supabase.functions.invoke('create-user-profile-function', {
@@ -100,41 +98,6 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
         .single();
 
       if (insertError) {
-        // Check if it's a duplicate key error, which might mean another concurrent request created the profile
-        if (insertError.code === "23505") {
-          console.log("Insert failed due to duplicate key - checking if profile was created concurrently");
-          
-          // Check again if profile exists now
-          const { data: retryProfile, error: retryError } = await supabase
-            .from('Users')
-            .select('*')
-            .eq('id', userId)
-            .maybeSingle();
-            
-          if (retryError) {
-            console.error("Error checking for profile after duplicate key error:", retryError);
-            throw retryError;
-          }
-          
-          if (retryProfile) {
-            console.log("Profile exists (possibly created by concurrent request):", retryProfile);
-            
-            // Update localStorage cache
-            try {
-              localStorage.setItem(`profile_${userId}`, JSON.stringify(retryProfile));
-            } catch (e) {
-              console.error("Error updating localStorage:", e);
-            }
-            
-            return { 
-              success: true, 
-              data: retryProfile as UserType, 
-              error: null,
-              existing: true
-            };
-          }
-        }
-        
         console.error("Error creating profile via direct insert:", insertError);
         
         // Create a minimal local profile for offline functionality

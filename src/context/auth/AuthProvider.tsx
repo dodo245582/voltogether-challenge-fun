@@ -10,6 +10,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
   
   const { 
     profile, 
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // Use setTimeout to prevent any potential deadlocks
           setTimeout(() => {
-            if (mounted && event === 'SIGNED_IN') {
+            if (mounted && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
               console.log("Processing post-login tasks for user:", session.user.id);
               createUserProfileIfNotExists(session.user.id, session.user.email);
               fetchUserProfile(session.user.id);
@@ -69,14 +70,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => {
           if (mounted) {
             console.log("Processing existing session for user:", session.user.id);
-            createUserProfileIfNotExists(session.user.id, session.user.email);
-            fetchUserProfile(session.user.id);
+            createUserProfileIfNotExists(session.user.id, session.user.email)
+              .then(() => {
+                return fetchUserProfile(session.user.id);
+              })
+              .finally(() => {
+                if (mounted) {
+                  setAuthInitialized(true);
+                }
+              });
           }
         }, 0);
+      } else {
+        setAuthInitialized(true);
+        setLoading(false);
       }
-      
-      // Always set loading to false regardless of session state
-      setLoading(false);
     });
 
     return () => {
@@ -88,16 +96,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string) => {
     try {
       console.log("Signing up user:", email);
+      setLoading(true);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
       
       if (!error && data.user) {
-        console.log("Signup successful, creating initial profile:", data.user.id);
-        setTimeout(async () => {
-          await createUserProfileIfNotExists(data.user!.id, data.user!.email);
-        }, 0);
+        console.log("Signup successful for user ID:", data.user.id);
+        
+        // Wait a short moment to ensure auth state has updated
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Ensure profile is created after signup
+        const profileResult = await createUserProfileIfNotExists(data.user.id, data.user.email);
+        console.log("Profile creation result:", profileResult);
+        
+        // Fetch profile data if created successfully
+        if (profileResult.success) {
+          await fetchUserProfile(data.user.id);
+        }
+      } else if (error) {
+        console.error("Signup error:", error);
+        setLoading(false);
       }
       
       return { 
@@ -106,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     } catch (error) {
       console.error("Exception in signUp:", error);
+      setLoading(false);
       return { error, success: false };
     }
   };
@@ -121,7 +144,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (error) {
+        console.error("Sign in error:", error);
         setLoading(false); // Reset loading if there's an error
+      } else if (data.user) {
+        console.log("Sign in successful for user ID:", data.user.id);
+        
+        // Wait a short moment to ensure auth state has updated
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Ensure profile exists
+        await createUserProfileIfNotExists(data.user.id, data.user.email);
       }
       
       return { 
@@ -197,6 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     updateProfile,
     refreshProfile,
+    authInitialized
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
