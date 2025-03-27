@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -13,9 +12,9 @@ import { useChallengeData } from '@/hooks/useChallengeData';
 import NotificationModals from '@/components/notifications/NotificationModals';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 
-// Lazy load components that aren't immediately visible
 const NextEvents = lazy(() => import('@/components/dashboard/NextEvents'));
 const CommunityStats = lazy(() => import('@/components/dashboard/CommunityStats'));
 
@@ -69,7 +68,6 @@ const Dashboard = () => {
     }
   }, [user, profile, navigate]);
 
-  // Update stats when profile changes
   useEffect(() => {
     if (profile) {
       console.log("Updating dashboard stats from profile:", {
@@ -85,43 +83,34 @@ const Dashboard = () => {
     }
   }, [profile]);
 
-  // Update stats after challenge completion
   const onCompleteChallenge = async (challengeId: number, actionIds: string[]) => {
-    // First call the original handler
     await handleCompleteChallenge(challengeId, actionIds);
     
-    // Then refresh the profile to get updated stats
     if (user && refreshProfile) {
       console.log("Refreshing profile after challenge completion");
       await refreshProfile(user.id);
     }
   };
 
-  // Update stats after challenge participation
   const onParticipateInChallenge = async (challengeId: number, participating: boolean) => {
-    // First call the original handler
     await handleParticipateInChallenge(challengeId, participating);
     
-    // Then refresh the profile to get updated stats
     if (user && refreshProfile) {
       console.log("Refreshing profile after participation update");
       await refreshProfile(user.id);
     }
   };
 
-  // Handle participation response from notification box
   const handleParticipationResponse = async (participating: boolean) => {
     if (notificationChallengeId !== null) {
       await respondToParticipation(notificationChallengeId, participating);
       
-      // Refresh the profile to update UI
       if (user && refreshProfile) {
         await refreshProfile(user.id);
       }
     }
   };
 
-  // Handle challenge completion from notification box
   const [selectedCompletionActions, setSelectedCompletionActions] = useState<string[]>([]);
   
   const handleActionToggle = (actionId: string) => {
@@ -143,12 +132,10 @@ const Dashboard = () => {
     if (notificationChallengeId !== null && selectedCompletionActions.length > 0) {
       await completeChallengeActions(notificationChallengeId, selectedCompletionActions);
       
-      // Refresh the profile to update UI
       if (user && refreshProfile) {
         await refreshProfile(user.id);
       }
       
-      // Reset selected actions
       setSelectedCompletionActions([]);
     }
   };
@@ -186,7 +173,6 @@ const Dashboard = () => {
       <main className="flex-1 max-w-5xl mx-auto w-full p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            {/* Participation notification box */}
             {shouldShowParticipationBox && (
               <Card className="border-amber-200 bg-amber-50 shadow-sm animate-pulse-soft">
                 <CardHeader>
@@ -224,7 +210,6 @@ const Dashboard = () => {
               </Card>
             )}
             
-            {/* Completion notification box */}
             {shouldShowCompletionBox && (
               <Card className="border-voltgreen-200 bg-voltgreen-50 shadow-sm">
                 <CardHeader>
