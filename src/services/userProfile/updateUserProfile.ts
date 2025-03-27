@@ -14,26 +14,25 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
   // Basic safety validation
   const cleanData: Record<string, any> = {};
   
-  // Only allow certain fields to be updated
+  // Only allow certain fields to be updated and enforce limits
   const safeKeys = ['name', 'city', 'discovery_source', 'selected_actions', 'profile_completed'];
   
-  // Basic validation of data
+  // Basic validation of data with strict limits
   Object.entries(data).forEach(([key, value]) => {
     if (safeKeys.includes(key) && value !== undefined) {
-      // Additional safety for strings and arrays
       if (typeof value === 'string') {
-        cleanData[key] = value.slice(0, 100); // Max 100 chars
+        cleanData[key] = value.slice(0, 50); // Limit strings to 50 chars
       } else if (Array.isArray(value)) {
-        cleanData[key] = value.slice(0, 20); // Max 20 items
+        cleanData[key] = value.slice(0, 10); // Limit arrays to 10 items max
       } else {
         cleanData[key] = value;
       }
     }
   });
 
-  // Use a timeout to prevent hanging
+  // Use a short timeout to prevent hanging
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Update timeout")), 5000);
+    setTimeout(() => reject(new Error("Update timeout")), 3000); // Shorter timeout
   });
 
   try {

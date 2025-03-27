@@ -9,14 +9,6 @@ interface LocationStepProps {
 }
 
 const LocationStep = ({ city, setCity }: LocationStepProps) => {
-  // Extremely simplified input handling
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Get value directly, no additional processing
-    const value = e.target.value;
-    // Call setter immediately 
-    setCity(value);
-  };
-
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -25,7 +17,7 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
           id="city"
           placeholder="Es. Milano, Roma, Napoli..."
           value={city}
-          onChange={handleChange}
+          onChange={(e) => setCity(e.target.value.slice(0, 50))}
           maxLength={50}
         />
         <p className="text-sm text-gray-500">

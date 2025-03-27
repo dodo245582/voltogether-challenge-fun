@@ -12,16 +12,12 @@ export const useOnboardingState = (profile: User | null) => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   
-  // Simple, direct city setter with no throttling or complex logic
-  const setSafeCity = (newCity: string) => {
-    setCity(newCity);
-  };
-  
-  // Simplified initialization
+  // Simple initialization that only runs once
   useEffect(() => {
     if (!profile || hasInitialized) return;
     
     try {
+      // Basic data initialization with safety checks
       if (profile.name && typeof profile.name === 'string') {
         setName(profile.name.slice(0, 50));
       }
@@ -37,10 +33,10 @@ export const useOnboardingState = (profile: User | null) => {
       if (profile.selected_actions && Array.isArray(profile.selected_actions)) {
         setSelectedActions(profile.selected_actions.slice(0, 20));
       }
-      
-      setHasInitialized(true);
     } catch (error) {
       console.error("Error initializing onboarding state:", error);
+    } finally {
+      // Always mark as initialized to prevent loops
       setHasInitialized(true);
     }
   }, [profile, hasInitialized]);
@@ -49,13 +45,13 @@ export const useOnboardingState = (profile: User | null) => {
     step,
     setStep,
     name,
-    setName,
+    setName: (value: string) => setName(value.slice(0, 50)),
     city,
-    setCity: setSafeCity,
+    setCity: (value: string) => setCity(value.slice(0, 50)),
     discoverySource,
     setDiscoverySource,
     selectedActions,
-    setSelectedActions,
+    setSelectedActions: (actions: string[]) => setSelectedActions(actions.slice(0, 20)),
     isLoading,
     setIsLoading,
     redirectAttempted,

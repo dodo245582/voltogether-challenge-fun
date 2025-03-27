@@ -8,31 +8,23 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   
-  // Store the current route to prevent redirect loops
-  useEffect(() => {
-    if (!loading && user) {
-      sessionStorage.setItem('lastAuthenticatedRoute', location.pathname);
-    }
-  }, [loading, user, location.pathname]);
-  
-  // First, handle loading state
+  // Show loading while auth is being determined
   if (loading) {
     return <DashboardLoadingState />;
   }
   
-  // Then, check if user is authenticated
+  // If no user, redirect to login
   if (!user) {
     console.log("Protected route - User not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
-  // If user exists but profile is not completed, redirect to onboarding
-  // Skip this check if we're already on the onboarding page
+  // If profile is not completed and not already on onboarding, redirect to onboarding
   if (profile && !profile.profile_completed && location.pathname !== "/onboarding") {
     console.log("Protected route - Profile not completed, redirecting to onboarding");
     return <Navigate to="/onboarding" replace />;
   }
   
-  // Render children when it's safe to do so
+  // Render children if all checks pass
   return <>{children}</>;
 };
