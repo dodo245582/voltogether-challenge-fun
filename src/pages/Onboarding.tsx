@@ -138,14 +138,32 @@ const Onboarding = () => {
     try {
       console.log("Starting onboarding completion process");
       
+      // Cache selected actions immediately
       localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
       
-      const { error, success } = await updateProfile({
+      // Prepare profile data
+      const profileData = {
         name,
         city,
         discovery_source: discoverySource,
         selected_actions: selectedActions,
-      });
+      };
+      
+      // Pre-cache profile immediately for faster UI updating
+      try {
+        if (user.id) {
+          const cachedProfile = localStorage.getItem(`profile_${user.id}`);
+          if (cachedProfile) {
+            const updatedCache = { ...JSON.parse(cachedProfile), ...profileData };
+            localStorage.setItem(`profile_${user.id}`, JSON.stringify(updatedCache));
+          }
+        }
+      } catch (e) {
+        console.error("Cache update error:", e);
+      }
+      
+      // Update profile in database
+      const { error, success } = await updateProfile(profileData);
       
       if (error) {
         console.error("Error in onboarding profile update:", error);
@@ -160,7 +178,8 @@ const Onboarding = () => {
           variant: "default",
         });
         
-        window.location.href = '/dashboard';
+        // Direct navigation instead of full page reload
+        navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
       console.error("Error updating user profile:", error);

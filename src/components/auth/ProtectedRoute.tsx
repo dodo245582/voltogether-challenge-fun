@@ -8,31 +8,23 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   
-  // Abbreviate logging to reduce processing overhead
-  useEffect(() => {
-    console.log("ProtectedRoute:", { 
-      path: location.pathname,
-      hasUser: !!user, 
-      loading,
-      hasProfile: !!profile
-    });
-  }, [user, loading, location.pathname, profile]);
-  
-  // Show loading state only if necessary
-  if (loading && !profile) {
+  // Show loading only when truly necessary (initial auth check)
+  if (loading && !user) {
     return <DashboardLoadingState />;
   }
   
   // If user is not authenticated, redirect to login
   if (!user) {
-    console.log("User not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
-  // Basic profile validation - optimized to reduce computations
-  const hasValidProfile = !!profile && 
-    !!profile.id && 
-    (!!profile.name || !!profile.city);
+  // Simplified profile validation with early return
+  const hasValidProfile = !!profile && !!profile.id && (!!profile.name || !!profile.city);
+  
+  // Fast path for dashboard when profile exists
+  if (location.pathname === '/dashboard' && hasValidProfile) {
+    return <>{children}</>;
+  }
   
   // Handle routing based on profile status
   if (location.pathname !== '/onboarding' && !hasValidProfile) {

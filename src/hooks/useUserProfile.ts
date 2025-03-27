@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { User as UserType } from '@/types';
 import { 
@@ -13,9 +14,33 @@ export const useUserProfile = () => {
   const fetchUserProfile = async (userId: string) => {
     if (!userId) return;
     
+    // First check localStorage for immediate response
     try {
-      setLoading(true);
-      console.log("useUserProfile: Fetching user profile for ID:", userId);
+      const cachedData = localStorage.getItem(`profile_${userId}`);
+      if (cachedData) {
+        const cachedProfile = JSON.parse(cachedData);
+        // Update state immediately with cached data
+        setProfile(cachedProfile);
+        
+        // Don't show loading state if we have cached data
+        if (!loading) {
+          // Fetch fresh data in background
+          fetchFromService(userId);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error("Error accessing localStorage:", e);
+    }
+    
+    // If no cache or loading already in progress, show loading
+    setLoading(true);
+    await fetchFromService(userId);
+  };
+  
+  // Private method to fetch from service
+  const fetchFromService = async (userId: string) => {
+    try {
       const { data, error } = await fetchUserProfileService(userId);
       
       if (error) {
@@ -24,10 +49,7 @@ export const useUserProfile = () => {
       }
       
       if (data) {
-        console.log("useUserProfile: Profile data received:", data);
         setProfile(data);
-      } else {
-        console.log("useUserProfile: No profile data received");
       }
     } catch (error) {
       console.error("Exception in fetchUserProfile:", error);
@@ -40,18 +62,22 @@ export const useUserProfile = () => {
     if (!userId || !email) return;
     
     try {
-      setLoading(true);
-      console.log("useUserProfile: Creating user profile if not exists:", userId);
-      const result = await createUserProfileService(userId, email);
-      if (result.success) {
-        console.log("useUserProfile: Profile creation successful or already exists");
-      } else {
-        console.log("useUserProfile: Profile creation failed:", result.error);
+      // Don't show loading if we have a cached profile
+      const hasCache = !!localStorage.getItem(`profile_${userId}`);
+      if (!hasCache) {
+        setLoading(true);
       }
-      await fetchUserProfile(userId);
+      
+      const result = await createUserProfileService(userId, email);
+      
+      // Only fetch if necessary
+      if (result.success && !hasCache) {
+        await fetchUserProfile(userId);
+      } else {
+        setLoading(false);
+      }
     } catch (error) {
       console.error("Error creating profile:", error);
-    } finally {
       setLoading(false);
     }
   };
@@ -65,25 +91,31 @@ export const useUserProfile = () => {
     }
 
     try {
+      // Update local state immediately
+      if (profile) {
+        const updatedProfile = { ...profile, ...data };
+        setProfile(updatedProfile);
+        
+        // Also pre-cache the update
+        try {
+          localStorage.setItem(`profile_${userId}`, JSON.stringify(updatedProfile));
+        } catch (e) {
+          console.error("Error updating localStorage:", e);
+        }
+      }
+      
+      // Update in background
       setLoading(true);
-      console.log("useUserProfile: Updating profile:", data);
       const { error, success } = await updateUserProfileService(userId, data);
       
-      if (success && profile) {
-        // Update local state
-        console.log("useUserProfile: Update successful, updating local state");
-        setProfile({
-          ...profile,
-          ...data
-        });
-      } else if (error) {
+      if (error) {
         console.log("useUserProfile: Update failed:", error);
       }
       
-      return { error, success };
+      return { error, success: success || !!profile };
     } catch (error) {
       console.error("Exception in updateProfile:", error);
-      return { error, success: false };
+      return { error, success: !!profile };
     } finally {
       setLoading(false);
     }
