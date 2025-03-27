@@ -102,28 +102,7 @@ const OnboardingContainer = () => {
     }
     
     setIsLoading(true);
-    
-    // Update local storage cache first for immediate UI response
-    try {
-      localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
-      
-      if (user.id) {
-        const cachedProfile = localStorage.getItem(`profile_${user.id}`);
-        if (cachedProfile) {
-          const updatedCache = { 
-            ...JSON.parse(cachedProfile), 
-            name, 
-            city, 
-            discovery_source: discoverySource, 
-            selected_actions: selectedActions,
-            profile_completed: true
-          };
-          localStorage.setItem(`profile_${user.id}`, JSON.stringify(updatedCache));
-        }
-      }
-    } catch (e) {
-      console.error("Cache update error:", e);
-    }
+    console.log("Starting profile completion with data:", { name, city, discoverySource, selectedActions });
     
     const profileData = {
       name,
@@ -135,15 +114,43 @@ const OnboardingContainer = () => {
     
     console.log("Profile data being submitted:", profileData);
     
-    // Set a very short timeout as fallback to ensure we don't freeze the UI
     const updateTimeoutId = setTimeout(() => {
       console.log("Profile update timeout - redirecting anyway");
       setIsLoading(false);
       navigate('/dashboard', { replace: true });
-    }, 3000);
+    }, 5000);
     
     try {
+      if (user.id) {
+        try {
+          localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
+          const cachedProfileKey = `profile_${user.id}`;
+          const cachedProfile = localStorage.getItem(cachedProfileKey);
+          
+          if (cachedProfile) {
+            const updatedCache = { 
+              ...JSON.parse(cachedProfile), 
+              ...profileData
+            };
+            localStorage.setItem(cachedProfileKey, JSON.stringify(updatedCache));
+            console.log("Updated local cache:", updatedCache);
+          } else {
+            const newCache = {
+              id: user.id,
+              email: user.email,
+              ...profileData
+            };
+            localStorage.setItem(cachedProfileKey, JSON.stringify(newCache));
+            console.log("Created new local cache:", newCache);
+          }
+        } catch (e) {
+          console.error("Local storage update error:", e);
+        }
+      }
+      
+      console.log("Calling updateProfile with data:", profileData);
       const result = await updateProfile(profileData);
+      console.log("Profile update result:", result);
       
       clearTimeout(updateTimeoutId);
       
@@ -156,6 +163,7 @@ const OnboardingContainer = () => {
           variant: "destructive",
         });
       } else {
+        console.log("Profile updated successfully");
         toast({
           title: "Profilo completato",
           description: "Il tuo profilo è stato configurato con successo",
@@ -163,11 +171,10 @@ const OnboardingContainer = () => {
         });
       }
       
-      // Always redirect to dashboard after a short delay
       setTimeout(() => {
         setIsLoading(false);
         navigate('/dashboard', { replace: true });
-      }, 500);
+      }, 800);
     } catch (error) {
       console.error("Exception during profile update:", error);
       clearTimeout(updateTimeoutId);
@@ -181,7 +188,7 @@ const OnboardingContainer = () => {
       setTimeout(() => {
         setIsLoading(false);
         navigate('/dashboard', { replace: true });
-      }, 500);
+      }, 800);
     }
   };
 

@@ -11,6 +11,23 @@ const Onboarding = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
   
+  // Check for existing completed profile immediately
+  useEffect(() => {
+    if (!authInitialized || loading) return;
+    
+    if (!user) {
+      console.log("Onboarding: no user, redirecting to login");
+      navigate('/login', { replace: true });
+      return;
+    }
+    
+    // Check if the profile is already completed, go to dashboard if so
+    if (profile && profile.profile_completed) {
+      console.log("Onboarding: profile already completed, redirecting to dashboard");
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, profile, loading, authInitialized, navigate]);
+  
   // Check profile only once on initial render
   useEffect(() => {
     let isMounted = true;
@@ -51,22 +68,6 @@ const Onboarding = () => {
       isMounted = false;
     };
   }, [user?.id, refreshProfile, isRefreshing, profileChecked]);
-  
-  // Redirect based on profile state
-  useEffect(() => {
-    if (!authInitialized || loading) return;
-    
-    if (!user) {
-      console.log("Onboarding: no user, redirecting to login");
-      navigate('/login', { replace: true });
-      return;
-    }
-    
-    if (profile && profile.profile_completed) {
-      console.log("Onboarding: profile already completed, redirecting to dashboard");
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, profile, loading, authInitialized, navigate]);
   
   // Show loading state while auth is being checked
   if (loading || !authInitialized) {

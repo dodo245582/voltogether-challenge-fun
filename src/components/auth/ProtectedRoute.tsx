@@ -5,16 +5,17 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '../dashboard/DashboardLoadingState';
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, loading, profile } = useAuth();
+  const { user, loading, profile, authInitialized } = useAuth();
   const location = useLocation();
   
-  // If user data is still loading, show loading state
-  if (loading) {
+  // If auth is not initialized or user data is still loading, show loading state
+  if (!authInitialized || loading) {
     return <DashboardLoadingState />;
   }
   
   // If no user at all, redirect to login immediately
   if (!user) {
+    console.log("ProtectedRoute: No user, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
@@ -23,12 +24,11 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   
   // Only check profile completion if we're not already on onboarding
   if (!isOnboardingRoute && profile && !profile.profile_completed) {
+    console.log("ProtectedRoute: Profile not completed, redirecting to onboarding");
     return <Navigate to="/onboarding" replace />;
   }
   
-  // If we're on onboarding but profile is null, we should still show onboarding
-  // This prevents unnecessary redirects while profile is loading
-  
   // Render children if all checks pass
+  console.log("ProtectedRoute: Rendering protected content");
   return <>{children}</>;
 };
