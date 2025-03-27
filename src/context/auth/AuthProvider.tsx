@@ -128,27 +128,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       console.log("Signing out user");
-      // Pulire lo stato locale prima di effettuare il logout
+      
+      // Clear all local state immediately
       setUser(null);
       setSession(null);
       setProfile(null);
       
-      // Pulire i dati di reindirizzamento per evitare loop dopo il logout
-      sessionStorage.removeItem('onboardingRedirectAttempted');
-      sessionStorage.removeItem('redirectFromOnboarding');
-      localStorage.removeItem('totalPoints');
-      localStorage.removeItem('completedChallenges');
-      localStorage.removeItem('streak');
-      localStorage.removeItem('userSelectedActions');
+      // Clear all storage to prevent any issues
+      localStorage.clear();
+      sessionStorage.clear();
       
-      // Solo ora effettuare il logout da Supabase
+      // Perform Supabase signout
       await supabase.auth.signOut();
       
-      // Reindirizzamento sicuro alla home page
-      const baseUrl = window.location.origin;
-      window.location.href = baseUrl;
+      // Force reload the page to clear everything
+      window.location.href = window.location.origin;
     } catch (error) {
       console.error("Exception in signOut:", error);
+      
+      // Force reload even if there's an error
+      window.location.href = window.location.origin;
     }
   };
 

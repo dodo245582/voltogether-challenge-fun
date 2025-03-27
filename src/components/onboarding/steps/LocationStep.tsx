@@ -9,16 +9,12 @@ interface LocationStepProps {
 }
 
 const LocationStep = ({ city, setCity }: LocationStepProps) => {
-  // Implementazione semplificata e robusta per evitare problemi
-  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      // Gestione sicura dell'input
-      const value = e.target.value || '';
-      setCity(value);
-    } catch (error) {
-      console.error("Errore nella gestione dell'input città:", error);
-      // Non propagare errori che potrebbero bloccare il rendering
-    }
+  // Extremely simplified input handling
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Get value directly, no additional processing
+    const value = e.target.value;
+    // Call setter immediately
+    setCity(value);
   };
 
   return (
@@ -28,9 +24,9 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
         <Input
           id="city"
           placeholder="Es. Milano, Roma, Napoli..."
-          value={city || ''}
-          onChange={handleCityChange}
-          maxLength={50} // Limitare la lunghezza per evitare problemi di prestazioni
+          value={city}
+          onChange={handleChange}
+          maxLength={50}
           aria-describedby="city-description"
         />
         <p id="city-description" className="text-sm text-gray-500">
