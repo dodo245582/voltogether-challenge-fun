@@ -22,16 +22,14 @@ const Login = () => {
       const { error, success } = await signIn(email, password);
       
       if (success) {
-        console.log("Login successful, setting success state");
-        setLoginSuccessful(true);
+        console.log("Login successful, redirecting to dashboard");
         toast({
           title: 'Login effettuato',
           description: 'Hai effettuato l\'accesso con successo',
           variant: 'default',
         });
         
-        // Let the protected route handle the redirection
-        // It will check profile_completed and redirect accordingly
+        // Redirect immediately to dashboard
         navigate('/dashboard', { replace: true });
       } else {
         console.error("Login error:", error);
@@ -60,11 +58,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-
-  // Se il login è avvenuto con successo, mostra lo spinner
-  if (loginSuccessful) {
-    return <DashboardLoadingState />;
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">

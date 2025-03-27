@@ -53,37 +53,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
             if (cachedProfile) {
               setProfile(JSON.parse(cachedProfile));
-              setLoading(false); // Reduce loading time by using cache
             }
           } catch (e) {
             console.error("Error retrieving cached profile:", e);
           }
           
-          // Fetch fresh profile data in background (non-blocking)
-          if (event === 'SIGNED_IN') {
-            setTimeout(async () => {
-              if (!mounted) return;
-              try {
-                console.log("Creating user profile if it doesn't exist after sign in");
-                await createUserProfileIfNotExists(session.user.id, session.user.email);
+          // Only fetch profile in background if not already available
+          if (event === 'SIGNED_IN' && !profile) {
+            console.log("Creating user profile if it doesn't exist after sign in");
+            createUserProfileIfNotExists(session.user.id, session.user.email)
+              .then(() => {
                 if (mounted) {
                   console.log("Fetching fresh profile data after sign in");
-                  await fetchUserProfile(session.user.id);
+                  return fetchUserProfile(session.user.id);
                 }
-              } catch (error) {
+              })
+              .catch(error => {
                 console.error("Error in auth state change handler:", error);
-              }
-            }, 0);
+              });
           }
         } else {
           setSession(null);
           setUser(null);
         }
+        
+        // Stop loading state after auth state change
+        setLoading(false);
       }
     );
 
     // Then check for existing session (once)
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
       console.log("Got existing session:", !!session);
@@ -103,20 +103,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("Error retrieving cached profile:", e);
         }
         
-        // Fetch fresh profile in background (non-blocking)
-        setTimeout(async () => {
-          if (!mounted) return;
-          try {
-            console.log("Creating user profile if it doesn't exist at initial load");
-            await createUserProfileIfNotExists(session.user.id, session.user.email);
-            if (mounted) {
-              console.log("Fetching fresh profile data at initial load");
-              await fetchUserProfile(session.user.id);
-            }
-          } finally {
-            if (mounted) setLoading(false);
-          }
-        }, 0);
+        // Only fetch fresh profile if no cache exists
+        if (!localStorage.getItem(`profile_${session.user.id}`)) {
+          console.log("No cache found, creating/fetching user profile");
+          createUserProfileIfNotExists(session.user.id, session.user.email)
+            .then(() => {
+              if (mounted) {
+                console.log("Fetching fresh profile data");
+                return fetchUserProfile(session.user.id);
+              }
+            })
+            .catch(error => {
+              console.error("Error in session init:", error);
+            })
+            .finally(() => {
+              if (mounted) setLoading(false);
+            });
+        }
       } else {
         if (mounted) setLoading(false);
       }
@@ -126,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserProfile, createUserProfileIfNotExists, setProfile, user]);
+  }, [fetchUserProfile, createUserProfileIfNotExists, setProfile, user, profile]);
 
   const signUp = async (email: string, password: string) => {
     try {
