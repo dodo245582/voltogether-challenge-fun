@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
@@ -8,7 +8,13 @@ interface LocationStepProps {
   setCity: (city: string) => void;
 }
 
-const LocationStep = ({ city, setCity }: LocationStepProps) => {
+// Using memo to prevent unnecessary re-renders
+const LocationStep = memo(({ city, setCity }: LocationStepProps) => {
+  // Define onChange handler outside of render to avoid recreating on each render
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCity(e.target.value);
+  };
+  
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -17,7 +23,7 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
           id="city"
           placeholder="Es. Milano, Roma, Napoli..."
           value={city}
-          onChange={(e) => setCity(e.target.value.slice(0, 50))}
+          onChange={handleChange}
           maxLength={50}
         />
         <p className="text-sm text-gray-500">
@@ -26,6 +32,8 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
       </div>
     </div>
   );
-};
+});
+
+LocationStep.displayName = 'LocationStep';
 
 export default LocationStep;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingContainer from '@/components/onboarding/OnboardingContainer';
@@ -7,36 +8,33 @@ import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState'
 const Onboarding = () => {
   const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
-  const [isChecking, setIsChecking] = useState(true);
+  const [isReady, setIsReady] = useState(false);
   
-  // Simple redirect check
+  // Simple redirect check that only runs once when component is mounted
   useEffect(() => {
-    // Skip all checks if we're still loading
+    // Wait until loading is complete
     if (loading) return;
-    
-    // Clear any problematic data that might cause loops
-    sessionStorage.removeItem('redirectAttempted');
-    
-    // If no user, go to login
+
+    // If no user, redirect to login
     if (!user) {
       console.log("Onboarding - No user found, redirecting to login");
       navigate('/login', { replace: true });
       return;
     }
     
-    // If profile is completed, go to dashboard
+    // If profile is completed, redirect to dashboard
     if (profile && profile.profile_completed) {
       console.log("Onboarding - Profile already completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
       return;
     }
     
-    // Otherwise we're done checking and can show the onboarding
-    setIsChecking(false);
+    // Ready to show onboarding
+    setIsReady(true);
   }, [user, loading, profile, navigate]);
   
-  // Show loading while auth or profile check is happening
-  if (loading || isChecking) {
+  // Show loading while auth check is happening
+  if (loading || !isReady) {
     return <DashboardLoadingState />;
   }
   

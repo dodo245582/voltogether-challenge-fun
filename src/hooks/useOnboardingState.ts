@@ -14,54 +14,57 @@ export const useOnboardingState = (profile: User | null) => {
   
   // Simple initialization that only runs once
   useEffect(() => {
-    if (!profile || hasInitialized) return;
+    // Skip if already initialized or no profile to prevent loops
+    if (hasInitialized || !profile) return;
+    
+    // Mark as initialized immediately to prevent multiple runs
+    setHasInitialized(true);
     
     try {
-      // Basic data initialization with safety checks
-      if (profile.name && typeof profile.name === 'string') {
-        setName(profile.name.slice(0, 50));
-      }
-      
-      if (profile.city && typeof profile.city === 'string') {
-        setCity(profile.city.slice(0, 50));
-      }
-      
-      if (profile.discovery_source) {
-        setDiscoverySource(profile.discovery_source as DiscoverySource);
-      }
-      
+      // Initialize each field individually to isolate potential errors
+      if (profile.name) setName(String(profile.name).slice(0, 50));
+      if (profile.city) setCity(String(profile.city).slice(0, 50));
+      if (profile.discovery_source) setDiscoverySource(profile.discovery_source as DiscoverySource);
       if (profile.selected_actions && Array.isArray(profile.selected_actions)) {
         setSelectedActions(profile.selected_actions.slice(0, 20));
       }
     } catch (error) {
       console.error("Error initializing onboarding state:", error);
-    } finally {
-      // Always mark as initialized to prevent loops
-      setHasInitialized(true);
     }
   }, [profile, hasInitialized]);
+
+  // Simplified safe setters
+  const safeSetName = (value: string) => setName(value.slice(0, 50));
+  const safeSetCity = (value: string) => setCity(value.slice(0, 50));
+  
+  // Type-safe implementation for setSelectedActions
+  const safeSetSelectedActions = (value: string[] | ((prev: string[]) => string[])) => {
+    if (typeof value === 'function') {
+      setSelectedActions(prev => {
+        try {
+          const result = value(prev);
+          return Array.isArray(result) ? result.slice(0, 20) : [];
+        } catch (e) {
+          console.error("Error updating selectedActions:", e);
+          return prev;
+        }
+      });
+    } else {
+      setSelectedActions(Array.isArray(value) ? value.slice(0, 20) : []);
+    }
+  };
 
   return {
     step,
     setStep,
     name,
-    setName: (value: string) => setName(value.slice(0, 50)),
+    setName: safeSetName,
     city,
-    setCity: (value: string) => setCity(value.slice(0, 50)),
+    setCity: safeSetCity,
     discoverySource,
     setDiscoverySource,
     selectedActions,
-    // Fix the type here to make it clear it accepts both string[] and a function that returns string[]
-    setSelectedActions: (value: string[] | ((prev: string[]) => string[])) => {
-      if (typeof value === 'function') {
-        setSelectedActions(current => {
-          const result = value(current);
-          return Array.isArray(result) ? result.slice(0, 20) : [];
-        });
-      } else {
-        setSelectedActions(Array.isArray(value) ? value.slice(0, 20) : []);
-      }
-    },
+    setSelectedActions: safeSetSelectedActions,
     isLoading,
     setIsLoading,
     redirectAttempted,
