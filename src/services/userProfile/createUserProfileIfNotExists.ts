@@ -1,191 +1,185 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { User as UserType } from '@/types';
 
 /**
- * Creates a user profile if it doesn't already exist
+ * Creates a user profile if it doesn't exist
  */
 export const createUserProfileIfNotExists = async (userId: string, email: string | undefined) => {
   if (!userId || !email) {
-    console.error("Cannot create profile - missing user ID or email");
     return { 
-      error: new Error('User ID and email are required'), 
-      success: false 
+      success: false, 
+      error: new Error('User ID and email are required'),
+      data: null
     };
   }
 
   try {
-    console.log("Service: Checking if user profile exists for:", userId);
+    console.log("Service: Attempting to create/verify profile for user:", userId);
     
-    // Add cache validation to avoid repeated checks
-    try {
-      const cachedProfile = localStorage.getItem(`profile_${userId}`);
-      if (cachedProfile) {
-        const profile = JSON.parse(cachedProfile);
-        // If we have a complete cached profile with ID matching the user, return it
-        if (profile && profile.id === userId) {
-          console.log("Service: Using cached profile, no need to check database");
-          return { error: null, success: true, data: profile };
-        }
-      }
-    } catch (e) {
-      console.error("Error retrieving profile from localStorage:", e);
-    }
-    
-    // First check if profile exists
-    const { data: existingProfile, error: lookupError } = await supabase
+    // Prima, verifica se il profilo esiste già nel database
+    const { data: existingProfile, error: checkError } = await supabase
       .from('Users')
       .select('*')
       .eq('id', userId)
-      .maybeSingle();
+      .single();
     
-    if (lookupError && lookupError.code !== 'PGRST116') {
-      // Real error (not just "not found")
-      console.error("Service: Error checking for existing profile:", lookupError);
-      return { error: lookupError, success: false };
-    }
-    
-    // If profile already exists, return success
     if (existingProfile) {
-      console.log("Service: Profile already exists, no need to create");
-      
-      // Update cache with the fresh data
-      try {
-        localStorage.setItem(`profile_${userId}`, JSON.stringify(existingProfile));
-      } catch (e) {
-        console.error("Error storing profile in localStorage:", e);
-      }
-      
-      return { error: null, success: true, data: existingProfile };
+      console.log("Service: Profile already exists in database");
+      return { 
+        success: true, 
+        error: null,
+        data: existingProfile as UserType,
+        existing: true
+      };
     }
     
-    // Create profile if it doesn't exist
-    console.log("Service: Creating new user profile for:", userId);
-    console.log("Service: Using email:", email);
+    // Se il profilo non esiste, chiamiamo la edge function per crearlo
+    // Questo bypasserà RLS e creerà il profilo con il ruolo di servizio
+    console.log("Service: Profile not found in database, calling edge function");
     
-    // Add a retry mechanism with exponential backoff
-    let retryCount = 0;
-    const maxRetries = 3;
-    let lastError = null;
+    // Imposta un timeout per la chiamata alla edge function
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Edge function timeout')), 10000);
+    });
     
-    while (retryCount < maxRetries) {
+    // Chiamata alla edge function con retry
+    const callEdgeFunction = async (retryCount = 0): Promise<any> => {
       try {
-        // Use separate insert to avoid unique constraint violations
-        const { error: insertError, data: newProfile } = await supabase
-          .from('Users')
-          .insert({
-            id: userId,
-            email: email,
-            name: '',
-            profile_completed: false
-          })
-          .select();
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user-profile-function`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabase.auth.getSession().then(({ data }) => data.session?.access_token)}`
+          },
+          body: JSON.stringify({ userId, email })
+        });
         
-        if (!insertError) {
-          console.log("Service: Profile created successfully:", newProfile);
-          
-          // Also store in localStorage for immediate access
-          try {
-            localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile?.[0] || {
-              id: userId,
-              email: email,
-              total_points: 0,
-              completed_challenges: 0,
-              streak: 0
-            }));
-          } catch (e) {
-            console.error("Error storing profile in localStorage:", e);
-          }
-          
-          return { error: null, success: true, data: newProfile?.[0] || null };
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Edge function failed: ${errorData.message || response.statusText}`);
         }
         
-        // If we got an error but it's a duplicate key error, try to fetch instead
-        if (insertError && insertError.code === '23505') {
-          console.log("Duplicate key error, likely race condition. Fetching profile instead.");
-          
-          // Try to fetch the profile that was likely created by another concurrent request
-          const { data: existingProfile, error: fetchError } = await supabase
-            .from('Users')
-            .select('*')
-            .eq('id', userId)
-            .maybeSingle();
-            
-          if (!fetchError && existingProfile) {
-            console.log("Successfully fetched profile that was created concurrently");
-            
-            try {
-              localStorage.setItem(`profile_${userId}`, JSON.stringify(existingProfile));
-            } catch (e) {
-              console.error("Error storing profile in localStorage:", e);
-            }
-            
-            return { error: null, success: true, data: existingProfile };
-          }
-          
-          // If we still can't fetch, fall through to retry or use the edge function
-          lastError = fetchError || insertError;
-        } else {
-          lastError = insertError;
-        }
+        return await response.json();
       } catch (error) {
-        console.error("Service: Error in createUserProfileIfNotExists retry attempt:", error);
-        lastError = error;
-      }
-      
-      // Increment retry count and delay with exponential backoff
-      retryCount++;
-      if (retryCount < maxRetries) {
-        const delay = Math.pow(2, retryCount) * 100; // 200, 400, 800ms...
-        console.log(`Retrying profile creation in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-    
-    // If we've exhausted retries, try the edge function as a fallback
-    console.log("Regular profile creation failed after retries. Attempting edge function...");
-    
-    try {
-      const { data: directInsertData, error: directInsertError } = await supabase.functions.invoke(
-        'create-user-profile-function',
-        {
-          body: {
-            userId: userId,
-            email: email
-          }
+        if (retryCount < 2) { // Riprova fino a 2 volte
+          console.log(`Service: Retrying edge function call (attempt ${retryCount + 1})`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Attendi 1 secondo prima di riprovare
+          return callEdgeFunction(retryCount + 1);
         }
-      );
-        
-      if (directInsertError) {
-        console.error("Direct insert failed:", directInsertError);
-        return { error: directInsertError || lastError, success: false };
+        throw error;
+      }
+    };
+    
+    // Esegui la chiamata alla edge function con un timeout
+    const result = await Promise.race([callEdgeFunction(), timeoutPromise]) as any;
+    
+    console.log("Service: Edge function result:", result);
+    
+    if (result.success) {
+      // Aggiorna la cache localStorage
+      try {
+        if (result.data) {
+          localStorage.setItem(`profile_${userId}`, JSON.stringify(result.data));
+        }
+      } catch (e) {
+        console.error("Error updating localStorage:", e);
       }
       
-      console.log("Direct insert succeeded:", directInsertData);
-      
-      // Get the newly created profile
-      const { data: createdProfile } = await supabase
+      // Rifetch dal database per sicurezza
+      const { data: verifiedProfile } = await supabase
         .from('Users')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
-        
-      if (createdProfile) {
-        try {
-          localStorage.setItem(`profile_${userId}`, JSON.stringify(createdProfile));
-        } catch (e) {
-          console.error("Error storing profile in localStorage:", e);
-        }
-        
-        return { error: null, success: true, data: createdProfile };
+        .single();
+      
+      if (verifiedProfile) {
+        console.log("Service: Profile verified in database after creation");
+        return { 
+          success: true, 
+          error: null,
+          data: verifiedProfile as UserType,
+          existing: result.existing
+        };
+      }
+      
+      return { 
+        success: true, 
+        error: null,
+        data: result.data as UserType,
+        existing: result.existing
+      };
+    } else {
+      throw new Error(result.message || 'Failed to create profile');
+    }
+  } catch (error) {
+    console.error("Service: Error in createUserProfileIfNotExists:", error);
+    
+    // Fallback alla creazione diretta tramite client se l'edge function fallisce
+    try {
+      console.log("Service: Attempting fallback direct creation");
+      
+      // Prima controlla di nuovo se il profilo esiste
+      const { data: doubleCheckProfile } = await supabase
+        .from('Users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (doubleCheckProfile) {
+        console.log("Service: Profile found in second check");
+        return { 
+          success: true, 
+          error: null,
+          data: doubleCheckProfile as UserType,
+          existing: true
+        };
+      }
+      
+      // Tenta la creazione diretta (potrebbe fallire con RLS)
+      const { data, error: insertError } = await supabase
+        .from('Users')
+        .insert([{
+          id: userId,
+          email: email,
+          completed_challenges: 0,
+          total_points: 0,
+          streak: 0,
+          profile_completed: false
+        }])
+        .select();
+      
+      if (insertError) {
+        console.error("Service: Direct creation fallback failed:", insertError);
+        return { 
+          success: false, 
+          error: insertError,
+          data: null
+        };
+      }
+      
+      if (data && data.length > 0) {
+        console.log("Service: Profile created via direct fallback");
+        return { 
+          success: true, 
+          error: null,
+          data: data[0] as UserType,
+          existing: false
+        };
+      } else {
+        return { 
+          success: false, 
+          error: new Error('No data returned from profile creation'),
+          data: null
+        };
       }
     } catch (fallbackError) {
-      console.error("Fallback error:", fallbackError);
+      console.error("Service: Fallback creation failed:", fallbackError);
+      return { 
+        success: false, 
+        error: new Error(`Failed to create profile: ${error.message}, fallback also failed: ${fallbackError.message}`),
+        data: null
+      };
     }
-    
-    // If both approaches failed, we return an error
-    return { error: lastError, success: false };
-  } catch (error) {
-    console.error("Service: Exception in createUserProfileIfNotExists:", error);
-    return { error, success: false };
   }
 };
