@@ -9,10 +9,6 @@ interface ProfileStepProps {
 }
 
 const ProfileStep = ({ name, setName }: ProfileStepProps) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  };
-  
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -21,7 +17,7 @@ const ProfileStep = ({ name, setName }: ProfileStepProps) => {
           id="name"
           placeholder="Inserisci il tuo nome"
           value={name}
-          onChange={handleChange}
+          onChange={(e) => setName(e.target.value)}
           autoFocus
           required
           maxLength={50}
@@ -34,4 +30,4 @@ const ProfileStep = ({ name, setName }: ProfileStepProps) => {
   );
 };
 
-export default React.memo(ProfileStep);
+export default ProfileStep;

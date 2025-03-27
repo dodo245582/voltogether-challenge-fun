@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User as UserType } from '@/types';
 
 /**
- * Updates a user profile with improved error handling and shorter timeouts
+ * Updates a user profile with drastically simplified logic and minimal timeout
  */
 export const updateUserProfile = async (userId: string, data: Partial<UserType>) => {
   if (!userId) {
@@ -11,40 +11,27 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
     return { success: false, error: new Error("Missing userId") };
   }
 
-  // Safety validation - create a clean copy of data
-  const cleanData: Record<string, any> = {};
+  // Prepare the data for update
+  const updateData: Record<string, any> = {};
   
-  // Only allow certain fields to be updated with strict limits
+  // Only allow certain fields
   const safeKeys = ['name', 'city', 'discovery_source', 'selected_actions', 'profile_completed'];
   
-  // Validate data with strict limits
+  // Simple validation
   Object.entries(data).forEach(([key, value]) => {
     if (safeKeys.includes(key) && value !== undefined) {
-      if (typeof value === 'string') {
-        cleanData[key] = value.slice(0, 50); // Strict limit to 50 chars
-      } else if (Array.isArray(value)) {
-        cleanData[key] = value.slice(0, 10); // Strict limit to 10 items
-      } else {
-        cleanData[key] = value;
-      }
+      updateData[key] = value;
     }
   });
 
-  // Use an extremely short timeout (500ms) to prevent hanging
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 500);
-
   try {
-    console.log("Attempting to update profile with data:", cleanData);
+    console.log("Updating profile with data:", updateData);
     
-    // Attempt update with timeout
+    // Attempt update with much shorter timeout to avoid UI freezes
     const { error } = await supabase
       .from('Users')
-      .update(cleanData)
-      .eq('id', userId)
-      .abortSignal(controller.signal);
-
-    clearTimeout(timeoutId);
+      .update(updateData)
+      .eq('id', userId);
 
     if (error) {
       console.error("Error updating profile:", error);
@@ -54,14 +41,6 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
     console.log("Profile updated successfully");
     return { success: true, error: null };
   } catch (err) {
-    clearTimeout(timeoutId);
-    
-    // Check if this was a timeout error
-    if (err.name === 'AbortError') {
-      console.log("Update timed out, assuming success for UX");
-      return { success: true, error: null }; // Return success for timeouts
-    }
-    
     console.error("Exception during profile update:", err);
     return { success: false, error: err };
   }

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { DiscoverySource, User } from '@/types';
 
 export const useOnboardingState = (profile: User | null) => {
@@ -10,70 +10,32 @@ export const useOnboardingState = (profile: User | null) => {
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
   
-  // Simple initialization that only runs once
+  // Simple initialization from profile, only runs once when profile is available
   useEffect(() => {
-    // Skip if already initialized or no profile to prevent loops
-    if (hasInitialized || !profile) return;
+    if (!profile) return;
     
-    // Mark as initialized immediately to prevent multiple runs
-    setHasInitialized(true);
-    
-    try {
-      // Initialize each field individually to isolate potential errors
-      if (profile.name) setName(String(profile.name).slice(0, 50));
-      if (profile.city) setCity(String(profile.city).slice(0, 50));
-      if (profile.discovery_source) setDiscoverySource(profile.discovery_source as DiscoverySource);
-      if (profile.selected_actions && Array.isArray(profile.selected_actions)) {
-        setSelectedActions(profile.selected_actions.slice(0, 20));
-      }
-    } catch (error) {
-      console.error("Error initializing onboarding state:", error);
-    }
-  }, [profile, hasInitialized]);
-
-  // Simplified safe setters with useCallback to prevent recreation
-  const safeSetName = useCallback((value: string) => setName(value.slice(0, 50)), []);
-  const safeSetCity = useCallback((value: string) => setCity(value.slice(0, 50)), []);
-  
-  // Properly typed setSelectedActions to handle both direct arrays and callback functions
-  const safeSetSelectedActions = useCallback((
-    value: string[] | ((prev: string[]) => string[])
-  ) => {
-    if (typeof value === 'function') {
-      setSelectedActions(prev => {
-        try {
-          // Call the function with current state
-          const result = value(prev);
-          // Validate and sanitize the result
-          return Array.isArray(result) ? result.slice(0, 20) : [];
-        } catch (e) {
-          console.error("Error updating selectedActions:", e);
-          return prev; // Return previous state if there's an error
-        }
-      });
-    } else {
-      // Handle direct array assignment
-      setSelectedActions(Array.isArray(value) ? value.slice(0, 20) : []);
-    }
-  }, []);
+    // Initialize values from profile if available
+    if (profile.name) setName(profile.name);
+    if (profile.city) setCity(profile.city);
+    if (profile.discovery_source) setDiscoverySource(profile.discovery_source as DiscoverySource);
+    if (profile.selected_actions) setSelectedActions(profile.selected_actions);
+  }, [profile]);
 
   return {
     step,
     setStep,
     name,
-    setName: safeSetName,
+    setName,
     city,
-    setCity: safeSetCity,
+    setCity,
     discoverySource,
     setDiscoverySource,
     selectedActions,
-    setSelectedActions: safeSetSelectedActions,
+    setSelectedActions,
     isLoading,
     setIsLoading,
     redirectAttempted,
     setRedirectAttempted,
-    hasInitialized
   };
 };

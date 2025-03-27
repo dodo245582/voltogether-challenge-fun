@@ -9,10 +9,6 @@ interface LocationStepProps {
 }
 
 const LocationStep = ({ city, setCity }: LocationStepProps) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCity(e.target.value);
-  };
-  
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -21,7 +17,7 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
           id="city"
           placeholder="Es. Milano, Roma, Napoli..."
           value={city}
-          onChange={handleChange}
+          onChange={(e) => setCity(e.target.value)}
           maxLength={50}
         />
         <p className="text-sm text-gray-500">
@@ -32,4 +28,4 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
   );
 };
 
-export default React.memo(LocationStep);
+export default LocationStep;
