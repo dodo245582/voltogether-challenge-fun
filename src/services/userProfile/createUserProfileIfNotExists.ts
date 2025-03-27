@@ -67,12 +67,14 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
       // Fallback: try creating without RLS (if the policy is causing issues)
       console.log("Attempting direct insert via function...");
       try {
-        // Fix for TypeScript error: Correcting the parameter type for create_user_profile RPC
+        // Define the parameter type explicitly to avoid TypeScript errors
+        const params: { user_id: string; user_email: string } = {
+          user_id: userId,
+          user_email: email
+        };
+        
         const { data: directInsertData, error: directInsertError } = await supabase
-          .rpc('create_user_profile', {
-            user_id: userId,
-            user_email: email
-          } as { user_id: string; user_email: string });
+          .rpc('create_user_profile', params);
           
         if (directInsertError) {
           console.error("Direct insert failed:", directInsertError);
