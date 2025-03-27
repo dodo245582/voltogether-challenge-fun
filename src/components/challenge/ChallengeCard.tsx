@@ -59,6 +59,9 @@ const ChallengeCard = ({
     }
   };
 
+  // Helper to correctly determine if the user has explicitly declined participation
+  const hasDeclinedParticipation = challenge.participating === false;
+
   return (
     <Card className={`
       w-full overflow-hidden transition-all duration-300 border
@@ -79,13 +82,13 @@ const ChallengeCard = ({
             <Badge variant="outline" className="bg-voltgreen-100 text-voltgreen-800 border-voltgreen-200">
               <CheckCircle className="mr-1 h-3 w-3" /> Completata
             </Badge>
-          ) : challenge.participating === false ? (
+          ) : hasDeclinedParticipation ? (
             <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
               <XCircle className="mr-1 h-3 w-3" /> Non partecipi
             </Badge>
           ) : isChallengeActive ? (
             <Badge className="bg-voltgreen-500 animate-pulse">In corso</Badge>
-          ) : isDayInPast && challenge.participating === false ? (
+          ) : isDayInPast && hasDeclinedParticipation ? (
             <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
               <XCircle className="mr-1 h-3 w-3" /> Persa
             </Badge>
@@ -208,7 +211,7 @@ const ChallengeCard = ({
             startTime={startTime} 
             endTime={endTime} 
             isActive={isChallengeActive}
-            isPast={isDayInPast && challenge.participating === false}
+            isPast={isDayInPast && hasDeclinedParticipation}
           />
         </div>
         
