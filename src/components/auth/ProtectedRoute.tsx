@@ -8,15 +8,13 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const location = useLocation();
   const [isReady, setIsReady] = useState(false);
-  const [hasCheckedProtection, setHasCheckedProtection] = useState(false);
   
-  // Only check protection logic once fully loaded and only once
+  // Only check protection logic once fully loaded
   useEffect(() => {
-    if (!loading && !hasCheckedProtection) {
-      setHasCheckedProtection(true);
+    if (!loading) {
       setIsReady(true);
     }
-  }, [loading, hasCheckedProtection]);
+  }, [loading]);
   
   // Only perform navigation when all data is ready
   if (!isReady || loading) {
@@ -25,14 +23,12 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   
   // If no user, redirect to login
   if (!user) {
-    console.log("Protected route - User not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
   // If profile is not completed and not already on onboarding, redirect to onboarding
   const isOnboarding = location.pathname === "/onboarding";
   if (profile && !profile.profile_completed && !isOnboarding) {
-    console.log("Protected route - Profile not completed, redirecting to onboarding");
     return <Navigate to="/onboarding" replace />;
   }
   

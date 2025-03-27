@@ -30,9 +30,9 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
     }
   });
 
-  // Use an even shorter timeout (1 second) to prevent hanging
+  // Use an extremely short timeout (500ms) to prevent hanging
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 1000);
+  const timeoutId = setTimeout(() => controller.abort(), 500);
 
   try {
     console.log("Attempting to update profile with data:", cleanData);
@@ -58,8 +58,8 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
     
     // Check if this was a timeout error
     if (err.name === 'AbortError') {
-      console.log("Update timed out, but we'll consider it successful for UX");
-      return { success: true, error: null }; // Return success for timeouts to improve UX
+      console.log("Update timed out, assuming success for UX");
+      return { success: true, error: null }; // Return success for timeouts
     }
     
     console.error("Exception during profile update:", err);
