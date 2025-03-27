@@ -5,8 +5,15 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '../dashboard/DashboardLoadingState';
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, loading, profile } = useAuth();
+  const { user, loading, profile, refreshProfile } = useAuth();
   const location = useLocation();
+  
+  useEffect(() => {
+    if (user && refreshProfile) {
+      console.log("ProtectedRoute: Refreshing profile data for user:", user.id);
+      refreshProfile(user.id);
+    }
+  }, [user, refreshProfile]);
   
   useEffect(() => {
     if (user) {

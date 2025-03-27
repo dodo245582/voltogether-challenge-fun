@@ -5,9 +5,11 @@ import Navbar from '@/components/layout/Navbar';
 import AuthForm from '@/components/auth/AuthForm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationSuccessful, setRegistrationSuccessful] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signUp, user } = useAuth();
@@ -20,6 +22,9 @@ const Register = () => {
       const { error, success } = await signUp(email, password);
       
       if (success) {
+        console.log("Registration successful, setting success state");
+        setRegistrationSuccessful(true);
+        
         toast({
           title: 'Registrazione completata',
           description: 'Ti abbiamo inviato un\'email di conferma. Procedi ora a completare il tuo profilo.',
@@ -43,6 +48,7 @@ const Register = () => {
           description: errorMessage,
           variant: 'destructive',
         });
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Unexpected error during registration:", error);
@@ -51,7 +57,6 @@ const Register = () => {
         description: 'Si è verificato un errore imprevisto',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -59,6 +64,10 @@ const Register = () => {
   // If already logged in, don't show registration form
   if (user) {
     return <Navigate to="/dashboard" replace />;
+  }
+  
+  if (registrationSuccessful) {
+    return <DashboardLoadingState />;
   }
 
   return (

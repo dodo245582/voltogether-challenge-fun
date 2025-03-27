@@ -50,24 +50,16 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
         id: userId,
         email: email,
         name: '',
-        total_points: 0,
-        completed_challenges: 0,
-        streak: 0
+        profile_completed: false
       })
       .select();
     
     if (insertError) {
       console.error("Service: Error creating profile:", insertError);
       
-      // If the error is an RLS policy violation, could be because the user is not properly authenticated
-      if (insertError.code === '42501') {
-        console.error("RLS policy violation - make sure user is authenticated");
-      }
-      
-      // Fallback: try creating without RLS (if the policy is causing issues)
-      console.log("Attempting direct insert via function...");
+      // Try alternative direct method without RLS
+      console.log("Attempting direct insert as fallback...");
       try {
-        // Call the RPC function with a type assertion to bypass TypeScript errors
         const { data: directInsertData, error: directInsertError } = await supabase.functions.invoke(
           'create-user-profile-function',
           {
@@ -93,7 +85,6 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
           .maybeSingle();
           
         if (createdProfile) {
-          // Also store in localStorage
           try {
             localStorage.setItem(`profile_${userId}`, JSON.stringify(createdProfile));
           } catch (e) {
@@ -111,9 +102,9 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
     
     console.log("Service: Profile created successfully:", newProfile);
     
-    // Also store in localStorage
+    // Also store in localStorage for immediate access
     try {
-      localStorage.setItem(`profile_${userId}`, JSON.stringify({
+      localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile?.[0] || {
         id: userId,
         email: email,
         total_points: 0,

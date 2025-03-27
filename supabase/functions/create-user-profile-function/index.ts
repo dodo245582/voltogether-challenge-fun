@@ -79,7 +79,7 @@ serve(async (req) => {
       );
     }
 
-    // Insert new profile with admin privileges
+    // Insert new profile with admin privileges to bypass RLS
     const { data, error } = await supabaseClient
       .from('Users')
       .insert({

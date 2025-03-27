@@ -17,7 +17,7 @@ import { useOnboardingState } from '@/hooks/useOnboardingState';
 const OnboardingContainer = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, updateProfile, profile } = useAuth();
+  const { user, updateProfile, profile, refreshProfile } = useAuth();
   const { 
     step, setStep, 
     name, setName, 
@@ -28,8 +28,17 @@ const OnboardingContainer = () => {
     redirectAttempted, setRedirectAttempted
   } = useOnboardingState(profile);
   
+  // Verificare lo stato del profilo all'avvio
   useEffect(() => {
-    if (profile && profile.profile_completed && !redirectAttempted) {
+    if (user && !redirectAttempted) {
+      // Assicuriamoci che i dati del profilo siano aggiornati
+      refreshProfile?.(user.id);
+    }
+  }, [user, redirectAttempted, refreshProfile]);
+  
+  // Gestire il reindirizzamento se il profilo è già completo
+  useEffect(() => {
+    if (profile && profile.profile_completed === true && !redirectAttempted) {
       console.log("User already has a completed profile, redirecting to dashboard");
       setRedirectAttempted(true);
       navigate('/dashboard', { replace: true });
@@ -160,6 +169,11 @@ const OnboardingContainer = () => {
           description: "Il tuo profilo è stato configurato con successo",
           variant: "default",
         });
+        
+        // Refresh profile data again to make sure we have the most up-to-date data
+        if (user && refreshProfile) {
+          await refreshProfile(user.id);
+        }
         
         // Force redirect to dashboard
         navigate('/dashboard', { replace: true });

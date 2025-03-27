@@ -1,4 +1,3 @@
-
 import { useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -138,14 +137,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (!error && data.user) {
-        setTimeout(async () => {
-          try {
-            console.log("Creating initial profile after signup for user:", data.user?.id);
-            await createUserProfileIfNotExists(data.user.id, data.user.email);
-          } catch (createError) {
-            console.error("Error creating initial profile:", createError);
-          }
-        }, 0);
+        console.log("Signup successful, creating initial profile:", data.user.id);
+        // Immediately try to create profile - don't defer this
+        try {
+          const result = await createUserProfileIfNotExists(data.user.id, data.user.email);
+          console.log("Profile creation result:", result);
+        } catch (createError) {
+          console.error("Error creating initial profile:", createError);
+        }
       }
       
       return { 
@@ -167,16 +166,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (!error && data.user) {
-        setTimeout(async () => {
-          try {
-            console.log("Creating profile if needed after signin for user:", data.user.id);
-            await createUserProfileIfNotExists(data.user.id, data.user.email);
-            console.log("Fetching profile after signin");
-            await fetchUserProfile(data.user.id);
-          } catch (profileError) {
-            console.error("Error handling profile after signin:", profileError);
-          }
-        }, 0);
+        console.log("Login successful, ensuring profile exists for user:", data.user.id);
+        // Immediately try to create profile - don't defer this
+        try {
+          const result = await createUserProfileIfNotExists(data.user.id, data.user.email);
+          console.log("Profile creation/verification result:", result);
+          await fetchUserProfile(data.user.id);
+        } catch (profileError) {
+          console.error("Error handling profile after signin:", profileError);
+        }
       }
       
       return { 
