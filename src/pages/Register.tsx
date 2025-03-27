@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -31,11 +30,8 @@ const Register = () => {
           variant: 'default',
         });
         
-        // Add a short delay before redirecting to ensure profile is initialized
-        setTimeout(() => {
-          // Redirect to onboarding for new users to complete their profile
-          navigate('/onboarding', { replace: true });
-        }, 500);
+        // Immediately redirect to onboarding without delay
+        navigate('/onboarding', { replace: true });
       } else {
         console.error("Registration error:", error);
         let errorMessage = 'Si è verificato un errore durante la registrazione';

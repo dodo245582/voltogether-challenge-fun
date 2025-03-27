@@ -11,7 +11,7 @@ const Onboarding = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [profileChecked, setProfileChecked] = useState(false);
   
-  // Refresh profile once when component mounts
+  // Check profile only once on initial render
   useEffect(() => {
     let isMounted = true;
     
@@ -22,18 +22,25 @@ const Onboarding = () => {
       setIsRefreshing(true);
       
       try {
-        // Fetch fresh profile data
-        const { success } = await refreshProfile(user.id);
-        console.log("Profile refresh result:", success);
-        
+        // Start displaying the onboarding form immediately while profile loads
+        // This removes perceived latency for the user
         if (isMounted) {
           setProfileChecked(true);
         }
+        
+        // Run profile refresh in background
+        refreshProfile(user.id).catch(error => {
+          console.error("Error refreshing profile:", error);
+        }).finally(() => {
+          if (isMounted) {
+            setIsRefreshing(false);
+          }
+        });
       } catch (error) {
         console.error("Error refreshing profile:", error);
-      } finally {
         if (isMounted) {
           setIsRefreshing(false);
+          setProfileChecked(true);
         }
       }
     }
@@ -47,7 +54,7 @@ const Onboarding = () => {
   
   // Redirect based on profile state
   useEffect(() => {
-    if (!authInitialized || loading || isRefreshing) return;
+    if (!authInitialized || loading) return;
     
     if (!user) {
       console.log("Onboarding: no user, redirecting to login");
@@ -59,10 +66,10 @@ const Onboarding = () => {
       console.log("Onboarding: profile already completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     }
-  }, [user, profile, loading, authInitialized, isRefreshing, navigate]);
+  }, [user, profile, loading, authInitialized, navigate]);
   
-  // Show loading state while auth is being checked or profile is being refreshed
-  if (loading || !authInitialized || isRefreshing) {
+  // Show loading state while auth is being checked
+  if (loading || !authInitialized) {
     return <DashboardLoadingState />;
   }
   
@@ -72,7 +79,8 @@ const Onboarding = () => {
   // If profile is completed, component will be unmounted by effect above
   if (profile && profile.profile_completed) return null;
   
-  // Only render onboarding when it's confirmed the user should be here
+  // Don't wait for profile refreshing anymore - show onboarding immediately
+  // This is a key change to reduce perceived latency
   console.log("Onboarding: rendering onboarding container for user", user.id);
   return <OnboardingContainer />;
 };

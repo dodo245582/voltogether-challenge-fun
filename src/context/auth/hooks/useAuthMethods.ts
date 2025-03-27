@@ -27,14 +27,15 @@ export const useAuthMethods = (user: User | null) => {
         console.log("Signup successful for user ID:", data.user.id);
         
         try {
-          // Create profile immediately after registration
-          const profileResult = await createUserProfileIfNotExists(data.user.id, data.user.email);
-          console.log("Profile creation result:", profileResult);
+          // Create profile immediately without waiting
+          // This will run in background and not block the UI
+          createUserProfileIfNotExists(data.user.id, data.user.email);
           
-          // Load the profile
-          await fetchUserProfile(data.user.id);
+          // Don't wait for full profile fetch - will happen on redirect
+          // This removes a major source of delay
         } catch (err) {
           console.error("Error creating user profile after signup:", err);
+          // Continue anyway - don't block the flow
         }
       } else if (error) {
         console.error("Signup error:", error);
