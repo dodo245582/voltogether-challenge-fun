@@ -31,7 +31,7 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
     }
   });
 
-  // Simple safety timeout
+  // Use a timeout to prevent hanging
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => reject(new Error("Update timeout")), 5000);
   });

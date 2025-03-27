@@ -1,3 +1,4 @@
+
 import { useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -24,32 +25,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
         
         console.log("Auth state change event:", event);
         
         if (session?.user) {
-          // Set user and session immediately
+          console.log("User authenticated:", session.user.email);
           setSession(session);
           setUser(session.user);
-          setLoading(false);
           
-          // Fetch profile in the background without blocking UI
-          if (event === 'SIGNED_IN') {
-            setTimeout(() => {
-              if (mounted) {
-                createUserProfileIfNotExists(session.user.id, session.user.email);
-                fetchUserProfile(session.user.id);
-              }
-            }, 0);
-          }
+          // Use setTimeout to prevent any potential deadlocks
+          setTimeout(() => {
+            if (mounted && event === 'SIGNED_IN') {
+              console.log("Processing post-login tasks for user:", session.user.id);
+              createUserProfileIfNotExists(session.user.id, session.user.email);
+              fetchUserProfile(session.user.id);
+            }
+          }, 0);
         } else {
+          console.log("No authenticated user");
           setSession(null);
           setUser(null);
           setProfile(null);
-          setLoading(false);
         }
+        
+        // Always ensure loading is set to false after auth state is updated
+        setLoading(false);
       }
     );
 
@@ -62,18 +64,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setSession(session);
         setUser(session.user);
-        setLoading(false);
         
-        // Fetch profile in background without blocking UI
+        // Use setTimeout to prevent any deadlocks
         setTimeout(() => {
           if (mounted) {
+            console.log("Processing existing session for user:", session.user.id);
             createUserProfileIfNotExists(session.user.id, session.user.email);
             fetchUserProfile(session.user.id);
           }
         }, 0);
-      } else {
-        setLoading(false);
       }
+      
+      // Always set loading to false regardless of session state
+      setLoading(false);
     });
 
     return () => {
@@ -110,10 +113,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Signing in user:", email);
+      setLoading(true); // Set loading state during sign in
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
+      if (error) {
+        setLoading(false); // Reset loading if there's an error
+      }
       
       return { 
         error, 
@@ -121,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     } catch (error) {
       console.error("Exception in signIn:", error);
+      setLoading(false); // Reset loading if there's an exception
       return { error, success: false };
     }
   };
@@ -128,26 +138,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       console.log("Signing out user");
+      setLoading(true);
       
-      // Clear all local state immediately
+      // Clear local state immediately
       setUser(null);
       setSession(null);
       setProfile(null);
       
-      // Clear all storage to prevent any issues
+      // Clear all storage
       localStorage.clear();
       sessionStorage.clear();
       
-      // Perform Supabase signout
       await supabase.auth.signOut();
       
-      // Force reload the page to clear everything
-      window.location.href = window.location.origin;
+      setLoading(false);
+      window.location.href = '/';
     } catch (error) {
       console.error("Exception in signOut:", error);
-      
-      // Force reload even if there's an error
-      window.location.href = window.location.origin;
+      setLoading(false);
+      window.location.href = '/';
     }
   };
 
