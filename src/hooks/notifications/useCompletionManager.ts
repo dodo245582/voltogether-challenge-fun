@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/auth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 export const useCompletionManager = (
@@ -32,21 +32,25 @@ export const useCompletionManager = (
     const newTotalPoints = currentPoints + totalPoints + streakBonus;
     localStorage.setItem('totalPoints', newTotalPoints.toString());
     
-    const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0');
-    localStorage.setItem('completedChallenges', (completedChallenges + 1).toString());
+    const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0') + 1;
+    localStorage.setItem('completedChallenges', (completedChallenges).toString());
     
     if (user) {
-      console.log("Updating profile after challenge completion");
+      console.log("Updating profile after challenge completion with immediate values:", {
+        completed_challenges: completedChallenges,
+        total_points: newTotalPoints,
+        streak: newStreak
+      });
       
       // Update the user's profile in Supabase
       await updateProfile(user.id, {
-        completed_challenges: completedChallenges + 1,
+        completed_challenges: completedChallenges,
         total_points: newTotalPoints,
         streak: newStreak
       });
       
       if (refreshProfile) {
-        console.log("Refreshing profile to update UI stats after challenge completion");
+        console.log("Immediately refreshing profile to update UI stats after challenge completion");
         await refreshProfile(user.id);
       }
     }

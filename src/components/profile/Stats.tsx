@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from '@/types';
 import { Zap, Award, Calendar, TrendingUp } from 'lucide-react';
@@ -57,14 +56,6 @@ const Stats = ({ user, totalChallenges }: StatsProps) => {
         }
         icon={<TrendingUp className="h-5 w-5 text-orange-500" />} 
         trend={streak >= 3 ? "up" : (streak === 2 ? "up" : "neutral")}
-      />
-      
-      <StatsCard 
-        title="Punti per Sfida" 
-        value={completedChallenges > 0 ? Math.round(totalPoints / completedChallenges).toString() : "0"} 
-        description="Media punti per sfida completata"
-        icon={<Award className="h-5 w-5 text-purple-500" />} 
-        trend="neutral"
       />
     </div>
   );

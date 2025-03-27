@@ -5,6 +5,7 @@ import type { Notification, NotificationType } from '@/types/notifications';
 import { isNotificationValid } from './dateUtils';
 import { useNotificationPermissions } from './useNotificationPermissions';
 import { parseISO, isToday, set } from 'date-fns';
+import { useLocation } from 'react-router-dom';
 
 export const useNotificationManager = () => {
   const { toast } = useToast();
@@ -13,6 +14,8 @@ export const useNotificationManager = () => {
   const [showParticipationModal, setShowParticipationModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [currentChallengeId, setCurrentChallengeId] = useState<number | null>(null);
+  const location = useLocation();
+  const isDashboard = location.pathname === '/dashboard';
 
   const areNotificationsEnabled = () => {
     return 'Notification' in window && Notification.permission === 'granted';
@@ -69,14 +72,17 @@ export const useNotificationManager = () => {
         });
       }
       
-      if (type === 'participation-request') {
-        console.log('Setting participation modal to show');
-        setCurrentChallengeId(challengeId || null);
-        setShowParticipationModal(true);
-      } else if (type === 'challenge-completion') {
-        console.log('Setting completion modal to show');
-        setCurrentChallengeId(challengeId || null);
-        setShowCompletionModal(true);
+      // Only show modals if we're on the dashboard
+      if (isDashboard) {
+        if (type === 'participation-request') {
+          console.log('Setting participation modal to show');
+          setCurrentChallengeId(challengeId || null);
+          setShowParticipationModal(true);
+        } else if (type === 'challenge-completion') {
+          console.log('Setting completion modal to show');
+          setCurrentChallengeId(challengeId || null);
+          setShowCompletionModal(true);
+        }
       }
       
       return newNotification;
@@ -127,8 +133,10 @@ export const useNotificationManager = () => {
     markAllRelatedNotificationsAsRead,
     showParticipationModal,
     setShowParticipationModal,
+    showCompletionBox: showCompletionModal && isDashboard,
     showCompletionModal,
     setShowCompletionModal,
+    showParticipationBox: showParticipationModal && isDashboard,
     currentChallengeId,
     setCurrentChallengeId,
     dismissParticipationModal,

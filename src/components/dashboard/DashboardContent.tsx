@@ -36,6 +36,8 @@ const DashboardContent = ({
   handleActionToggle,
   handleSubmitCompletionActions
 }: DashboardContentProps) => {
+  console.log("DashboardContent rendering with shouldShowCompletionBox:", shouldShowCompletionBox);
+  
   return (
     <div className="lg:col-span-2 space-y-6">
       {shouldShowParticipationBox && (

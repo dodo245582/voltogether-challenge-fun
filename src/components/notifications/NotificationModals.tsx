@@ -1,6 +1,6 @@
 
 import { useNotifications } from '@/context/NotificationContext';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/auth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import ParticipationModal from './ParticipationModal';
 import CompletionModal from './CompletionModal';
@@ -60,16 +60,27 @@ const NotificationModals = () => {
       const newStreak = totalPoints > 0 ? currentStreak + 1 : 0;
       const streakBonus = newStreak >= 3 ? 5 : 0;
       
+      const currentTotalPoints = parseInt(localStorage.getItem('totalPoints') || '0');
+      const newTotalPoints = currentTotalPoints + totalPoints + streakBonus;
+      
+      const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0') + 1;
+      
+      console.log("NotificationModals: immediately updating profile with new values:", {
+        completed_challenges: completedChallenges,
+        total_points: newTotalPoints,
+        streak: newStreak
+      });
+      
       // Update profile in Supabase
       await updateProfile(user.id, {
-        completed_challenges: parseInt(localStorage.getItem('completedChallenges') || '0') + 1,
-        total_points: parseInt(localStorage.getItem('totalPoints') || '0') + totalPoints + streakBonus,
+        completed_challenges: completedChallenges,
+        total_points: newTotalPoints,
         streak: newStreak,
         selected_actions: userSelectedActions
       });
       
       if (refreshProfile) {
-        console.log("Refreshing profile after challenge completion via notification");
+        console.log("NotificationModals: immediately refreshing profile after challenge completion");
         await refreshProfile(user.id);
       }
     }

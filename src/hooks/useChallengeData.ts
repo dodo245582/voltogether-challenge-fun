@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Challenge } from '@/types';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/auth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from '@/hooks/use-toast';
 
@@ -119,7 +119,8 @@ export const useChallengeData = (initialChallenge: Challenge) => {
       
       // Update current totalPoints in localStorage
       const currentTotalPoints = parseInt(localStorage.getItem('totalPoints') || '0');
-      localStorage.setItem('totalPoints', (currentTotalPoints + totalPoints).toString());
+      const newTotalPoints = currentTotalPoints + totalPoints;
+      localStorage.setItem('totalPoints', newTotalPoints.toString());
       
       // Update completedChallenges in localStorage
       const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0') + 1;
@@ -132,20 +133,24 @@ export const useChallengeData = (initialChallenge: Challenge) => {
         userActions: actionIds
       }));
       
-      // Update user profile in the database
+      // Update user profile in the database and locally immediately
       if (user) {
-        console.log("Updating profile after challenge completion");
-        
-        // Update profile in database and wait for it to complete
-        await updateProfile(user.id, {
+        console.log("Updating profile after challenge completion with new values:", {
           completed_challenges: completedChallenges,
-          total_points: currentTotalPoints + totalPoints,
+          total_points: newTotalPoints,
           streak: newStreak
         });
         
-        // Force refresh profile from database to update UI
+        // Update profile database first
+        await updateProfile(user.id, {
+          completed_challenges: completedChallenges,
+          total_points: newTotalPoints,
+          streak: newStreak
+        });
+        
+        // Force refresh profile to update UI immediately
         if (refreshProfile) {
-          console.log("Refreshing profile data to update UI stats");
+          console.log("Immediately refreshing profile data to update UI stats");
           await refreshProfile(user.id);
         }
       }
