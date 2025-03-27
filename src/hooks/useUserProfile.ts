@@ -50,6 +50,27 @@ export const useUserProfile = () => {
       
       if (data) {
         setProfile(data);
+        
+        // Update localStorage cache
+        try {
+          localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
+          
+          // Also update specific values in localStorage
+          if (data.total_points !== undefined) {
+            localStorage.setItem('totalPoints', data.total_points.toString());
+          }
+          if (data.completed_challenges !== undefined) {
+            localStorage.setItem('completedChallenges', data.completed_challenges.toString());
+          }
+          if (data.streak !== undefined) {
+            localStorage.setItem('streak', data.streak.toString());
+          }
+          if (data.selected_actions) {
+            localStorage.setItem('userSelectedActions', JSON.stringify(data.selected_actions));
+          }
+        } catch (e) {
+          console.error("Error updating localStorage:", e);
+        }
       }
     } catch (error) {
       console.error("Exception in fetchUserProfile:", error);
@@ -99,6 +120,20 @@ export const useUserProfile = () => {
         // Also pre-cache the update
         try {
           localStorage.setItem(`profile_${userId}`, JSON.stringify(updatedProfile));
+          
+          // Update specific localStorage values for immediate UI updates
+          if (data.total_points !== undefined) {
+            localStorage.setItem('totalPoints', data.total_points.toString());
+          }
+          if (data.completed_challenges !== undefined) {
+            localStorage.setItem('completedChallenges', data.completed_challenges.toString());
+          }
+          if (data.streak !== undefined) {
+            localStorage.setItem('streak', data.streak.toString());
+          }
+          if (data.selected_actions) {
+            localStorage.setItem('userSelectedActions', JSON.stringify(data.selected_actions));
+          }
         } catch (e) {
           console.error("Error updating localStorage:", e);
         }
@@ -110,6 +145,8 @@ export const useUserProfile = () => {
       
       if (error) {
         console.log("useUserProfile: Update failed:", error);
+      } else {
+        console.log("useUserProfile: Profile updated successfully in database");
       }
       
       return { error, success: success || !!profile };

@@ -2,10 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Challenge } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from '@/hooks/use-toast';
 
 export const useChallengeData = (initialChallenge: Challenge) => {
-  const { user, profile, updateProfile, refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
+  const { updateProfile } = useUserProfile();
   const [challengeData, setChallengeData] = useState<Challenge>(initialChallenge);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -71,8 +73,8 @@ export const useChallengeData = (initialChallenge: Challenge) => {
       });
       
       // Update user profile if needed
-      if (user && profile && !participating) {
-        await updateProfile({
+      if (user && !participating) {
+        await updateProfile(user.id, {
           streak: 0,  // Reset streak if user is not participating
         });
         
@@ -119,6 +121,10 @@ export const useChallengeData = (initialChallenge: Challenge) => {
       const currentTotalPoints = parseInt(localStorage.getItem('totalPoints') || '0');
       localStorage.setItem('totalPoints', (currentTotalPoints + totalPoints).toString());
       
+      // Update completedChallenges in localStorage
+      const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0') + 1;
+      localStorage.setItem('completedChallenges', completedChallenges.toString());
+      
       // Update state
       setChallengeData(prev => ({
         ...prev,
@@ -127,16 +133,13 @@ export const useChallengeData = (initialChallenge: Challenge) => {
       }));
       
       // Update user profile in the database
-      if (user && profile) {
+      if (user) {
         console.log("Updating profile after challenge completion");
         
-        const updatedCompletedChallenges = (profile.completed_challenges || 0) + 1;
-        const updatedTotalPoints = (profile.total_points || 0) + totalPoints;
-        
         // Update profile in database and wait for it to complete
-        await updateProfile({
-          completed_challenges: updatedCompletedChallenges,
-          total_points: updatedTotalPoints,
+        await updateProfile(user.id, {
+          completed_challenges: completedChallenges,
+          total_points: currentTotalPoints + totalPoints,
           streak: newStreak
         });
         

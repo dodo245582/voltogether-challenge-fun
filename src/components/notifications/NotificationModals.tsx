@@ -1,6 +1,7 @@
 
 import { useNotifications } from '@/context/NotificationContext';
 import { useAuth } from '@/context/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import ParticipationModal from './ParticipationModal';
 import CompletionModal from './CompletionModal';
 
@@ -23,6 +24,7 @@ const NotificationModals = () => {
   } = useNotifications();
   
   const { user, refreshProfile } = useAuth();
+  const { updateProfile } = useUserProfile();
   
   // Get previously selected actions from localStorage
   const userSelectedActions = JSON.parse(localStorage.getItem('userSelectedActions') || '[]');
@@ -48,9 +50,28 @@ const NotificationModals = () => {
       markAllRelatedNotificationsAsRead(challengeId);
     }
     
-    if (user && refreshProfile) {
-      console.log("Refreshing profile after challenge completion via notification");
-      await refreshProfile(user.id);
+    // Update user profile with new points and challenge completion
+    if (user) {
+      const pointsPerAction = 10;
+      const totalPoints = selectedActions.includes('none') ? 0 : selectedActions.length * pointsPerAction;
+      
+      // Get current streak from localStorage
+      const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+      const newStreak = totalPoints > 0 ? currentStreak + 1 : 0;
+      const streakBonus = newStreak >= 3 ? 5 : 0;
+      
+      // Update profile in Supabase
+      await updateProfile(user.id, {
+        completed_challenges: parseInt(localStorage.getItem('completedChallenges') || '0') + 1,
+        total_points: parseInt(localStorage.getItem('totalPoints') || '0') + totalPoints + streakBonus,
+        streak: newStreak,
+        selected_actions: userSelectedActions
+      });
+      
+      if (refreshProfile) {
+        console.log("Refreshing profile after challenge completion via notification");
+        await refreshProfile(user.id);
+      }
     }
   };
   
