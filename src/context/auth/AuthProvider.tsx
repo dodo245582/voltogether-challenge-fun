@@ -110,11 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Ensure profile is created after signup
-        await createUserProfileIfNotExists(data.user.id, data.user.email);
-        console.log("Profile creation completed for user ID:", data.user.id);
+        const result = await createUserProfileIfNotExists(data.user.id, data.user.email);
+        console.log("Profile creation completed for user ID:", data.user.id, "Result:", result);
         
         // Fetch profile data 
-        await fetchUserProfile(data.user.id);
+        const profileResult = await fetchUserProfile(data.user.id);
+        console.log("Profile fetch result:", profileResult);
       } else if (error) {
         console.error("Signup error:", error);
         setLoading(false);
@@ -212,9 +213,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshProfile = async (userId: string) => {
-    if (!userId) return;
+    if (!userId) return { success: false, error: "No user ID provided" };
     console.log("AuthProvider: Refreshing profile for user:", userId);
-    return await fetchUserProfile(userId);
+    const result = await fetchUserProfile(userId);
+    return { success: !!result, error: result ? null : "Failed to fetch profile" };
   };
 
   const value = {

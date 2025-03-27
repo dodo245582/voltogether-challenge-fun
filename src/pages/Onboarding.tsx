@@ -1,24 +1,28 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingContainer from '@/components/onboarding/OnboardingContainer';
 import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Onboarding = () => {
-  const { user, loading, profile, refreshProfile } = useAuth();
+  const { user, loading, profile, refreshProfile, authInitialized } = useAuth();
   const navigate = useNavigate();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Refresh profile once when component mounts
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && !isRefreshing) {
       console.log("Onboarding: refreshing profile for user", user.id);
-      refreshProfile(user.id);
+      setIsRefreshing(true);
+      refreshProfile(user.id).finally(() => {
+        setIsRefreshing(false);
+      });
     }
-  }, [user?.id, refreshProfile]);
+  }, [user?.id, refreshProfile, isRefreshing]);
   
-  // Show loading state while auth is being checked
-  if (loading) {
+  // Show loading state while auth is being checked or profile is being refreshed
+  if (loading || !authInitialized || isRefreshing) {
     return <DashboardLoadingState />;
   }
   
