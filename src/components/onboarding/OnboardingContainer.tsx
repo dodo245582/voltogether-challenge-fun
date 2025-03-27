@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +18,7 @@ import { useOnboardingState } from '@/hooks/useOnboardingState';
 const OnboardingContainer = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, updateProfile, profile, refreshProfile } = useAuth();
+  const { user, updateProfile, profile } = useAuth();
   const { 
     step, setStep, 
     name, setName, 
@@ -29,72 +29,7 @@ const OnboardingContainer = () => {
     redirectAttempted, setRedirectAttempted
   } = useOnboardingState(profile);
   
-  const [refreshError, setRefreshError] = useState(false);
-  const [refreshTimeout, setRefreshTimeout] = useState(false);
-  const [updateAttempts, setUpdateAttempts] = useState(0);
-  const [refreshAttempts, setRefreshAttempts] = useState(0);
-  
-  useEffect(() => {
-    if (!user || redirectAttempted) return;
-    
-    console.log("OnboardingContainer: Checking profile status for user:", user.id);
-    
-    let refreshTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    let mounted = true;
-    
-    const timeoutId = setTimeout(() => {
-      if (mounted) {
-        console.log("OnboardingContainer: Profile refresh timeout reached");
-        setRefreshTimeout(true);
-      }
-    }, 5000);
-    
-    const attemptRefresh = () => {
-      if (!mounted || !refreshProfile) return;
-      
-      refreshProfile(user.id)
-        .then(() => {
-          if (mounted) {
-            clearTimeout(timeoutId);
-            if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
-          }
-        })
-        .catch(error => {
-          console.error("OnboardingContainer: Error refreshing profile:", error);
-          
-          if (mounted && refreshAttempts < 3) {
-            const retryDelay = Math.pow(2, refreshAttempts) * 1000; // Exponential backoff
-            console.log(`OnboardingContainer: Retrying profile refresh in ${retryDelay}ms (attempt ${refreshAttempts + 1})`);
-            
-            refreshTimeoutId = setTimeout(() => {
-              if (mounted) {
-                setRefreshAttempts(prev => prev + 1);
-                attemptRefresh();
-              }
-            }, retryDelay);
-          } else if (mounted) {
-            setRefreshError(true);
-            clearTimeout(timeoutId);
-          }
-        });
-    };
-    
-    attemptRefresh();
-    
-    return () => {
-      mounted = false;
-      clearTimeout(timeoutId);
-      if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
-    };
-  }, [user, redirectAttempted, refreshProfile, refreshAttempts]);
-  
-  useEffect(() => {
-    if (profile && profile.profile_completed === true && !redirectAttempted) {
-      console.log("User already has a completed profile, redirecting to dashboard");
-      setRedirectAttempted(true);
-      navigate('/dashboard', { replace: true });
-    }
-  }, [profile, navigate, redirectAttempted, setRedirectAttempted]);
+  const [error, setError] = useState(false);
   
   const nextStep = () => {
     if (step === 1 && !name) {
@@ -146,18 +81,12 @@ const OnboardingContainer = () => {
     }
   };
   
-  // Fix: Ensure proper typing and string array handling 
   const toggleAction = (actionId: string) => {
-    // Use direct callback to avoid any potential state staleness issues
-    setSelectedActions((prev) => {
-      // Ensure prev is always treated as an array
-      const currentActions = Array.isArray(prev) ? prev : [];
-      
-      // Return a new array to avoid mutation
-      if (currentActions.includes(actionId)) {
-        return currentActions.filter((id) => id !== actionId);
+    setSelectedActions(prev => {
+      if (prev.includes(actionId)) {
+        return prev.filter(id => id !== actionId);
       } else {
-        return [...currentActions, actionId];
+        return [...prev, actionId];
       }
     });
   };
@@ -173,17 +102,9 @@ const OnboardingContainer = () => {
       return;
     }
     
-    if (!name || !city || !discoverySource || selectedActions.length === 0) {
-      toast({
-        title: "Campi obbligatori mancanti",
-        description: "Tutti i campi del profilo sono obbligatori",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     setIsLoading(true);
     
+    // Update local storage cache first for immediate UI response
     try {
       localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
       
@@ -215,83 +136,53 @@ const OnboardingContainer = () => {
     
     console.log("Profile data being submitted:", profileData);
     
+    // Set a very short timeout as fallback to ensure we don't freeze the UI
     const updateTimeoutId = setTimeout(() => {
-      console.log("Profile update timeout reached");
+      console.log("Profile update timeout - redirecting anyway");
       setIsLoading(false);
-      toast({
-        title: "Operazione completata",
-        description: "Anche se l'aggiornamento ha impiegato più tempo del previsto, il tuo profilo dovrebbe essere stato completato. Ti reindirizziamo alla dashboard.",
-        variant: "default",
-      });
-      
       navigate('/dashboard', { replace: true });
-    }, 8000);
+    }, 3000);
     
     try {
-      const attemptUpdate = async (attempt = 1): Promise<any> => {
-        try {
-          console.log(`Calling updateProfile with data (attempt ${attempt}):`, profileData);
-          const result = await updateProfile(profileData);
-          
-          if (result.error) {
-            console.error(`Error in onboarding profile update (attempt ${attempt}):`, result.error);
-            
-            if (attempt < 3) {
-              const retryDelay = Math.pow(2, attempt) * 500;
-              console.log(`Retrying update after ${retryDelay}ms`);
-              await new Promise(resolve => setTimeout(resolve, retryDelay));
-              return attemptUpdate(attempt + 1);
-            }
-            
-            throw result.error;
-          }
-          
-          return result;
-        } catch (error) {
-          if (attempt < 3) {
-            const retryDelay = Math.pow(2, attempt) * 500;
-            console.log(`Caught exception, retrying update after ${retryDelay}ms`);
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
-            return attemptUpdate(attempt + 1);
-          }
-          throw error;
-        }
-      };
-      
-      const { error, success } = await attemptUpdate();
+      const result = await updateProfile(profileData);
       
       clearTimeout(updateTimeoutId);
       
-      if (error) {
-        throw error;
-      }
-      
-      if (success) {
-        console.log("Onboarding completed successfully");
+      if (result.error) {
+        console.error("Error updating profile:", result.error);
+        setError(true);
+        toast({
+          title: "Errore",
+          description: "Si è verificato un errore durante il salvataggio del profilo, ma ti reindirizziamo comunque alla dashboard.",
+          variant: "destructive",
+        });
+      } else {
         toast({
           title: "Profilo completato",
           description: "Il tuo profilo è stato configurato con successo",
           variant: "default",
         });
-        
-        navigate('/dashboard', { replace: true });
       }
-    } catch (error: any) {
-      console.error("Error updating user profile:", error);
+      
+      // Always redirect to dashboard after a short delay
+      setTimeout(() => {
+        setIsLoading(false);
+        navigate('/dashboard', { replace: true });
+      }, 500);
+    } catch (error) {
+      console.error("Exception during profile update:", error);
       clearTimeout(updateTimeoutId);
       
       toast({
         title: "Errore",
-        description: error.message || "Si è verificato un errore durante il salvataggio del profilo",
+        description: "Si è verificato un errore, ma ti reindirizziamo comunque alla dashboard.",
         variant: "destructive",
       });
       
       setTimeout(() => {
         setIsLoading(false);
         navigate('/dashboard', { replace: true });
-      }, 2000);
-    } finally {
-      setIsLoading(false);
+      }, 500);
     }
   };
 
@@ -331,35 +222,18 @@ const OnboardingContainer = () => {
     );
   }
   
-  if (refreshError) {
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md p-8 rounded-lg shadow-md bg-white">
           <h2 className="text-xl font-bold text-red-600 mb-4">Errore di caricamento</h2>
-          <p className="mb-4">Si è verificato un errore durante il caricamento del profilo. Riprova più tardi.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-voltgreen-600 text-white rounded hover:bg-voltgreen-700 transition-colors"
-          >
-            Ricarica pagina
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
-  if (refreshTimeout) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md p-8 rounded-lg shadow-md bg-white">
-          <h2 className="text-xl font-bold text-amber-600 mb-4">Caricamento lento</h2>
-          <p className="mb-4">Il caricamento del profilo sta impiegando più tempo del previsto. Puoi attendere o ricaricare la pagina.</p>
+          <p className="mb-4">Si è verificato un errore. Puoi riprovare o procedere alla dashboard.</p>
           <div className="flex gap-3 justify-center">
             <button 
               onClick={() => window.location.reload()} 
               className="px-4 py-2 bg-voltgreen-600 text-white rounded hover:bg-voltgreen-700 transition-colors"
             >
-              Ricarica pagina
+              Riprova
             </button>
             <button 
               onClick={() => navigate('/dashboard', { replace: true })} 
@@ -374,7 +248,7 @@ const OnboardingContainer = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 animate-fade-in">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="mb-8 text-center">
           <img 
@@ -388,7 +262,7 @@ const OnboardingContainer = () => {
         
         <StepIndicators currentStep={step} />
         
-        <Card className="shadow-lg border border-gray-200 animate-scale-in duration-300">
+        <Card className="shadow-lg border border-gray-200">
           <CardHeader>
             <CardTitle>
               {step === 1 && "Come ti chiami?"}
