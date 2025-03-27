@@ -78,10 +78,10 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
           user_email: email
         };
         
-        // Fix: The rpc method requires two type arguments - the return type and the input type
-        // Using any as the return type to fix the constraint error
+        // Use a properly typed RPC call without specifying generic types
+        // Let TypeScript infer the return type instead of explicitly setting it
         const { data: directInsertData, error: directInsertError } = await supabase
-          .rpc<any, CreateUserProfileParams>('create_user_profile', params);
+          .rpc('create_user_profile', params);
           
         if (directInsertError) {
           console.error("Direct insert failed:", directInsertError);
