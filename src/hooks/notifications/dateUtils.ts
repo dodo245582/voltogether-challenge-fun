@@ -26,17 +26,24 @@ export const shouldShowParticipationBox = (
   challengeId: number | null,
   notifications: { type: string; challengeId?: number; timestamp: string }[]
 ): boolean => {
-  if (!challengeId) return false;
+  if (!challengeId) {
+    console.log("shouldShowParticipationBox: No challenge ID provided");
+    return false;
+  }
 
   // Check if user has already responded to participation
   const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
-  if (participationResponse !== null) return false; // Already responded
-
-  // DEBUG: Always return true for testing
+  
   console.log("shouldShowParticipationBox called with challengeId:", challengeId);
   console.log("Participation response from localStorage:", participationResponse);
   
-  // FORCE TRUE FOR TESTING - comment this line after testing is complete
+  if (participationResponse !== null) {
+    console.log("shouldShowParticipationBox: User already responded with:", participationResponse);
+    return false; // Already responded
+  }
+  
+  // FORCE TRUE FOR TESTING - uncomment this line after testing is complete
+  console.log("shouldShowParticipationBox: Forcing true for testing purposes");
   return true;
 };
 

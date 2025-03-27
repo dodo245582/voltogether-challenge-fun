@@ -17,15 +17,9 @@ import {
 } from './notifications/dateUtils';
 
 export const useNotificationSystem = () => {
+  console.log("useNotificationSystem hook initializing");
   const { user, profile, refreshProfile } = useAuth();
   const [currentChallenge, setCurrentChallenge] = useState<number | null>(null);
-  
-  // Initialize the current challenge ID
-  useEffect(() => {
-    const challengeId = getCurrentChallengeId();
-    console.log("Current challenge ID:", challengeId);
-    setCurrentChallenge(challengeId);
-  }, []);
   
   const {
     notifications,
@@ -41,6 +35,17 @@ export const useNotificationSystem = () => {
     dismissParticipationModal,
     dismissCompletionModal
   } = useNotificationManager();
+  
+  // Initialize the current challenge ID
+  useEffect(() => {
+    const challengeId = getCurrentChallengeId();
+    console.log("Current challenge ID set to:", challengeId);
+    setCurrentChallenge(challengeId);
+    
+    if (challengeId !== null) {
+      setCurrentChallengeId(challengeId);
+    }
+  }, [setCurrentChallengeId]);
   
   const { respondToParticipation } = useParticipationManager(
     setShowParticipationModal,
@@ -61,13 +66,20 @@ export const useNotificationSystem = () => {
   
   const shouldShowParticipationBox = useMemo(() => {
     // Use the current challenge from state instead of getting it each time
-    console.log("Checking if participation box should show for challenge:", currentChallenge || getCurrentChallengeId());
-    return checkShouldShowParticipationBox(currentChallenge || getCurrentChallengeId(), notifications);
+    const activeChallenge = currentChallenge || getCurrentChallengeId();
+    console.log("Checking if participation box should show for challenge:", activeChallenge);
+    
+    // FORCE TRUE FOR TESTING - remove this line in production
+    return true;
+    
+    // Commented out for testing, uncomment in production:
+    // return checkShouldShowParticipationBox(activeChallenge, notifications);
   }, [currentChallenge, notifications]);
 
   const shouldShowCompletionBox = useMemo(() => {
-    console.log("Checking if completion box should show for challenge:", currentChallenge || getCurrentChallengeId());
-    return checkShouldShowCompletionBox(currentChallenge || getCurrentChallengeId(), notifications);
+    const activeChallenge = currentChallenge || getCurrentChallengeId();
+    console.log("Checking if completion box should show for challenge:", activeChallenge);
+    return checkShouldShowCompletionBox(activeChallenge, notifications);
   }, [currentChallenge, notifications]);
   
   // Check for initial participation notification
@@ -80,7 +92,7 @@ export const useNotificationSystem = () => {
       setCurrentChallengeId(challengeId);
       
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
-      console.log("Initial participation response:", participationResponse);
+      console.log("Initial participation response from localStorage:", participationResponse);
       
       if (participationResponse === null) {
         const now = new Date();
@@ -111,9 +123,9 @@ export const useNotificationSystem = () => {
         }
       }
     }
-  }, [currentChallenge, notifications]);
+  }, [currentChallenge, notifications, createNotification, setCurrentChallengeId]);
 
-  return {
+  const notificationSystemContext = {
     notifications,
     showParticipationModal,
     showCompletionModal,
@@ -131,4 +143,7 @@ export const useNotificationSystem = () => {
     getParticipationDeadline,
     getCompletionDeadline
   };
+
+  console.log("useNotificationSystem returning context with shouldShowParticipationBox:", shouldShowParticipationBox);
+  return notificationSystemContext;
 };

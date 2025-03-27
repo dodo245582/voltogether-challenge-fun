@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Notification, NotificationType } from '@/types/notifications';
@@ -62,7 +63,7 @@ export const useNotificationManager = () => {
       });
       
       if (areNotificationsEnabled()) {
-        new Notification(newNotification.title, {
+        new window.Notification(newNotification.title, {
           body: newNotification.message,
           icon: '/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png'
         });
