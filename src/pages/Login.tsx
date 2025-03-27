@@ -5,11 +5,9 @@ import Navbar from '@/components/layout/Navbar';
 import AuthForm from '@/components/auth/AuthForm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [loginSuccessful, setLoginSuccessful] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn } = useAuth();
@@ -29,7 +27,7 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Redirect immediately to dashboard
+        // Immediate redirect to dashboard
         navigate('/dashboard', { replace: true });
       } else {
         console.error("Login error:", error);
