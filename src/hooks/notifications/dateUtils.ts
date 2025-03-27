@@ -42,9 +42,12 @@ export const shouldShowParticipationBox = (
     return false; // Already responded
   }
   
-  // FORCE TRUE FOR TESTING - uncomment this line after testing is complete
-  console.log("shouldShowParticipationBox: Forcing true for testing purposes");
+  // Uncomment this in production
   return true;
+  
+  // FORCE TRUE FOR TESTING - uncomment this line after testing is complete
+  // console.log("shouldShowParticipationBox: Forcing true for testing purposes");
+  // return true;
 };
 
 export const shouldShowCompletionBox = (

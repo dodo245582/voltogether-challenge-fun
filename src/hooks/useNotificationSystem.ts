@@ -20,6 +20,7 @@ export const useNotificationSystem = () => {
   console.log("useNotificationSystem hook initializing");
   const { user, profile, refreshProfile } = useAuth();
   const [currentChallenge, setCurrentChallenge] = useState<number | null>(null);
+  const [forceHideParticipationBox, setForceHideParticipationBox] = useState(false);
   
   const {
     notifications,
@@ -47,10 +48,25 @@ export const useNotificationSystem = () => {
     }
   }, [setCurrentChallengeId]);
   
-  const { respondToParticipation } = useParticipationManager(
+  const { respondToParticipation: originalRespondToParticipation } = useParticipationManager(
     setShowParticipationModal,
     markAllRelatedNotificationsAsRead
   );
+  
+  // Wrap the respondToParticipation to also update our local state
+  const respondToParticipation = async (challengeId: number, participating: boolean) => {
+    setForceHideParticipationBox(true);
+    await originalRespondToParticipation(challengeId, participating);
+    
+    // Immediately update localStorage to ensure UI shows correct state
+    localStorage.setItem(`challenge_${challengeId}_participating`, participating.toString());
+    
+    // If not participating, also mark as completed with no actions
+    if (!participating) {
+      localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
+      localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(['none']));
+    }
+  };
   
   const { completeChallengeActions } = useCompletionManager(
     setShowCompletionModal,
@@ -65,16 +81,17 @@ export const useNotificationSystem = () => {
   );
   
   const shouldShowParticipationBox = useMemo(() => {
+    if (forceHideParticipationBox) {
+      console.log("Forcing hide participation box due to user response");
+      return false;
+    }
+    
     // Use the current challenge from state instead of getting it each time
     const activeChallenge = currentChallenge || getCurrentChallengeId();
     console.log("Checking if participation box should show for challenge:", activeChallenge);
     
-    // FORCE TRUE FOR TESTING - remove this line in production
-    return true;
-    
-    // Commented out for testing, uncomment in production:
-    // return checkShouldShowParticipationBox(activeChallenge, notifications);
-  }, [currentChallenge, notifications]);
+    return checkShouldShowParticipationBox(activeChallenge, notifications);
+  }, [currentChallenge, notifications, forceHideParticipationBox]);
 
   const shouldShowCompletionBox = useMemo(() => {
     const activeChallenge = currentChallenge || getCurrentChallengeId();

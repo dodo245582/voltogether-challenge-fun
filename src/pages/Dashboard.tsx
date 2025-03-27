@@ -119,6 +119,12 @@ const Dashboard = () => {
     if (notificationChallengeId !== null) {
       await respondToParticipation(notificationChallengeId, participating);
       
+      if (participating) {
+        handleParticipateInChallenge(notificationChallengeId, true);
+      } else {
+        handleParticipateInChallenge(notificationChallengeId, false);
+      }
+      
       if (user && refreshProfile) {
         await refreshProfile(user.id);
       }

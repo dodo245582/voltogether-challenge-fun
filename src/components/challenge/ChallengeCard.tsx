@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -94,7 +93,11 @@ const ChallengeCard = ({
             <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
               <XCircle className="mr-1 h-3 w-3" /> Non partecipi
             </Badge>
-          ) : isChallengeActive ? (
+          ) : challenge.participating === true && !isChallengeActive && !isDayInPast ? (
+            <Badge variant="outline" className="bg-voltgreen-100 text-voltgreen-800 border-voltgreen-200">
+              <CheckCircle className="mr-1 h-3 w-3" /> Partecipi
+            </Badge>
+          ) : isChallengeActive && challenge.participating === true ? (
             <Badge className="bg-voltgreen-500 animate-pulse">In corso</Badge>
           ) : isDayInPast && !challenge.completed ? (
             <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
