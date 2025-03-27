@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { SUSTAINABLE_ACTIONS } from '@/types';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export const NotificationModals = () => {
@@ -19,7 +19,9 @@ export const NotificationModals = () => {
     completeChallengeActions,
     dismissParticipationModal,
     dismissCompletionModal,
-    markAllRelatedNotificationsAsRead
+    markAllRelatedNotificationsAsRead,
+    getParticipationDeadline,
+    getCompletionDeadline
   } = useNotifications();
   
   const { user, refreshProfile } = useAuth();
@@ -108,6 +110,14 @@ export const NotificationModals = () => {
               Partecipando alla sfida contribuirai a ridurre l'impatto ambientale e guadagnerai punti per ogni azione sostenibile.
             </p>
             
+            {/* Deadline information */}
+            <div className="flex items-center p-2 bg-amber-50 text-amber-800 rounded-md border border-amber-200">
+              <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+              <p className="text-sm">
+                Hai tempo per rispondere fino alle {getParticipationDeadline()}!
+              </p>
+            </div>
+            
             <div className="bg-gray-50 p-3 rounded-md border">
               <h4 className="font-medium text-sm mb-2">Azioni consigliate:</h4>
               <ul className="text-sm space-y-1.5">
@@ -151,6 +161,14 @@ export const NotificationModals = () => {
           </DialogHeader>
           
           <div className="flex flex-col gap-4 py-4">
+            {/* Deadline information */}
+            <div className="flex items-center p-2 bg-amber-50 text-amber-800 rounded-md border border-amber-200">
+              <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+              <p className="text-sm">
+                Hai tempo per rispondere fino alle {getCompletionDeadline()}!
+              </p>
+            </div>
+            
             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
               {allActions.map((action) => (
                 <div key={action.id} className="flex items-start space-x-2">

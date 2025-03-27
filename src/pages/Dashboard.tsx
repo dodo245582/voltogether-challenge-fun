@@ -10,6 +10,10 @@ import { SUSTAINABLE_ACTIONS, CHALLENGE_DATES } from '@/types';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 import { useChallengeData } from '@/hooks/useChallengeData';
+import NotificationModals from '@/components/notifications/NotificationModals';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, XCircle, Clock } from 'lucide-react';
 
 // Lazy load components that aren't immediately visible
 const NextEvents = lazy(() => import('@/components/dashboard/NextEvents'));
@@ -18,7 +22,17 @@ const CommunityStats = lazy(() => import('@/components/dashboard/CommunityStats'
 const Dashboard = () => {
   const { profile, user, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const { notifications } = useNotifications();
+  const { 
+    notifications, 
+    shouldShowParticipationBox, 
+    shouldShowCompletionBox,
+    currentChallengeId: notificationChallengeId,
+    respondToParticipation,
+    completeChallengeActions,
+    getParticipationDeadline,
+    getCompletionDeadline
+  } = useNotifications();
+  
   const [challengeStats, setChallengeStats] = useState({
     totalChallenges: 7,
     completedChallenges: 0,
@@ -95,6 +109,50 @@ const Dashboard = () => {
     }
   };
 
+  // Handle participation response from notification box
+  const handleParticipationResponse = async (participating: boolean) => {
+    if (notificationChallengeId !== null) {
+      await respondToParticipation(notificationChallengeId, participating);
+      
+      // Refresh the profile to update UI
+      if (user && refreshProfile) {
+        await refreshProfile(user.id);
+      }
+    }
+  };
+
+  // Handle challenge completion from notification box
+  const [selectedCompletionActions, setSelectedCompletionActions] = useState<string[]>([]);
+  
+  const handleActionToggle = (actionId: string) => {
+    if (actionId === 'none') {
+      setSelectedCompletionActions(['none']);
+    } else {
+      setSelectedCompletionActions(prev => {
+        if (prev.includes('none')) {
+          return [actionId];
+        }
+        return prev.includes(actionId)
+          ? prev.filter(id => id !== actionId)
+          : [...prev, actionId];
+      });
+    }
+  };
+  
+  const handleSubmitCompletionActions = async () => {
+    if (notificationChallengeId !== null && selectedCompletionActions.length > 0) {
+      await completeChallengeActions(notificationChallengeId, selectedCompletionActions);
+      
+      // Refresh the profile to update UI
+      if (user && refreshProfile) {
+        await refreshProfile(user.id);
+      }
+      
+      // Reset selected actions
+      setSelectedCompletionActions([]);
+    }
+  };
+
   useEffect(() => {
     document.body.classList.add('bg-white');
     return () => {
@@ -128,6 +186,113 @@ const Dashboard = () => {
       <main className="flex-1 max-w-5xl mx-auto w-full p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Participation notification box */}
+            {shouldShowParticipationBox && (
+              <Card className="border-amber-200 bg-amber-50 shadow-sm animate-pulse-soft">
+                <CardHeader>
+                  <CardTitle className="text-lg text-amber-800">Parteciperai alla sfida di oggi?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-amber-700 mb-4">
+                    Oggi dalle 19:00 alle 20:00 riduci i tuoi consumi energetici e partecipa alla sfida!
+                  </p>
+                  <div className="bg-white rounded-md p-3 border border-amber-200 mb-4">
+                    <div className="flex items-center text-amber-800 mb-2">
+                      <Clock className="h-4 w-4 mr-2" />
+                      <p className="text-sm font-medium">
+                        Hai tempo per rispondere fino alle {getParticipationDeadline()}!
+                      </p>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Partecipando alla sfida contribuirai a ridurre l'impatto ambientale e guadagnerai punti.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between pt-2 pb-4">
+                  <Button variant="outline" onClick={() => handleParticipationResponse(false)}>
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Non parteciperò
+                  </Button>
+                  <Button 
+                    onClick={() => handleParticipationResponse(true)}
+                    className="bg-voltgreen-600 hover:bg-voltgreen-700"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Parteciperò
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+            
+            {/* Completion notification box */}
+            {shouldShowCompletionBox && (
+              <Card className="border-voltgreen-200 bg-voltgreen-50 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg text-voltgreen-800">Sfida completata!</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-voltgreen-700 mb-4">
+                    Quali azioni hai fatto per ridurre i consumi energetici?
+                  </p>
+                  <div className="bg-white rounded-md p-3 border border-voltgreen-200 mb-4">
+                    <div className="flex items-center text-amber-800 mb-2">
+                      <Clock className="h-4 w-4 mr-2" />
+                      <p className="text-sm font-medium">
+                        Hai tempo per rispondere fino alle {getCompletionDeadline()}!
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
+                    {userActions.map((action) => (
+                      <div key={action.id} className="flex items-start space-x-2">
+                        <Checkbox 
+                          id={`dashboard-action-${action.id}`}
+                          checked={selectedCompletionActions.includes(action.id)}
+                          onCheckedChange={() => handleActionToggle(action.id)}
+                          disabled={selectedCompletionActions.includes('none')}
+                        />
+                        <div>
+                          <label
+                            htmlFor={`dashboard-action-${action.id}`}
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            {action.label}
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex items-start space-x-2">
+                        <Checkbox 
+                          id="dashboard-action-none"
+                          checked={selectedCompletionActions.includes('none')}
+                          onCheckedChange={() => handleActionToggle('none')}
+                          disabled={selectedCompletionActions.length > 0 && !selectedCompletionActions.includes('none')}
+                        />
+                        <label
+                          htmlFor="dashboard-action-none"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Non sono riuscito a partecipare
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-2 pb-4">
+                  <Button 
+                    onClick={handleSubmitCompletionActions}
+                    disabled={selectedCompletionActions.length === 0}
+                    className="w-full bg-voltgreen-600 hover:bg-voltgreen-700"
+                  >
+                    Conferma
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+            
             <ChallengeCard
               challenge={todayChallengeData}
               recommendedActions={SUSTAINABLE_ACTIONS.slice(0, 3)}
@@ -156,6 +321,7 @@ const Dashboard = () => {
         </div>
       </main>
       
+      <NotificationModals />
       <Footer />
     </div>
   );

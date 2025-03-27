@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
 import type { Notification, NotificationType } from '@/types/notifications';
 import { getCurrentChallengeId } from '@/types/notifications';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { isToday, parseISO } from 'date-fns';
+import { isToday, parseISO, format, addDays, isAfter, isBefore, set } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 export const useNotificationSystem = () => {
   const { toast } = useToast();
@@ -15,6 +16,49 @@ export const useNotificationSystem = () => {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [currentChallengeId, setCurrentChallengeId] = useState<number | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  const getParticipationDeadline = (): string => {
+    const today = new Date();
+    const deadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
+    return format(deadline, "HH:mm 'di oggi'", { locale: it });
+  };
+
+  const getCompletionDeadline = (): string => {
+    const tomorrow = addDays(new Date(), 1);
+    const deadline = set(tomorrow, { hours: 8, minutes: 59, seconds: 0 });
+    return format(deadline, "HH:mm 'di domani'", { locale: it });
+  };
+
+  const shouldShowParticipationBox = useMemo(() => {
+    const challengeId = getCurrentChallengeId();
+    if (!challengeId) return false;
+
+    const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
+    if (participationResponse !== null) return false; // Already responded
+
+    const now = new Date();
+    const participationDeadline = set(now, { hours: 18, minutes: 54, seconds: 0 });
+
+    return isBefore(now, participationDeadline) && isToday(participationDeadline);
+  }, [notifications]);
+
+  const shouldShowCompletionBox = useMemo(() => {
+    const challengeId = getCurrentChallengeId();
+    if (!challengeId) return false;
+
+    const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
+    if (participationResponse !== 'true') return false; // Only show if participating
+
+    const completionResponse = localStorage.getItem(`challenge_${challengeId}_completed`);
+    if (completionResponse === 'true') return false; // Already completed
+
+    const now = new Date();
+    const completionCutoff = set(addDays(new Date(), 1), { hours: 8, minutes: 59, seconds: 0 });
+    const challengeDay = parseISO(CHALLENGE_DATES[challengeId - 1]);
+    const challengeEndTime = set(challengeDay, { hours: 20, minutes: 0, seconds: 0 });
+
+    return isAfter(now, challengeEndTime) && isBefore(now, completionCutoff);
+  }, [notifications]);
 
   const areNotificationsEnabled = () => {
     return 'Notification' in window && Notification.permission === 'granted';
@@ -59,6 +103,15 @@ export const useNotificationSystem = () => {
     challengeId?: number,
     requiredAction: boolean = false
   ) => {
+    let deadline: Date | undefined;
+    if (type === 'participation-request') {
+      const today = new Date();
+      deadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
+    } else if (type === 'challenge-completion') {
+      const tomorrow = addDays(new Date(), 1);
+      deadline = set(tomorrow, { hours: 8, minutes: 59, seconds: 0 });
+    }
+
     const newNotification: Notification = {
       id: Date.now().toString(),
       type,
@@ -67,7 +120,8 @@ export const useNotificationSystem = () => {
       challengeId,
       read: false,
       timestamp: new Date().toISOString(),
-      requiredAction
+      requiredAction,
+      deadline
     };
     
     setNotifications(prev => [newNotification, ...prev]);
@@ -343,6 +397,10 @@ export const useNotificationSystem = () => {
     dismissParticipationModal,
     dismissCompletionModal,
     notificationsEnabled,
-    enableNotifications
+    enableNotifications,
+    shouldShowParticipationBox,
+    shouldShowCompletionBox,
+    getParticipationDeadline,
+    getCompletionDeadline
   };
 };

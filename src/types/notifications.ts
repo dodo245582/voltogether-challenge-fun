@@ -18,6 +18,7 @@ export interface Notification {
   read: boolean;
   timestamp: string;
   requiredAction: boolean;
+  deadline?: Date; // Added deadline field for time-sensitive notifications
 }
 
 export interface NotificationContextType {
@@ -33,6 +34,11 @@ export interface NotificationContextType {
   dismissCompletionModal: () => void;
   notificationsEnabled: boolean;
   enableNotifications: () => void;
+  // Add these properties for box visibility control
+  shouldShowParticipationBox: boolean;
+  shouldShowCompletionBox: boolean;
+  getParticipationDeadline: () => string;
+  getCompletionDeadline: () => string;
 }
 
 // For the current challenge
