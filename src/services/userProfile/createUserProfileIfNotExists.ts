@@ -21,7 +21,7 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
       .from('Users')
       .select('*')
       .eq('id', userId)
-      .maybeSingle(); // Cambiato da .single() a .maybeSingle() per evitare errori se non viene trovato
+      .maybeSingle();
     
     if (lookupError && lookupError.code !== 'PGRST116') {
       // Real error (not just "not found")
@@ -32,12 +32,17 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
     // If profile already exists, return success
     if (existingProfile) {
       console.log("Service: Profile already exists, no need to create");
+      console.log("Existing profile data:", existingProfile);
       return { error: null, success: true, data: existingProfile };
     }
     
     // Create profile if it doesn't exist
     console.log("Service: Creating new user profile for:", userId);
     console.log("Service: Using email:", email);
+    
+    // Log current auth status
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Current auth session:", session ? "Exists" : "None");
     
     const { error: insertError, data: newProfile } = await supabase
       .from('Users')
@@ -57,6 +62,43 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
       // Se l'errore è di violazione RLS, potrebbe essere perché l'utente non è autenticato correttamente
       if (insertError.code === '42501') {
         console.error("RLS policy violation - make sure user is authenticated");
+      }
+      
+      // Fallback: try creating without RLS (if the policy is causing issues)
+      console.log("Attempting direct insert via function...");
+      try {
+        const { data: directInsertData, error: directInsertError } = await supabase
+          .rpc('create_user_profile', {
+            user_id: userId,
+            user_email: email
+          });
+          
+        if (directInsertError) {
+          console.error("Direct insert failed:", directInsertError);
+          return { error: directInsertError, success: false };
+        }
+        
+        console.log("Direct insert succeeded:", directInsertData);
+        
+        // Get the newly created profile
+        const { data: createdProfile } = await supabase
+          .from('Users')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+          
+        if (createdProfile) {
+          // Also store in localStorage
+          try {
+            localStorage.setItem(`profile_${userId}`, JSON.stringify(createdProfile));
+          } catch (e) {
+            console.error("Error storing profile in localStorage:", e);
+          }
+          
+          return { error: null, success: true, data: createdProfile };
+        }
+      } catch (fallbackError) {
+        console.error("Fallback error:", fallbackError);
       }
       
       return { error: insertError, success: false };
