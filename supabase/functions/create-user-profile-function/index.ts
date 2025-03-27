@@ -27,7 +27,23 @@ serve(async (req) => {
     );
 
     // Parse the request body
-    const { userId, email } = await req.json();
+    let userId, email;
+    try {
+      const body = await req.json();
+      userId = body.userId;
+      email = body.email;
+    } catch (parseError) {
+      console.error("Edge function: Error parsing request body:", parseError);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request body format",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Validate input parameters
     if (!userId || !email) {
@@ -79,40 +95,92 @@ serve(async (req) => {
       );
     }
 
-    // Insert new profile with admin privileges to bypass RLS
-    const { data, error } = await supabaseClient
-      .from('Users')
-      .insert({
-        id: userId,
-        email: email,
-        name: '',
-        total_points: 0,
-        completed_challenges: 0,
-        streak: 0
-      })
-      .select();
+    // Try to insert the profile with a few retries for race conditions
+    let retryCount = 0;
+    const maxRetries = 3;
+    let lastError = null;
 
-    if (error) {
-      console.error("Edge function: Error creating profile:", error);
-      return new Response(
-        JSON.stringify({
-          error: error.message,
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+    while (retryCount < maxRetries) {
+      try {
+        // Insert new profile with admin privileges to bypass RLS
+        const { data, error } = await supabaseClient
+          .from('Users')
+          .insert({
+            id: userId,
+            email: email,
+            name: '',
+            total_points: 0,
+            completed_challenges: 0,
+            streak: 0,
+            profile_completed: false
+          })
+          .select();
+
+        if (!error) {
+          console.log("Edge function: Profile created successfully");
+          return new Response(
+            JSON.stringify({
+              success: true,
+              data: data[0],
+            }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
         }
-      );
+
+        // If error is a duplicate key error, try to fetch the existing profile
+        if (error.code === '23505') {
+          console.log("Edge function: Duplicate key error, fetching existing profile");
+          
+          const { data: existingData, error: fetchError } = await supabaseClient
+            .from('Users')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+            
+          if (!fetchError && existingData) {
+            console.log("Edge function: Successfully fetched existing profile");
+            return new Response(
+              JSON.stringify({
+                success: true,
+                data: existingData,
+              }),
+              {
+                status: 200,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              }
+            );
+          }
+          
+          lastError = fetchError || error;
+        } else {
+          console.error("Edge function: Error creating profile:", error);
+          lastError = error;
+        }
+      } catch (err) {
+        console.error("Edge function: Unexpected error in retry loop:", err);
+        lastError = err;
+      }
+
+      // Increment retry count and delay with exponential backoff
+      retryCount++;
+      if (retryCount < maxRetries) {
+        const delay = Math.pow(2, retryCount) * 100; // 200, 400, 800ms...
+        console.log(`Edge function: Retrying profile creation in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
 
-    console.log("Edge function: Profile created successfully");
+    // If we've exhausted retries, return the last error
+    console.error("Edge function: Failed to create profile after retries:", lastError);
     return new Response(
       JSON.stringify({
-        success: true,
-        data: data[0],
+        error: lastError?.message || "Failed to create profile after multiple attempts",
       }),
       {
-        status: 200,
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );

@@ -28,15 +28,38 @@ const OnboardingContainer = () => {
     redirectAttempted, setRedirectAttempted
   } = useOnboardingState(profile);
   
-  // Verificare lo stato del profilo all'avvio
+  const [refreshError, setRefreshError] = useState(false);
+  const [refreshTimeout, setRefreshTimeout] = useState(false);
+  
+  // Check profile status on component mount
   useEffect(() => {
     if (user && !redirectAttempted) {
-      // Assicuriamoci che i dati del profilo siano aggiornati
-      refreshProfile?.(user.id);
+      // Make sure profile data is up-to-date
+      console.log("OnboardingContainer: Checking profile status for user:", user.id);
+      
+      // Set a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        console.log("OnboardingContainer: Profile refresh timeout reached");
+        setRefreshTimeout(true);
+      }, 5000); // 5 seconds timeout
+      
+      if (refreshProfile) {
+        refreshProfile(user.id)
+          .then(() => {
+            clearTimeout(timeoutId);
+          })
+          .catch(error => {
+            console.error("OnboardingContainer: Error refreshing profile:", error);
+            setRefreshError(true);
+            clearTimeout(timeoutId);
+          });
+      } else {
+        clearTimeout(timeoutId);
+      }
     }
   }, [user, redirectAttempted, refreshProfile]);
   
-  // Gestire il reindirizzamento se il profilo è già completo
+  // Handle redirect if profile is already complete
   useEffect(() => {
     if (profile && profile.profile_completed === true && !redirectAttempted) {
       console.log("User already has a completed profile, redirecting to dashboard");
@@ -140,6 +163,18 @@ const OnboardingContainer = () => {
       
       console.log("Profile data being submitted:", profileData);
       
+      // Set a timeout to prevent infinite loading
+      const updateTimeoutId = setTimeout(() => {
+        console.log("Profile update timeout reached");
+        setIsLoading(false);
+        toast({
+          title: "Timeout di aggiornamento",
+          description: "L'aggiornamento del profilo sta impiegando troppo tempo. Riprova tra poco.",
+          variant: "destructive",
+        });
+      }, 10000); // 10 seconds timeout
+      
+      // Update local cache first
       try {
         if (user.id) {
           const cachedProfile = localStorage.getItem(`profile_${user.id}`);
@@ -155,6 +190,9 @@ const OnboardingContainer = () => {
       console.log("Calling updateProfile with data:", profileData);
       const { error, success } = await updateProfile(profileData);
       
+      // Clear the timeout as we got a response
+      clearTimeout(updateTimeoutId);
+      
       console.log("Risultato aggiornamento profilo:", { error, success });
       
       if (error) {
@@ -169,11 +207,6 @@ const OnboardingContainer = () => {
           description: "Il tuo profilo è stato configurato con successo",
           variant: "default",
         });
-        
-        // Refresh profile data again to make sure we have the most up-to-date data
-        if (user && refreshProfile) {
-          await refreshProfile(user.id);
-        }
         
         // Force redirect to dashboard
         navigate('/dashboard', { replace: true });
@@ -219,6 +252,42 @@ const OnboardingContainer = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-voltgreen-600 rounded-full"></div>
+      </div>
+    );
+  }
+  
+  // Show error state if profile refresh failed
+  if (refreshError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md p-8 rounded-lg shadow-md bg-white">
+          <h2 className="text-xl font-bold text-red-600 mb-4">Errore di caricamento</h2>
+          <p className="mb-4">Si è verificato un errore durante il caricamento del profilo. Riprova più tardi.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-voltgreen-600 text-white rounded hover:bg-voltgreen-700 transition-colors"
+          >
+            Ricarica pagina
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show timeout message if profile refresh is taking too long
+  if (refreshTimeout) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md p-8 rounded-lg shadow-md bg-white">
+          <h2 className="text-xl font-bold text-amber-600 mb-4">Caricamento lento</h2>
+          <p className="mb-4">Il caricamento del profilo sta impiegando più tempo del previsto. Puoi attendere o ricaricare la pagina.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-voltgreen-600 text-white rounded hover:bg-voltgreen-700 transition-colors"
+          >
+            Ricarica pagina
+          </button>
+        </div>
       </div>
     );
   }

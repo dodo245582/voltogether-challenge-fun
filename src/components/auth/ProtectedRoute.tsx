@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '../dashboard/DashboardLoadingState';
@@ -7,26 +7,39 @@ import DashboardLoadingState from '../dashboard/DashboardLoadingState';
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile, refreshProfile } = useAuth();
   const location = useLocation();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshAttempted, setRefreshAttempted] = useState(false);
   
   useEffect(() => {
-    if (user && refreshProfile) {
+    if (user && refreshProfile && !refreshAttempted) {
       console.log("ProtectedRoute: Refreshing profile data for user:", user.id);
-      refreshProfile(user.id);
+      setIsRefreshing(true);
+      
+      // Set a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        console.log("ProtectedRoute: Profile refresh timeout reached");
+        setIsRefreshing(false);
+        setRefreshAttempted(true);
+      }, 5000); // 5 seconds timeout
+      
+      refreshProfile(user.id)
+        .then(() => {
+          console.log("ProtectedRoute: Profile refresh completed");
+          clearTimeout(timeoutId);
+          setIsRefreshing(false);
+          setRefreshAttempted(true);
+        })
+        .catch(error => {
+          console.error("ProtectedRoute: Error refreshing profile:", error);
+          clearTimeout(timeoutId);
+          setIsRefreshing(false);
+          setRefreshAttempted(true);
+        });
     }
-  }, [user, refreshProfile]);
+  }, [user, refreshProfile, refreshAttempted]);
   
-  useEffect(() => {
-    if (user) {
-      console.log("ProtectedRoute: User authenticated with ID:", user.id);
-      console.log("ProtectedRoute: Profile state:", profile ? "exists" : "missing");
-      if (profile) {
-        console.log("ProtectedRoute: Profile completed:", profile.profile_completed);
-      }
-    }
-  }, [user, profile]);
-  
-  // Simplified loading - show only when truly necessary
-  if (loading && !user) {
+  // Show loading state only when truly necessary and with a maximum duration
+  if ((loading || isRefreshing) && !refreshAttempted) {
     return <DashboardLoadingState />;
   }
   
