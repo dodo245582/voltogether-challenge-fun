@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,10 +25,8 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
-  // If profile exists, populate form fields
   useEffect(() => {
     if (profile) {
-      // Only set values if they exist and are valid strings
       if (profile.name && typeof profile.name === 'string') {
         setName(profile.name);
       }
@@ -45,7 +42,6 @@ const Onboarding = () => {
     }
   }, [profile]);
   
-  // If user already has a profile, redirect to dashboard
   useEffect(() => {
     if (profile && typeof profile.name === 'string' && profile.name.trim() !== '' && !redirectAttempted) {
       console.log("User already has a profile, redirecting to dashboard");
@@ -123,7 +119,6 @@ const Onboarding = () => {
       return;
     }
     
-    // Validate all required fields one last time
     if (!name || !city || !discoverySource || selectedActions.length === 0) {
       toast({
         title: "Campi obbligatori mancanti",
@@ -137,11 +132,11 @@ const Onboarding = () => {
     
     try {
       console.log("Starting onboarding completion process");
+      console.log("User authentication status:", !!user);
+      console.log("User ID:", user.id);
       
-      // Cache selected actions immediately
       localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
       
-      // Prepare profile data
       const profileData = {
         name,
         city,
@@ -149,7 +144,8 @@ const Onboarding = () => {
         selected_actions: selectedActions,
       };
       
-      // Pre-cache profile immediately for faster UI updating
+      console.log("Profile data being submitted:", profileData);
+      
       try {
         if (user.id) {
           const cachedProfile = localStorage.getItem(`profile_${user.id}`);
@@ -162,8 +158,10 @@ const Onboarding = () => {
         console.error("Cache update error:", e);
       }
       
-      // Update profile in database
+      console.log("Calling updateProfile with data:", profileData);
       const { error, success } = await updateProfile(profileData);
+      
+      console.log("Update profile result:", { error, success });
       
       if (error) {
         console.error("Error in onboarding profile update:", error);
@@ -178,7 +176,6 @@ const Onboarding = () => {
           variant: "default",
         });
         
-        // Direct navigation instead of full page reload
         navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {

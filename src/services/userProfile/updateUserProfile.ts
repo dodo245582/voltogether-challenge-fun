@@ -7,6 +7,7 @@ import { User as UserType } from '@/types';
  */
 export const updateUserProfile = async (userId: string, data: Partial<UserType>) => {
   if (!userId) {
+    console.error("Service: Cannot update profile - user ID is missing");
     return { 
       error: new Error('User not authenticated'), 
       success: false 
@@ -15,14 +16,16 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
 
   try {
     console.log("Service: Updating user profile with data:", data);
+    console.log("Service: User ID being used:", userId);
     
-    const { error } = await supabase
+    const { error, data: updatedData } = await supabase
       .from('Users')
       .update(data)
-      .eq('id', userId);
+      .eq('id', userId)
+      .select();
     
     if (!error) {
-      console.log("Service: Profile updated successfully");
+      console.log("Service: Profile updated successfully in database", updatedData);
       
       // Also update localStorage
       try {
