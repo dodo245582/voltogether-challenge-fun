@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -11,15 +12,17 @@ const Login = () => {
   const [loginSuccessful, setLoginSuccessful] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {
+      console.log("Attempting login with email:", email);
       const { error, success } = await signIn(email, password);
       
       if (success) {
+        console.log("Login successful, setting success state");
         setLoginSuccessful(true);
         toast({
           title: 'Login effettuato',
@@ -57,6 +60,11 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  // If already logged in, don't show login form
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (loginSuccessful) {
     return <DashboardLoadingState />;

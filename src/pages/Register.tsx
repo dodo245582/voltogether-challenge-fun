@@ -10,12 +10,13 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
 
   const handleRegister = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {
+      console.log("Attempting registration with email:", email);
       const { error, success } = await signUp(email, password);
       
       if (success) {
@@ -54,6 +55,11 @@ const Register = () => {
       setIsLoading(false);
     }
   };
+
+  // If already logged in, don't show registration form
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">

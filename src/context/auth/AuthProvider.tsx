@@ -65,8 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setTimeout(async () => {
               if (!mounted) return;
               try {
+                console.log("Creating user profile if it doesn't exist after sign in");
                 await createUserProfileIfNotExists(session.user.id, session.user.email);
-                if (mounted) await fetchUserProfile(session.user.id);
+                if (mounted) {
+                  console.log("Fetching fresh profile data after sign in");
+                  await fetchUserProfile(session.user.id);
+                }
               } catch (error) {
                 console.error("Error in auth state change handler:", error);
               }
@@ -104,8 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(async () => {
           if (!mounted) return;
           try {
+            console.log("Creating user profile if it doesn't exist at initial load");
             await createUserProfileIfNotExists(session.user.id, session.user.email);
-            if (mounted) await fetchUserProfile(session.user.id);
+            if (mounted) {
+              console.log("Fetching fresh profile data at initial load");
+              await fetchUserProfile(session.user.id);
+            }
           } finally {
             if (mounted) setLoading(false);
           }
@@ -132,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!error && data.user) {
         setTimeout(async () => {
           try {
+            console.log("Creating initial profile after signup for user:", data.user?.id);
             await createUserProfileIfNotExists(data.user.id, data.user.email);
           } catch (createError) {
             console.error("Error creating initial profile:", createError);
@@ -156,6 +165,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
+      
+      if (!error && data.user) {
+        setTimeout(async () => {
+          try {
+            console.log("Creating profile if needed after signin for user:", data.user.id);
+            await createUserProfileIfNotExists(data.user.id, data.user.email);
+            console.log("Fetching profile after signin");
+            await fetchUserProfile(data.user.id);
+          } catch (profileError) {
+            console.error("Error handling profile after signin:", profileError);
+          }
+        }, 0);
+      }
       
       return { 
         error, 

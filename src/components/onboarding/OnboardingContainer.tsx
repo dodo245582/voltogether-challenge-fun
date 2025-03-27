@@ -161,6 +161,7 @@ const OnboardingContainer = () => {
           variant: "default",
         });
         
+        // Force redirect to dashboard
         navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
