@@ -10,10 +10,11 @@ export const useOnboardingState = (profile: User | null) => {
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
-  // Safely initialize form state from profile
+  // Safely initialize form state from profile - only once
   useEffect(() => {
-    if (!profile) return;
+    if (!profile || hasInitialized) return;
     
     try {
       // Only set values if they exist and are of the right type
@@ -32,10 +33,12 @@ export const useOnboardingState = (profile: User | null) => {
       if (profile.selected_actions && Array.isArray(profile.selected_actions)) {
         setSelectedActions(profile.selected_actions);
       }
+      
+      setHasInitialized(true);
     } catch (error) {
       console.error("Error initializing onboarding state from profile:", error);
     }
-  }, [profile]);
+  }, [profile, hasInitialized]);
 
   return {
     step,
@@ -51,6 +54,7 @@ export const useOnboardingState = (profile: User | null) => {
     isLoading,
     setIsLoading,
     redirectAttempted,
-    setRedirectAttempted
+    setRedirectAttempted,
+    hasInitialized
   };
 };

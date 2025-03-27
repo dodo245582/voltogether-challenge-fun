@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '../dashboard/DashboardLoadingState';
@@ -7,15 +7,17 @@ import DashboardLoadingState from '../dashboard/DashboardLoadingState';
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
-  // Simplified logic for redirection to onboarding
+  // Prevent infinite redirection loops
   useEffect(() => {
-    if (!loading && user && profile && !profile.profile_completed) {
+    if (!loading && user && profile && !profile.profile_completed && !redirectAttempted) {
       console.log("User profile not complete, redirecting to onboarding");
+      setRedirectAttempted(true);
       // Using replace to avoid navigation history issues
       navigate('/onboarding', { replace: true });
     }
-  }, [user, loading, profile, navigate]);
+  }, [user, loading, profile, navigate, redirectAttempted]);
   
   // Show loading state only when checking auth
   if (loading) {

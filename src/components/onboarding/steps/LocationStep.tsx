@@ -9,17 +9,10 @@ interface LocationStepProps {
 }
 
 const LocationStep = ({ city, setCity }: LocationStepProps) => {
-  // Handle city input change with better validation
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const value = e.target.value;
-      // Simpler sanitization - just allow standard characters
-      const sanitized = value.slice(0, 100); // Prevent too long inputs
-      setCity(sanitized);
-    } catch (error) {
-      console.error("Error updating city value:", error);
-      // Don't clear the field on error
-    }
+    // Simple input handling without complex validation that could crash
+    const value = e.target.value || '';
+    setCity(value);
   };
 
   return (
@@ -31,7 +24,6 @@ const LocationStep = ({ city, setCity }: LocationStepProps) => {
           placeholder="Es. Milano, Roma, Napoli..."
           value={city || ''}
           onChange={handleCityChange}
-          autoFocus
           maxLength={100}
           aria-describedby="city-description"
         />

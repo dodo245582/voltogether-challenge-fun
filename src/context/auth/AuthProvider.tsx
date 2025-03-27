@@ -1,4 +1,3 @@
-
 import { useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -48,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setSession(null);
           setUser(null);
+          setProfile(null);
           setLoading(false);
         }
       }
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserProfile, createUserProfileIfNotExists]);
+  }, [fetchUserProfile, createUserProfileIfNotExists, setProfile]);
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -131,7 +131,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
-      // Navigate in the component where this function is called
+      setProfile(null);
+      
+      // Use direct redirection instead of navigate hook
+      // This avoids any issues with hooks/React context
       window.location.href = '/';
     } catch (error) {
       console.error("Exception in signOut:", error);
