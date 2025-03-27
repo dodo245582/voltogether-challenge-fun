@@ -1,4 +1,5 @@
 import { useState, useEffect, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { User as UserType } from '@/types';
@@ -9,6 +10,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   
   const { 
     profile, 
@@ -169,22 +171,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     signUp,
     signIn,
-    signOut: async () => {
-      try {
-        await supabase.auth.signOut();
-        setUser(null);
-        setSession(null);
-      } catch (error) {
-        console.error("Error signing out:", error);
-      }
-    },
+    signOut,
     loading,
-    updateProfile: async (data: Partial<UserType>) => {
-      if (!user) {
-        return { error: new Error('User not authenticated'), success: false };
-      }
-      return updateUserProfile(user.id, data);
-    },
+    updateProfile,
     refreshProfile,
   };
 
