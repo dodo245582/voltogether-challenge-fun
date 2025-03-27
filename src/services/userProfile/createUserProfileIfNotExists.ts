@@ -78,8 +78,9 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
           user_email: email
         };
         
+        // Fix: The rpc method requires two type arguments - the return type and the input type
         const { data: directInsertData, error: directInsertError } = await supabase
-          .rpc<boolean>('create_user_profile', params);
+          .rpc<boolean, CreateUserProfileParams>('create_user_profile', params);
           
         if (directInsertError) {
           console.error("Direct insert failed:", directInsertError);
