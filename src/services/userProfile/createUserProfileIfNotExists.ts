@@ -67,21 +67,20 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
       // Fallback: try creating without RLS (if the policy is causing issues)
       console.log("Attempting direct insert via function...");
       try {
-        // Define complete type for RPC parameters to avoid TypeScript errors
-        type CreateUserProfileParams = {
-          user_id: string;
-          user_email: string;
-        };
-        
-        const params: CreateUserProfileParams = {
+        // Define the parameters for the RPC call
+        const params = {
           user_id: userId,
           user_email: email
         };
         
-        // Fix: Use the rpc method without explicit type parameters
-        // The Supabase client will handle the types correctly
-        const { data: directInsertData, error: directInsertError } = await supabase
-          .rpc('create_user_profile', params);
+        // Utilizzare .rpc senza specificare tipi generici o con as any per evitare errori di tipo
+        const response = await supabase.rpc(
+          'create_user_profile', 
+          params
+        ) as { data: boolean | null; error: any };
+        
+        const directInsertData = response.data;
+        const directInsertError = response.error;
           
         if (directInsertError) {
           console.error("Direct insert failed:", directInsertError);
