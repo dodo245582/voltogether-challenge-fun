@@ -4,6 +4,10 @@ import { useAuth } from '@/context/AuthContext';
 import ParticipationModal from './ParticipationModal';
 import CompletionModal from './CompletionModal';
 
+/**
+ * NotificationModals component handles the rendering and coordination of 
+ * participation and completion modals for challenge notifications.
+ */
 const NotificationModals = () => {
   const { 
     showParticipationModal, 
@@ -20,8 +24,10 @@ const NotificationModals = () => {
   
   const { user, refreshProfile } = useAuth();
   
+  // Get previously selected actions from localStorage
   const userSelectedActions = JSON.parse(localStorage.getItem('userSelectedActions') || '[]');
   
+  // Handle user participation response
   const handleParticipationResponse = async (challengeId: number, participating: boolean) => {
     await respondToParticipation(challengeId, participating);
     
@@ -34,6 +40,7 @@ const NotificationModals = () => {
     }
   };
   
+  // Handle submission of challenge completion actions
   const handleSubmitActions = async (challengeId: number, selectedActions: string[]) => {
     await completeChallengeActions(challengeId, selectedActions);
     
