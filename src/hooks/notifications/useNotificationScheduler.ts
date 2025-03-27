@@ -24,24 +24,24 @@ export const useNotificationScheduler = (
     const today20 = new Date(todayStr);
     today20.setHours(20, 0, 0, 0);
     
-    if (now.getTime() >= today9AM.getTime()) {
-      const alreadySentParticipation = notifications.some(n => 
-        n.type === 'participation-request' && 
-        n.challengeId === challengeId &&
-        isToday(parseISO(n.timestamp))
+    // Always try to create the 9AM notification on page load for testing
+    const alreadySentParticipation = notifications.some(n => 
+      n.type === 'participation-request' && 
+      n.challengeId === challengeId &&
+      isToday(parseISO(n.timestamp))
+    );
+    
+    const hasResponded = localStorage.getItem(`challenge_${challengeId}_participating`) !== null;
+    
+    if (!alreadySentParticipation && !hasResponded) {
+      console.log('Creating participation notification for challenge', challengeId);
+      createNotification(
+        'participation-request',
+        'Sfida di oggi',
+        `Parteciperai alla sfida di oggi dalle 19:00 alle 20:00?`,
+        challengeId,
+        true
       );
-      
-      const hasResponded = localStorage.getItem(`challenge_${challengeId}_participating`) !== null;
-      
-      if (!alreadySentParticipation && !hasResponded) {
-        createNotification(
-          'participation-request',
-          'Sfida di oggi',
-          `Parteciperai alla sfida di oggi dalle 19:00 alle 20:00?`,
-          challengeId,
-          true
-        );
-      }
     }
     
     if (now.getTime() >= today1855.getTime()) {
@@ -92,6 +92,7 @@ export const useNotificationScheduler = (
   };
 
   useEffect(() => {
+    // Check immediately when component mounts
     checkForScheduledNotifications();
     
     const interval = setInterval(() => {

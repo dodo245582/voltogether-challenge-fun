@@ -24,6 +24,7 @@ export const useNotificationManager = () => {
     challengeId?: number,
     requiredAction: boolean = false
   ) => {
+    console.log(`Creating notification of type ${type} for challenge ${challengeId}`);
     let deadline: Date | undefined;
     
     if (type === 'participation-request') {
@@ -51,6 +52,7 @@ export const useNotificationManager = () => {
     };
     
     if (isNotificationValid(newNotification)) {
+      console.log('Adding valid notification:', newNotification);
       setNotifications(prev => [newNotification, ...prev]);
       
       toast({
@@ -67,9 +69,11 @@ export const useNotificationManager = () => {
       }
       
       if (type === 'participation-request') {
+        console.log('Setting participation modal to show');
         setCurrentChallengeId(challengeId || null);
         setShowParticipationModal(true);
       } else if (type === 'challenge-completion') {
+        console.log('Setting completion modal to show');
         setCurrentChallengeId(challengeId || null);
         setShowCompletionModal(true);
       }
