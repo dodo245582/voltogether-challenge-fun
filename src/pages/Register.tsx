@@ -12,7 +12,7 @@ const Register = () => {
   const [registrationSuccessful, setRegistrationSuccessful] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signUp, user } = useAuth();
+  const { signUp, user, loading } = useAuth();
 
   const handleRegister = async (email: string, password: string) => {
     setIsLoading(true);
@@ -61,8 +61,14 @@ const Register = () => {
     }
   };
 
+  // Se stiamo ancora caricando lo stato dell'autenticazione, mostra spinner
+  if (loading) {
+    return <DashboardLoadingState />;
+  }
+
   // If already logged in, don't show registration form
   if (user) {
+    console.log("User already logged in, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
   

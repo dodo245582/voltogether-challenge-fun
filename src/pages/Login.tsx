@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -11,7 +12,7 @@ const Login = () => {
   const [loginSuccessful, setLoginSuccessful] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, user } = useAuth();
+  const { signIn, user, loading } = useAuth();
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -60,8 +61,14 @@ const Login = () => {
     }
   };
 
+  // Se stiamo ancora caricando lo stato dell'autenticazione, mostra spinner
+  if (loading) {
+    return <DashboardLoadingState />;
+  }
+
   // If already logged in, don't show login form
   if (user) {
+    console.log("User already logged in, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 
