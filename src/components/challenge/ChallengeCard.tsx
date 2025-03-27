@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,11 +89,15 @@ const ChallengeCard = ({
             <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
               <Clock className="mr-1 h-3 w-3" /> In attesa
             </Badge>
-          ) : (isDayInPast && !challenge.participating) ? (
+          ) : (isDayInPast && challenge.participating === false) ? (
             <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
               <XCircle className="mr-1 h-3 w-3" /> Persa
             </Badge>
-          ) : null}
+          ) : (
+            <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+              <Clock className="mr-1 h-3 w-3" /> In attesa
+            </Badge>
+          )}
         </div>
         <div className="flex items-center text-gray-500 text-sm">
           <Clock className="h-4 w-4 mr-1" />
@@ -207,7 +212,7 @@ const ChallengeCard = ({
             startTime={startTime} 
             endTime={endTime} 
             isActive={isChallengeActive}
-            isPast={isDayInPast && !challenge.participating}
+            isPast={isDayInPast && challenge.participating === false}
           />
         </div>
         

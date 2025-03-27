@@ -24,6 +24,7 @@ export const useChallengeData = (initialChallenge: Challenge) => {
       }
     }
     
+    // Now instead of setting to undefined, we leave it as undefined (which means "In attesa")
     setChallengeData({
       ...initialChallenge,
       participating: participating === 'true' ? true : participating === 'false' ? false : undefined,

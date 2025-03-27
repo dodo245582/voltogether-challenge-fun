@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
@@ -199,6 +200,7 @@ export const useNotificationSystem = () => {
     if (now.getTime() >= today1855test.getTime()) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
+      // Only send reminder if user explicitly chose to participate
       if (participationResponse === 'true') {
         const alreadySentReminder = notifications.some(n => 
           n.type === 'challenge-reminder' && 
@@ -221,6 +223,7 @@ export const useNotificationSystem = () => {
     if (now.getTime() >= today20test.getTime()) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
+      // Only send completion notification if user explicitly chose to participate
       if (participationResponse === 'true') {
         const alreadySentCompletion = notifications.some(n => 
           n.type === 'challenge-completion' && 
