@@ -22,6 +22,7 @@ const Onboarding = () => {
       setIsRefreshing(true);
       
       try {
+        // Fetch fresh profile data
         const { success } = await refreshProfile(user.id);
         console.log("Profile refresh result:", success);
         
@@ -44,7 +45,7 @@ const Onboarding = () => {
     };
   }, [user?.id, refreshProfile, isRefreshing, profileChecked]);
   
-  // Effetto per reindirizzare in base allo stato del profilo
+  // Redirect based on profile state
   useEffect(() => {
     if (!authInitialized || loading || isRefreshing) return;
     

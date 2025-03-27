@@ -4,7 +4,7 @@ import { User as UserType } from '@/types';
 
 /**
  * Creates a user profile if it doesn't exist
- * Ottimizzato con migliore gestione degli errori e performance
+ * Fixed to properly handle the database constraints
  */
 export const createUserProfileIfNotExists = async (userId: string, email: string | undefined) => {
   if (!userId || !email) {
@@ -15,11 +15,11 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
   try {
     console.log("Service: Checking if profile exists for:", userId);
     
-    // Prima verifico se c'è già un profilo in localStorage
+    // First check if there's a cached profile in localStorage
     try {
       const cachedProfile = localStorage.getItem(`profile_${userId}`);
       if (cachedProfile) {
-        // Se c'è un profilo in cache, lo aggiorno in background senza bloccare
+        // If there's a profile in cache, update it in background without blocking
         setTimeout(() => {
           checkAndCreateProfileInDb(userId, email);
         }, 0);
@@ -43,10 +43,11 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
 
 /**
  * Helper function to check and create profile in database
+ * Fixed to properly handle the password field constraint
  */
 async function checkAndCreateProfileInDb(userId: string, email: string) {
   try {
-    // Verifica se il profilo esiste già
+    // Verify if the profile already exists
     const { data: existingProfile, error: fetchError } = await supabase
       .from('Users')
       .select('*')
@@ -58,11 +59,11 @@ async function checkAndCreateProfileInDb(userId: string, email: string) {
       return { success: false, error: fetchError };
     }
     
-    // Se esiste già, restituisco il profilo
+    // If it exists already, return the profile
     if (existingProfile) {
       console.log("Service: Profile already exists for:", userId);
       
-      // Aggiorno la cache
+      // Update the cache
       try {
         localStorage.setItem(`profile_${userId}`, JSON.stringify(existingProfile));
       } catch (e) {
@@ -78,13 +79,16 @@ async function checkAndCreateProfileInDb(userId: string, email: string) {
     
     console.log("Service: Creating new profile for:", userId);
     
-    // Creo un nuovo profilo
+    // Create a new profile - FIXED: generated a random password string to avoid constraint violations
+    const randomPassword = Math.random().toString(36).substring(2, 15);
+    
     const { data: newProfile, error: createError } = await supabase
       .from('Users')
       .insert([
         { 
           id: userId, 
           email, 
+          password: randomPassword, // Using random string to avoid constraint issues
           profile_completed: false,
           completed_challenges: 0,
           total_points: 0,
@@ -97,7 +101,7 @@ async function checkAndCreateProfileInDb(userId: string, email: string) {
     if (createError) {
       console.error("Error creating profile:", createError);
       
-      // Se c'è un errore di duplicazione, potrebbe essere stato creato da un'altra richiesta
+      // If there's a duplication error, it might have been created by another request
       if (createError.code === '23505') {
         console.log("Profile may have been created by another request, fetching...");
         const { data: retryProfile, error: retryError } = await supabase
@@ -112,7 +116,7 @@ async function checkAndCreateProfileInDb(userId: string, email: string) {
         }
         
         if (retryProfile) {
-          // Aggiorno la cache
+          // Update the cache
           try {
             localStorage.setItem(`profile_${userId}`, JSON.stringify(retryProfile));
           } catch (e) {
@@ -132,7 +136,7 @@ async function checkAndCreateProfileInDb(userId: string, email: string) {
     
     console.log("Service: New profile created successfully");
     
-    // Aggiorno la cache con il nuovo profilo
+    // Update the cache with the new profile
     try {
       localStorage.setItem(`profile_${userId}`, JSON.stringify(newProfile));
     } catch (e) {
