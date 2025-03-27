@@ -1,8 +1,8 @@
-
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentChallengeId } from '@/types/notifications';
 import { parseISO, isToday, isBefore, set, format } from 'date-fns';
+import { CHALLENGE_DATES } from '@/types';
 
 import { useNotificationManager } from './notifications/useNotificationManager';
 import { useParticipationManager } from './notifications/useParticipationManager';
