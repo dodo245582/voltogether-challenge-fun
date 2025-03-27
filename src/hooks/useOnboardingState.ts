@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DiscoverySource, User } from '@/types';
 
 export const useOnboardingState = (profile: User | null) => {
@@ -11,19 +11,36 @@ export const useOnboardingState = (profile: User | null) => {
   const [isLoading, setIsLoading] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(0);
   
-  // Safely initialize form state from profile - only once
+  // Funzione di aggiornamento sicura di city con throttling
+  const setSafeCity = useCallback((newCity: string) => {
+    const now = Date.now();
+    // Limitare gli aggiornamenti a un massimo di uno ogni 100ms
+    if (now - lastUpdateTime > 100) {
+      try {
+        setCity(newCity);
+        setLastUpdateTime(now);
+      } catch (error) {
+        console.error("Error updating city:", error);
+      }
+    }
+  }, [lastUpdateTime]);
+  
+  // Inizializzazione sicura dello stato dal profilo - solo una volta
   useEffect(() => {
     if (!profile || hasInitialized) return;
     
     try {
-      // Only set values if they exist and are of the right type
+      // Impostare i valori solo se esistono e sono del tipo corretto
+      // Limitare la lunghezza dei valori stringa per evitare problemi di prestazioni
+      
       if (profile.name && typeof profile.name === 'string') {
-        setName(profile.name);
+        setName(profile.name.slice(0, 50)); // Limitare a 50 caratteri
       }
       
       if (profile.city && typeof profile.city === 'string') {
-        setCity(profile.city);
+        setCity(profile.city.slice(0, 50)); // Limitare a 50 caratteri
       }
       
       if (profile.discovery_source) {
@@ -31,12 +48,15 @@ export const useOnboardingState = (profile: User | null) => {
       }
       
       if (profile.selected_actions && Array.isArray(profile.selected_actions)) {
-        setSelectedActions(profile.selected_actions);
+        // Limitare a 20 azioni per evitare problemi di prestazioni
+        setSelectedActions(profile.selected_actions.slice(0, 20));
       }
       
       setHasInitialized(true);
     } catch (error) {
       console.error("Error initializing onboarding state from profile:", error);
+      // Impostare comunque hasInitialized per evitare tentativi infiniti
+      setHasInitialized(true);
     }
   }, [profile, hasInitialized]);
 
@@ -46,7 +66,7 @@ export const useOnboardingState = (profile: User | null) => {
     name,
     setName,
     city,
-    setCity,
+    setCity: setSafeCity, // Usare la versione sicura con throttling
     discoverySource,
     setDiscoverySource,
     selectedActions,

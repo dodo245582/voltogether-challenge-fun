@@ -8,28 +8,45 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   
-  // Prevent infinite redirection loops
+  // Gestione sicura del reindirizzamento con memorizzazione
   useEffect(() => {
-    if (!loading && user && profile && !profile.profile_completed && !redirectAttempted) {
+    // Memorizzare lo stato di reindirizzamento in sessionStorage per evitare loop
+    const hasRedirectedBefore = sessionStorage.getItem('onboardingRedirectAttempted');
+    
+    if (!loading && !redirectAttempted && !hasRedirectedBefore && user && profile && !profile.profile_completed) {
       console.log("User profile not complete, redirecting to onboarding");
+      // Impostare il flag di reindirizzamento
       setRedirectAttempted(true);
-      // Using replace to avoid navigation history issues
+      sessionStorage.setItem('onboardingRedirectAttempted', 'true');
+      
+      // Reindirizzare con replace per evitare problemi di navigazione
       navigate('/onboarding', { replace: true });
+    } else if (!loading) {
+      // Se il caricamento è completo e non serve reindirizzare, mostrare i contenuti
+      setShouldRender(true);
     }
+    
+    // Pulizia del flag di reindirizzamento dopo 5 secondi per evitare problemi persistenti
+    const timeout = setTimeout(() => {
+      sessionStorage.removeItem('onboardingRedirectAttempted');
+    }, 5000);
+    
+    return () => clearTimeout(timeout);
+    
   }, [user, loading, profile, navigate, redirectAttempted]);
   
-  // Show loading state only when checking auth
-  if (loading) {
+  // Mostro stato di caricamento solo quando necessario
+  if (loading || (!shouldRender && !redirectAttempted)) {
     return <DashboardLoadingState />;
   }
   
-  // Fast path - if no user, redirect to login immediately
+  // Se non c'è utente, reindirizzare subito
   if (!user) {
-    console.log("No authenticated user, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
-  // User is authenticated, render the children
-  return <>{children}</>;
+  // Rendere i figli solo quando è sicuro farlo
+  return shouldRender ? <>{children}</> : <DashboardLoadingState />;
 };

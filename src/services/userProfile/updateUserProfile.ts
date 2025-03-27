@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User as UserType } from '@/types';
 
 /**
- * Updates a user profile
+ * Updates a user profile with safe error handling
  */
 export const updateUserProfile = async (userId: string, data: Partial<UserType>) => {
   console.log("Updating profile for userId:", userId, "with data:", data);
@@ -14,45 +14,55 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
   }
 
   try {
-    // Create a clean data object without any undefined values or complex objects that could crash
+    // Limitare la dimensione e complessità dei dati da salvare
     const cleanData: Record<string, any> = {};
     
-    // Only include defined primitive values
+    // Limitare le chiavi per evitare sovraccarichi
+    const safeKeys = [
+      'name', 'city', 'discovery_source', 'selected_actions', 
+      'profile_completed', 'total_points', 'completed_challenges', 
+      'streak'
+    ];
+    
+    // Filtrare solo chiavi consentite e valori definiti
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        // Handle arrays specifically (like selected_actions)
+      if (safeKeys.includes(key) && value !== undefined && value !== null) {
+        // Gestione array con limite di dimensione
         if (Array.isArray(value)) {
-          cleanData[key] = value;
+          cleanData[key] = value.slice(0, 20); // Limitare a 20 elementi
         } 
-        // Handle primitive values
-        else if (typeof value !== 'object') {
-          cleanData[key] = value;
+        // Gestione stringhe con limite di lunghezza
+        else if (typeof value === 'string') {
+          cleanData[key] = value.slice(0, 100); // Limitare a 100 caratteri
         }
-        // Handle simple objects by stringifying them (if needed)
-        else {
-          try {
-            // Test if it can be stringified
-            JSON.stringify(value);
-            cleanData[key] = value;
-          } catch (e) {
-            console.warn(`Could not process value for key ${key}:`, e);
-          }
+        // Gestione valori booleani e numerici
+        else if (typeof value === 'boolean' || typeof value === 'number') {
+          cleanData[key] = value;
         }
       }
     });
     
-    console.log("Clean data for update:", cleanData);
+    console.log("Clean data prepared for update:", cleanData);
 
-    // Simple validation to prevent errors
+    // Verificare che ci siano dati da aggiornare
     if (Object.keys(cleanData).length === 0) {
       console.log("No valid data to update");
-      return { success: true, error: null }; // Not an error, just nothing to do
+      return { success: true, error: null }; // Considerare un successo per non bloccare il flusso
     }
 
-    const { error } = await supabase
+    // Aggiornare con timeout per evitare blocchi
+    const updatePromise = supabase
       .from('Users')
       .update(cleanData)
       .eq('id', userId);
+    
+    // Aggiungere timeout per evitare blocchi infiniti
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Update timeout exceeded")), 5000)
+    );
+    
+    // Eseguire con timeout
+    const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
 
     if (error) {
       console.error("Error updating profile in Supabase:", error);
