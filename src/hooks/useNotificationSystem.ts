@@ -30,6 +30,21 @@ export const useNotificationSystem = () => {
     return format(deadline, "HH:mm 'di domani'", { locale: it });
   };
 
+  // Function to check if a notification is still valid based on its deadline
+  const isNotificationValid = (notification: Notification): boolean => {
+    // Se la notifica non ha una scadenza, è sempre valida
+    if (!notification.deadline) return true;
+    
+    // Verifica se la notifica è ancora valida rispetto alla sua scadenza
+    const now = new Date();
+    return isBefore(now, notification.deadline);
+  };
+
+  // Funzione per ottenere solo le notifiche valide
+  const getValidNotifications = useMemo(() => {
+    return notifications.filter(isNotificationValid);
+  }, [notifications]);
+
   const shouldShowParticipationBox = useMemo(() => {
     const challengeId = getCurrentChallengeId();
     if (!challengeId) return false;
@@ -151,6 +166,15 @@ export const useNotificationSystem = () => {
     return newNotification;
   };
 
+  // Periodicamente filtra le notifiche scadute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNotifications(prev => prev.filter(isNotificationValid));
+    }, 60000); // Controlla ogni minuto
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const checkForScheduledNotifications = () => {
     const now = new Date();
     const challengeId = getCurrentChallengeId();
@@ -264,6 +288,13 @@ export const useNotificationSystem = () => {
   const respondToParticipation = async (challengeId: number, participating: boolean) => {
     localStorage.setItem(`challenge_${challengeId}_participating`, participating.toString());
     setShowParticipationModal(false);
+    
+    // Rimuovi immediatamente tutte le notifiche di partecipazione relative a questa sfida
+    setNotifications(prev => 
+      prev.filter(n => !(n.type === 'participation-request' && n.challengeId === challengeId))
+    );
+    
+    // Segna come lette le altre notifiche relative a questa sfida
     markAllRelatedNotificationsAsRead(challengeId);
     
     if (participating) {
@@ -289,6 +320,13 @@ export const useNotificationSystem = () => {
   const completeChallengeActions = async (challengeId: number, actionIds: string[]) => {
     localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
     setShowCompletionModal(false);
+    
+    // Rimuovi immediatamente tutte le notifiche di completamento relative a questa sfida
+    setNotifications(prev => 
+      prev.filter(n => !(n.type === 'challenge-completion' && n.challengeId === challengeId))
+    );
+    
+    // Segna come lette le altre notifiche relative a questa sfida
     markAllRelatedNotificationsAsRead(challengeId);
     
     const pointsPerAction = 10;
@@ -389,7 +427,8 @@ export const useNotificationSystem = () => {
   }, []);
 
   return {
-    notifications,
+    // Utilizza getValidNotifications invece di notifications
+    notifications: getValidNotifications,
     showParticipationModal,
     showCompletionModal,
     currentChallengeId,

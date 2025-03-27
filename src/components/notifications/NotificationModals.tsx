@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNotifications } from '@/context/NotificationContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -27,35 +26,28 @@ export const NotificationModals = () => {
   const { user, refreshProfile } = useAuth();
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   
-  // Reset selected actions when modal opens
   useEffect(() => {
     if (showCompletionModal) {
       setSelectedActions([]);
     }
   }, [showCompletionModal]);
   
-  // Ottieni le azioni selezionate dall'utente in fase di registrazione
   const userSelectedActions = JSON.parse(localStorage.getItem('userSelectedActions') || '[]');
   
-  // Ottieni tutte le azioni disponibili selezionate dall'utente
   const availableActions = SUSTAINABLE_ACTIONS.filter(action => 
     userSelectedActions.includes(action.id)
   );
   
-  // Ottieni azioni consigliate (non selezionate dall'utente)
   const recommendedActions = SUSTAINABLE_ACTIONS.filter(action => 
     !userSelectedActions.includes(action.id)
   ).slice(0, 3);
   
-  // Combina le azioni per la visualizzazione
   const allActions = [...availableActions, ...recommendedActions.slice(0, 3 - Math.min(3, availableActions.length))];
   
   const handleActionToggle = (actionId: string) => {
     if (actionId === 'none') {
-      // Se seleziono "non sono riuscito a partecipare", deseleziono tutte le altre opzioni
       setSelectedActions(['none']);
     } else {
-      // Se seleziono un'altra opzione, deseleziono "non sono riuscito a partecipare"
       setSelectedActions(prev => {
         if (prev.includes('none')) {
           return [actionId];
@@ -71,12 +63,10 @@ export const NotificationModals = () => {
     if (currentChallengeId !== null) {
       await completeChallengeActions(currentChallengeId, selectedActions);
       
-      // Mark all related notifications as read
       if (currentChallengeId) {
         markAllRelatedNotificationsAsRead(currentChallengeId);
       }
       
-      // Forza l'aggiornamento del profilo per aggiornare l'UI
       if (user && refreshProfile) {
         console.log("Refreshing profile after challenge completion via notification");
         await refreshProfile(user.id);
@@ -87,7 +77,6 @@ export const NotificationModals = () => {
   const handleParticipationResponse = async (challengeId: number, participating: boolean) => {
     await respondToParticipation(challengeId, participating);
     
-    // Mark all related notifications as read
     if (challengeId) {
       markAllRelatedNotificationsAsRead(challengeId);
     }
@@ -95,7 +84,6 @@ export const NotificationModals = () => {
   
   return (
     <>
-      {/* Modal per la richiesta di partecipazione */}
       <Dialog open={showParticipationModal} onOpenChange={dismissParticipationModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -110,7 +98,6 @@ export const NotificationModals = () => {
               Partecipando alla sfida contribuirai a ridurre l'impatto ambientale e guadagnerai punti per ogni azione sostenibile.
             </p>
             
-            {/* Deadline information */}
             <div className="flex items-center p-2 bg-amber-50 text-amber-800 rounded-md border border-amber-200">
               <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
               <p className="text-sm">
@@ -150,7 +137,6 @@ export const NotificationModals = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Modal per il completamento della sfida */}
       <Dialog open={showCompletionModal} onOpenChange={dismissCompletionModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -161,7 +147,6 @@ export const NotificationModals = () => {
           </DialogHeader>
           
           <div className="flex flex-col gap-4 py-4">
-            {/* Deadline information */}
             <div className="flex items-center p-2 bg-amber-50 text-amber-800 rounded-md border border-amber-200">
               <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
               <p className="text-sm">
