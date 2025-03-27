@@ -75,11 +75,18 @@ const Register = () => {
       console.log("Logging out current user");
       await signOut();
       setShowLogout(false);
+      
       toast({
         title: 'Logout effettuato',
         description: 'Hai effettuato il logout con successo',
         variant: 'default',
       });
+      
+      // Reimposta lo stato locale dopo il logout e forza la navigazione alla pagina di registrazione
+      setTimeout(() => {
+        navigate('/register', { replace: true });
+        window.location.reload(); // Forza il ricaricamento della pagina per ripristinare lo stato
+      }, 0);
     } catch (error) {
       console.error("Error during logout:", error);
       toast({
