@@ -73,20 +73,27 @@ const Register = () => {
   const handleLogout = async () => {
     try {
       console.log("Logging out current user");
-      await signOut();
+      
+      // First clear the local state
       setShowLogout(false);
       
+      // Show toast
       toast({
         title: 'Logout effettuato',
         description: 'Hai effettuato il logout con successo',
         variant: 'default',
       });
       
-      // Reimposta lo stato locale dopo il logout e forza la navigazione alla pagina di registrazione
+      // IMPORTANT: Force page reload BEFORE signOut to prevent auth state issues
+      // Use a small timeout to ensure the toast is visible
       setTimeout(() => {
-        navigate('/register', { replace: true });
-        window.location.reload(); // Forza il ricaricamento della pagina per ripristinare lo stato
-      }, 0);
+        // Perform hard redirect to registration page and force page reload
+        window.location.href = '/register';
+      }, 100);
+      
+      // Then sign out (this will happen after redirect is initiated)
+      await signOut();
+      
     } catch (error) {
       console.error("Error during logout:", error);
       toast({
