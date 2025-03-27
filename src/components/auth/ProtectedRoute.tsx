@@ -35,14 +35,20 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Simplified profile validation - only check if profile exists and has an ID
-  // This solves the issue where users are continuously redirected to onboarding
-  const hasValidProfile = !!profile && !!profile.id && profile.name !== undefined && profile.name !== null;
+  // Fixed profile validation - check if profile exists, has an ID
+  // AND at least one of the essential fields is populated (name or city)
+  const hasValidProfile = !!profile && 
+    !!profile.id && 
+    (
+      (profile.name && profile.name.trim() !== '') || 
+      (profile.city && profile.city.trim() !== '')
+    );
   
-  console.log("Simplified profile validation check:", {
+  console.log("Improved profile validation check:", {
     hasProfile: !!profile,
     hasId: profile ? !!profile.id : false,
-    hasName: profile ? profile.name !== undefined && profile.name !== null : false,
+    hasName: profile ? !!profile.name && profile.name.trim() !== '' : false,
+    hasCity: profile ? !!profile.city && profile.city.trim() !== '' : false,
     hasValidProfile,
     isOnboarding: location.pathname === '/onboarding'
   });
