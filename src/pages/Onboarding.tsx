@@ -9,11 +9,10 @@ const Onboarding = () => {
   const { user, loading, profile, refreshProfile, authInitialized } = useAuth();
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [profileChecked, setProfileChecked] = useState(false);
   
-  // Check for existing completed profile immediately
+  // Check for existing completed profile once
   useEffect(() => {
-    if (!authInitialized || loading) return;
+    if (!authInitialized) return;
     
     if (!user) {
       console.log("Onboarding: no user, redirecting to login");
@@ -21,68 +20,37 @@ const Onboarding = () => {
       return;
     }
     
-    // Check if the profile is already completed, go to dashboard if so
+    // If profile is loaded and completed, go to dashboard immediately
     if (profile && profile.profile_completed) {
       console.log("Onboarding: profile already completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
+      return;
     }
-  }, [user, profile, loading, authInitialized, navigate]);
-  
-  // Check profile only once on initial render
-  useEffect(() => {
-    let isMounted = true;
     
-    async function checkProfile() {
-      if (!user?.id || isRefreshing || profileChecked) return;
-      
-      console.log("Onboarding: refreshing profile for user", user.id);
+    // Only refresh profile if we have a user and we're not already refreshing
+    if (user.id && !isRefreshing && !profile) {
+      console.log("Onboarding: refreshing profile in background");
       setIsRefreshing(true);
       
-      try {
-        // Start displaying the onboarding form immediately while profile loads
-        // This removes perceived latency for the user
-        if (isMounted) {
-          setProfileChecked(true);
-        }
-        
-        // Run profile refresh in background
-        refreshProfile(user.id).catch(error => {
-          console.error("Error refreshing profile:", error);
-        }).finally(() => {
-          if (isMounted) {
-            setIsRefreshing(false);
-          }
-        });
-      } catch (error) {
+      // Refresh profile in background without blocking UI
+      refreshProfile(user.id).catch(error => {
         console.error("Error refreshing profile:", error);
-        if (isMounted) {
-          setIsRefreshing(false);
-          setProfileChecked(true);
-        }
-      }
+      }).finally(() => {
+        setIsRefreshing(false);
+      });
     }
-    
-    checkProfile();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.id, refreshProfile, isRefreshing, profileChecked]);
+  }, [user, profile, authInitialized, navigate, refreshProfile, isRefreshing]);
   
-  // Show loading state while auth is being checked
-  if (loading || !authInitialized) {
+  // Show minimal loading state only during initial auth check
+  if (!authInitialized) {
     return <DashboardLoadingState />;
   }
   
   // If no user, component will be unmounted by effect above
   if (!user) return null;
   
-  // If profile is completed, component will be unmounted by effect above
-  if (profile && profile.profile_completed) return null;
-  
-  // Don't wait for profile refreshing anymore - show onboarding immediately
-  // This is a key change to reduce perceived latency
-  console.log("Onboarding: rendering onboarding container for user", user.id);
+  // Don't wait for profile refreshing - show onboarding immediately
+  console.log("Onboarding: rendering onboarding container");
   return <OnboardingContainer />;
 };
 

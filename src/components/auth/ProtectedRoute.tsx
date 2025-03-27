@@ -8,8 +8,8 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile, authInitialized } = useAuth();
   const location = useLocation();
   
-  // If auth is not initialized or user data is still loading, show loading state
-  if (!authInitialized || loading) {
+  // If auth is not initialized, show minimal loading state
+  if (!authInitialized) {
     return <DashboardLoadingState />;
   }
   
@@ -21,6 +21,17 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   
   // Check if we're already on the onboarding route to prevent redirect loops
   const isOnboardingRoute = location.pathname === "/onboarding";
+  
+  // If still loading profile data but we have user, render children or loading state
+  // depending on whether we're on onboarding route
+  if (loading) {
+    if (isOnboardingRoute) {
+      // Don't show loading on onboarding page to avoid delays
+      console.log("ProtectedRoute: On onboarding page, showing onboarding without waiting for profile");
+      return <>{children}</>;
+    }
+    return <DashboardLoadingState />;
+  }
   
   // Only check profile completion if we're not already on onboarding
   if (!isOnboardingRoute && profile && !profile.profile_completed) {

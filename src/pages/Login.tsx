@@ -10,7 +10,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn } = useAuth();
+  const { signIn, profile } = useAuth();
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -20,15 +20,19 @@ const Login = () => {
       const { error, success } = await signIn(email, password);
       
       if (success) {
-        console.log("Login successful, redirecting to dashboard");
+        console.log("Login successful, redirecting");
         toast({
           title: 'Login effettuato',
           description: 'Hai effettuato l\'accesso con successo',
           variant: 'default',
         });
         
-        // Immediate redirect to dashboard without any additional checks
-        navigate('/dashboard', { replace: true });
+        // Immediate redirect based on profile completion status
+        if (profile && !profile.profile_completed) {
+          navigate('/onboarding', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';
