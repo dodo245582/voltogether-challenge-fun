@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { format, parseISO, isToday } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 const NextEvents = lazy(() => import('@/components/dashboard/NextEvents'));
 const CommunityStats = lazy(() => import('@/components/dashboard/CommunityStats'));
@@ -38,14 +40,21 @@ const Dashboard = () => {
     points: 0
   });
 
-  const initialChallengeData = useMemo(() => ({
-    id: 1,
-    date: CHALLENGE_DATES[0],
-    startTime: '19:00',
-    endTime: '20:00',
-    completed: false,
-    participating: undefined
-  }), []);
+  const initialChallengeData = useMemo(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const todayIndex = CHALLENGE_DATES.findIndex(date => date === todayStr);
+    const dateToUse = todayIndex >= 0 ? CHALLENGE_DATES[todayIndex] : CHALLENGE_DATES[0];
+    
+    return {
+      id: todayIndex >= 0 ? todayIndex + 1 : 1,
+      date: dateToUse,
+      startTime: '19:00',
+      endTime: '20:00',
+      completed: false,
+      participating: undefined
+    };
+  }, []);
 
   const { 
     challengeData: todayChallengeData,
@@ -291,18 +300,16 @@ const Dashboard = () => {
             </Suspense>
           </div>
           
-          <div className="space-y-6">
-            {profile && (
-              <Stats
-                user={profile}
-                totalChallenges={challengeStats.totalChallenges}
-              />
-            )}
-            
-            <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
-              <CommunityStats />
-            </Suspense>
-          </div>
+          {profile && (
+            <Stats
+              user={profile}
+              totalChallenges={challengeStats.totalChallenges}
+            />
+          )}
+          
+          <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
+            <CommunityStats />
+          </Suspense>
         </div>
       </main>
       

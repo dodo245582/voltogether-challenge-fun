@@ -2,17 +2,33 @@
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { SUSTAINABLE_ACTIONS, CHALLENGE_DATES } from '@/types';
 import { CheckCircle } from 'lucide-react';
-import { format, addDays } from 'date-fns';
+import { format, addDays, isToday, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
 
 const NextEvents = () => {
   // Getting random recommended actions for the next day
   const recommendedActions = SUSTAINABLE_ACTIONS.slice(0, 3);
   
-  // Get tomorrow's date for the next event
+  // Get today's date
   const today = new Date();
-  const tomorrow = addDays(today, 1);
-  const tomorrowFormatted = format(tomorrow, 'EEEE d MMMM', { locale: it });
+  
+  // Find the next challenge date after today
+  const findNextChallengeDate = () => {
+    const todayStr = today.toISOString().split('T')[0];
+    const todayIndex = CHALLENGE_DATES.findIndex(date => date === todayStr);
+    
+    // If today is a challenge day and we have more challenges after today
+    if (todayIndex >= 0 && todayIndex < CHALLENGE_DATES.length - 1) {
+      return parseISO(CHALLENGE_DATES[todayIndex + 1]);
+    } 
+    // If today is not a challenge day or it's the last challenge day
+    else {
+      return addDays(today, 1); // Default to tomorrow
+    }
+  };
+  
+  const nextChallengeDate = findNextChallengeDate();
+  const nextChallengeDateFormatted = format(nextChallengeDate, 'EEEE d MMMM', { locale: it });
   
   // Get date for special challenge (this weekend)
   const weekend = new Date(today);
@@ -28,7 +44,7 @@ const NextEvents = () => {
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
               <div>
                 <p className="font-medium">Sfida Giornaliera</p>
-                <p className="text-sm text-gray-500">{tomorrowFormatted}, 19:00 - 20:00</p>
+                <p className="text-sm text-gray-500">{nextChallengeDateFormatted}, 19:00 - 20:00</p>
               </div>
               <span className="text-xs font-medium px-2 py-1 bg-voltgreen-100 text-voltgreen-700 rounded-full">
                 +10 punti per azione

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { CHALLENGE_DATES, SUSTAINABLE_ACTIONS } from '@/types';
@@ -45,6 +44,7 @@ export const useNotificationSystem = () => {
     return notifications.filter(isNotificationValid);
   }, [notifications]);
 
+  // Updated logic for participation box visibility
   const shouldShowParticipationBox = useMemo(() => {
     const challengeId = getCurrentChallengeId();
     if (!challengeId) return false;
@@ -53,11 +53,16 @@ export const useNotificationSystem = () => {
     if (participationResponse !== null) return false; // Already responded
 
     const now = new Date();
-    const participationDeadline = set(now, { hours: 18, minutes: 54, seconds: 0 });
+    const today = new Date(now);
+    const participationDeadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
 
-    return isBefore(now, participationDeadline) && isToday(participationDeadline);
+    // Show participation box from 9:00 AM to 18:54 PM
+    const participationStartTime = set(today, { hours: 9, minutes: 0, seconds: 0 });
+    
+    return isAfter(now, participationStartTime) && isBefore(now, participationDeadline);
   }, [notifications]);
 
+  // Updated logic for completion box visibility
   const shouldShowCompletionBox = useMemo(() => {
     const challengeId = getCurrentChallengeId();
     if (!challengeId) return false;
@@ -69,7 +74,10 @@ export const useNotificationSystem = () => {
     if (completionResponse === 'true') return false; // Already completed
 
     const now = new Date();
-    const completionCutoff = set(addDays(new Date(), 1), { hours: 8, minutes: 59, seconds: 0 });
+    const tomorrow = addDays(new Date(), 1);
+    const completionCutoff = set(tomorrow, { hours: 8, minutes: 59, seconds: 0 });
+    
+    const today = new Date(now);
     const challengeDay = parseISO(CHALLENGE_DATES[challengeId - 1]);
     const challengeEndTime = set(challengeDay, { hours: 20, minutes: 0, seconds: 0 });
 
@@ -120,12 +128,17 @@ export const useNotificationSystem = () => {
     requiredAction: boolean = false
   ) => {
     let deadline: Date | undefined;
+    
+    // Set proper deadlines for each notification type
     if (type === 'participation-request') {
       const today = new Date();
       deadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
     } else if (type === 'challenge-completion') {
       const tomorrow = addDays(new Date(), 1);
       deadline = set(tomorrow, { hours: 8, minutes: 59, seconds: 0 });
+    } else if (type === 'challenge-reminder') {
+      const today = new Date();
+      deadline = set(today, { hours: 20, minutes: 0, seconds: 0 });
     }
 
     const newNotification: Notification = {
@@ -140,37 +153,43 @@ export const useNotificationSystem = () => {
       deadline
     };
     
-    setNotifications(prev => [newNotification, ...prev]);
-    
-    toast({
-      title: newNotification.title,
-      description: newNotification.message,
-      variant: "default",
-    });
-    
-    if (areNotificationsEnabled()) {
-      new Notification(newNotification.title, {
-        body: newNotification.message,
-        icon: '/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png'
+    // Check if the notification would be valid before adding it
+    if (isNotificationValid(newNotification)) {
+      setNotifications(prev => [newNotification, ...prev]);
+      
+      toast({
+        title: newNotification.title,
+        description: newNotification.message,
+        variant: "default",
       });
+      
+      if (areNotificationsEnabled()) {
+        new Notification(newNotification.title, {
+          body: newNotification.message,
+          icon: '/lovable-uploads/8fb26252-8fb0-4f8b-8f11-0c217cfcbf7b.png'
+        });
+      }
+      
+      if (type === 'participation-request') {
+        setCurrentChallengeId(challengeId || null);
+        setShowParticipationModal(true);
+      } else if (type === 'challenge-completion') {
+        setCurrentChallengeId(challengeId || null);
+        setShowCompletionModal(true);
+      }
+      
+      return newNotification;
     }
     
-    if (type === 'participation-request') {
-      setCurrentChallengeId(challengeId || null);
-      setShowParticipationModal(true);
-    } else if (type === 'challenge-completion') {
-      setCurrentChallengeId(challengeId || null);
-      setShowCompletionModal(true);
-    }
-    
-    return newNotification;
+    // If notification would not be valid, don't add it
+    return null;
   };
 
-  // Periodicamente filtra le notifiche scadute
+  // Filter expired notifications more frequently
   useEffect(() => {
     const interval = setInterval(() => {
       setNotifications(prev => prev.filter(isNotificationValid));
-    }, 60000); // Controlla ogni minuto
+    }, 30000); // Check every 30 seconds
     
     return () => clearInterval(interval);
   }, []);
@@ -191,6 +210,7 @@ export const useNotificationSystem = () => {
     const today20 = new Date(todayStr);
     today20.setHours(20, 0, 0, 0);
     
+    // For testing purposes
     const testNow = new Date();
     const today9AMtest = new Date(testNow);
     today9AMtest.setMinutes(today9AMtest.getMinutes() - 2);
@@ -201,7 +221,8 @@ export const useNotificationSystem = () => {
     const today20test = new Date(testNow);
     today20test.setMinutes(today20test.getMinutes() - 0.5);
     
-    if (now.getTime() >= today9AMtest.getTime()) {
+    // Check if it's time for the 9:00 AM notification
+    if (now.getTime() >= today9AM.getTime()) {
       const alreadySentParticipation = notifications.some(n => 
         n.type === 'participation-request' && 
         n.challengeId === challengeId &&
@@ -210,6 +231,7 @@ export const useNotificationSystem = () => {
       
       const hasResponded = localStorage.getItem(`challenge_${challengeId}_participating`) !== null;
       
+      // Only send if not already sent and user hasn't responded
       if (!alreadySentParticipation && !hasResponded) {
         createNotification(
           'participation-request',
@@ -221,7 +243,8 @@ export const useNotificationSystem = () => {
       }
     }
     
-    if (now.getTime() >= today1855test.getTime()) {
+    // Check if it's time for the 18:55 notification
+    if (now.getTime() >= today1855.getTime()) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
       // Only send reminder if user explicitly chose to participate
@@ -244,7 +267,8 @@ export const useNotificationSystem = () => {
       }
     }
     
-    if (now.getTime() >= today20test.getTime()) {
+    // Check if it's time for the 20:00 notification
+    if (now.getTime() >= today20.getTime()) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
       // Only send completion notification if user explicitly chose to participate
@@ -289,22 +313,32 @@ export const useNotificationSystem = () => {
     localStorage.setItem(`challenge_${challengeId}_participating`, participating.toString());
     setShowParticipationModal(false);
     
-    // Rimuovi immediatamente tutte le notifiche di partecipazione relative a questa sfida
+    // Immediately remove all participation notifications related to this challenge
     setNotifications(prev => 
       prev.filter(n => !(n.type === 'participation-request' && n.challengeId === challengeId))
     );
     
-    // Segna come lette le altre notifiche relative a questa sfida
+    // Mark as read other notifications related to this challenge
     markAllRelatedNotificationsAsRead(challengeId);
+    
+    // Mark as lost if the user responded "No"
+    if (!participating) {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const challengeDate = CHALLENGE_DATES[challengeId - 1];
+      
+      // If this is today's challenge or a past challenge, mark it as completed but with no points
+      if (challengeDate <= todayStr) {
+        localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
+        localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(['none']));
+      }
+    }
     
     if (participating) {
       toast({
         title: "Partecipazione confermata",
         description: "Riceverai una notifica poco prima dell'inizio della sfida",
       });
-      
-      const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0');
-      localStorage.setItem('completedChallenges', (completedChallenges + 1).toString());
     } else {
       toast({
         title: "Partecipazione annullata",
@@ -319,14 +353,15 @@ export const useNotificationSystem = () => {
 
   const completeChallengeActions = async (challengeId: number, actionIds: string[]) => {
     localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
+    localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
     setShowCompletionModal(false);
     
-    // Rimuovi immediatamente tutte le notifiche di completamento relative a questa sfida
+    // Immediately remove all completion notifications related to this challenge
     setNotifications(prev => 
       prev.filter(n => !(n.type === 'challenge-completion' && n.challengeId === challengeId))
     );
     
-    // Segna come lette le altre notifiche relative a questa sfida
+    // Mark as read other notifications related to this challenge
     markAllRelatedNotificationsAsRead(challengeId);
     
     const pointsPerAction = 10;
@@ -344,8 +379,6 @@ export const useNotificationSystem = () => {
     
     const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0');
     localStorage.setItem('completedChallenges', (completedChallenges + 1).toString());
-    
-    localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
     
     if (user && profile) {
       console.log("Updating profile after challenge completion");
@@ -372,6 +405,13 @@ export const useNotificationSystem = () => {
         description: "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
       });
     } else {
+      const pointsPerAction = 10;
+      const totalPoints = actionIds.length * pointsPerAction;
+      
+      const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+      const newStreak = totalPoints > 0 ? currentStreak + 1 : 0;
+      const streakBonus = newStreak >= 3 ? 5 : 0;
+      
       toast({
         title: "Sfida completata",
         description: `Hai guadagnato ${totalPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!`,
@@ -387,26 +427,39 @@ export const useNotificationSystem = () => {
     setShowCompletionModal(false);
   };
   
+  // Initial check for participation notification on mount
   useEffect(() => {
     const challengeId = getCurrentChallengeId();
     if (challengeId !== null) {
       const participationResponse = localStorage.getItem(`challenge_${challengeId}_participating`);
       
       if (participationResponse === null) {
-        const alreadySentParticipation = notifications.some(n => 
-          n.type === 'participation-request' && 
-          n.challengeId === challengeId &&
-          isToday(parseISO(n.timestamp))
-        );
+        const now = new Date();
+        const today = new Date(now);
+        const participationDeadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
         
-        if (!alreadySentParticipation) {
-          createNotification(
-            'participation-request',
-            'Sfida di oggi',
-            `Parteciperai alla sfida di oggi dalle 19:00 alle 20:00?`,
-            challengeId,
-            true
+        // Only show if it's still before the deadline
+        if (isBefore(now, participationDeadline)) {
+          const alreadySentParticipation = notifications.some(n => 
+            n.type === 'participation-request' && 
+            n.challengeId === challengeId &&
+            isToday(parseISO(n.timestamp))
           );
+          
+          if (!alreadySentParticipation) {
+            createNotification(
+              'participation-request',
+              'Sfida di oggi',
+              `Parteciperai alla sfida di oggi dalle 19:00 alle 20:00?`,
+              challengeId,
+              true
+            );
+          }
+        } else {
+          // If past deadline and no response, mark as not participating
+          localStorage.setItem(`challenge_${challengeId}_participating`, 'false');
+          localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
+          localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(['none']));
         }
       }
     }
@@ -427,7 +480,6 @@ export const useNotificationSystem = () => {
   }, []);
 
   return {
-    // Utilizza getValidNotifications invece di notifications
     notifications: getValidNotifications,
     showParticipationModal,
     showCompletionModal,

@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useNotifications } from '@/context/NotificationContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -79,6 +80,10 @@ export const NotificationModals = () => {
     
     if (challengeId) {
       markAllRelatedNotificationsAsRead(challengeId);
+    }
+    
+    if (user && refreshProfile) {
+      await refreshProfile(user.id);
     }
   };
   

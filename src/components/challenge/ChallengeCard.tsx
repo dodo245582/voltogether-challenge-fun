@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Challenge, SustainableAction } from '@/types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday, isBefore, isAfter, set, addDays } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Calendar, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -30,15 +30,23 @@ const ChallengeCard = ({
   const startTime = parseISO(`${challenge.date}T${challenge.startTime}`);
   const endTime = parseISO(`${challenge.date}T${challenge.endTime}`);
   
-  const isDayInPast = challengeDate < new Date(now.setHours(0, 0, 0, 0));
-  const isChallengeActive = now >= startTime && now <= endTime;
-  const isChallengeFuture = now < startTime;
-  const isChallengeOver = now > endTime;
+  const isDayInPast = isBefore(challengeDate, new Date(now.setHours(0, 0, 0, 0)));
+  const isChallengeActive = isAfter(now, startTime) && isBefore(now, endTime);
+  const isChallengeFuture = isBefore(now, startTime);
+  const isChallengeOver = isAfter(now, endTime);
   
-  const showParticipationQuestion = isChallengeFuture && 
-    (now >= new Date(startTime.getTime() - 3 * 60 * 60 * 1000)); // 3 hours before
+  // Participation question should be shown from 9:00 to 18:54 on the day of the challenge
+  const showParticipationQuestion = isToday(challengeDate) && 
+    isAfter(now, set(new Date(), { hours: 9, minutes: 0 })) && 
+    isBefore(now, set(new Date(), { hours: 18, minutes: 54 })) &&
+    challenge.participating === undefined;
   
-  const showCompletionQuestion = isChallengeOver && !challenge.completed && challenge.participating;
+  // Completion question should be shown from end of challenge until 8:59 the next day
+  const completionDeadline = set(addDays(challengeDate, 1), { hours: 8, minutes: 59 });
+  const showCompletionQuestion = isChallengeOver && 
+    !challenge.completed && 
+    challenge.participating === true && 
+    isBefore(now, completionDeadline);
 
   const formattedDate = format(challengeDate, 'EEEE d MMMM yyyy', { locale: it });
   const formattedTimeRange = `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}`;
@@ -88,7 +96,7 @@ const ChallengeCard = ({
             </Badge>
           ) : isChallengeActive ? (
             <Badge className="bg-voltgreen-500 animate-pulse">In corso</Badge>
-          ) : isDayInPast && hasDeclinedParticipation ? (
+          ) : isDayInPast && !challenge.completed ? (
             <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
               <XCircle className="mr-1 h-3 w-3" /> Persa
             </Badge>
@@ -117,7 +125,7 @@ const ChallengeCard = ({
           </div>
         )}
         
-        {showParticipationQuestion && !isDayInPast && (
+        {showParticipationQuestion && (
           <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
             <p className="font-medium mb-2">Parteciperai alla sfida di oggi?</p>
             <div className="flex space-x-2 mt-3">
@@ -211,7 +219,7 @@ const ChallengeCard = ({
             startTime={startTime} 
             endTime={endTime} 
             isActive={isChallengeActive}
-            isPast={isDayInPast && hasDeclinedParticipation}
+            isPast={isDayInPast && (hasDeclinedParticipation || !challenge.participating)}
           />
         </div>
         
