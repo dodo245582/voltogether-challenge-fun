@@ -37,12 +37,16 @@ export const useOnboardingState = (profile: User | null) => {
   const safeSetName = (value: string) => setName(value.slice(0, 50));
   const safeSetCity = (value: string) => setCity(value.slice(0, 50));
   
-  // Type-safe implementation for setSelectedActions
-  const safeSetSelectedActions = (value: string[] | ((prev: string[]) => string[])) => {
+  // Properly typed setSelectedActions to handle both direct arrays and callback functions
+  const safeSetSelectedActions = (
+    value: string[] | ((prev: string[]) => string[])
+  ) => {
     if (typeof value === 'function') {
       setSelectedActions(prev => {
         try {
+          // Call the function with current state
           const result = value(prev);
+          // Validate and sanitize the result
           return Array.isArray(result) ? result.slice(0, 20) : [];
         } catch (e) {
           console.error("Error updating selectedActions:", e);
@@ -50,6 +54,7 @@ export const useOnboardingState = (profile: User | null) => {
         }
       });
     } else {
+      // Handle direct array assignment
       setSelectedActions(Array.isArray(value) ? value.slice(0, 20) : []);
     }
   };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -145,12 +146,18 @@ const OnboardingContainer = () => {
     }
   };
   
+  // Fix: Ensure proper typing and string array handling 
   const toggleAction = (actionId: string) => {
-    setSelectedActions((prev: string[]) => {
-      if (prev.includes(actionId)) {
-        return prev.filter((id) => id !== actionId);
+    // Use direct callback to avoid any potential state staleness issues
+    setSelectedActions((prev) => {
+      // Ensure prev is always treated as an array
+      const currentActions = Array.isArray(prev) ? prev : [];
+      
+      // Return a new array to avoid mutation
+      if (currentActions.includes(actionId)) {
+        return currentActions.filter((id) => id !== actionId);
       } else {
-        return [...prev, actionId];
+        return [...currentActions, actionId];
       }
     });
   };

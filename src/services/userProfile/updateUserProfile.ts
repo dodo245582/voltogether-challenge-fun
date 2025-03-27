@@ -30,11 +30,13 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
     }
   });
 
-  // Use a very short timeout to prevent hanging
+  // Use an even shorter timeout to prevent hanging (1.5 seconds)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 1500);
 
   try {
+    console.log("Attempting to update profile with data:", cleanData);
+    
     // Attempt update with timeout
     const { error } = await supabase
       .from('Users')
@@ -49,6 +51,7 @@ export const updateUserProfile = async (userId: string, data: Partial<UserType>)
       return { success: false, error };
     }
 
+    console.log("Profile updated successfully");
     return { success: true, error: null };
   } catch (err) {
     clearTimeout(timeoutId);
