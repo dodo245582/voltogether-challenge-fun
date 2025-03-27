@@ -1,7 +1,6 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Notification, NotificationType } from '@/types/notifications';
+import type { Notification, NotificationType } from '@/types/notifications';
 import { isNotificationValid } from './dateUtils';
 import { useNotificationPermissions } from './useNotificationPermissions';
 import { parseISO, isToday, set } from 'date-fns';
