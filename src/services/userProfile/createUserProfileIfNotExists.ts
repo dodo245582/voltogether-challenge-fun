@@ -59,7 +59,7 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
     if (insertError) {
       console.error("Service: Error creating profile:", insertError);
       
-      // Se l'errore è di violazione RLS, potrebbe essere perché l'utente non è autenticato correttamente
+      // If the error is an RLS policy violation, could be because the user is not properly authenticated
       if (insertError.code === '42501') {
         console.error("RLS policy violation - make sure user is authenticated");
       }
@@ -67,20 +67,16 @@ export const createUserProfileIfNotExists = async (userId: string, email: string
       // Fallback: try creating without RLS (if the policy is causing issues)
       console.log("Attempting direct insert via function...");
       try {
-        // Define the parameters for the RPC call
-        const params = {
-          user_id: userId,
-          user_email: email
-        };
-        
-        // Utilizzare .rpc senza specificare tipi generici o con as any per evitare errori di tipo
-        const response = await supabase.rpc(
-          'create_user_profile', 
-          params
-        ) as { data: boolean | null; error: any };
-        
-        const directInsertData = response.data;
-        const directInsertError = response.error;
+        // Call the RPC function with a type assertion to bypass TypeScript errors
+        const { data: directInsertData, error: directInsertError } = await supabase.functions.invoke(
+          'create-user-profile-function',
+          {
+            body: {
+              userId: userId,
+              email: email
+            }
+          }
+        );
           
         if (directInsertError) {
           console.error("Direct insert failed:", directInsertError);
