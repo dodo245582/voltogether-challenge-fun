@@ -7,35 +7,33 @@ import { User as UserType } from '@/types';
  */
 export const fetchUserProfile = async (userId: string) => {
   try {
-    // Add console logs to track execution
     console.log("Service: Fetching user profile for ID:", userId);
     
-    // First try to get from localStorage as an optimization
+    // First try to get from localStorage
     try {
       const cachedProfile = localStorage.getItem(`profile_${userId}`);
       if (cachedProfile) {
-        console.log("Service: Found cached profile, using it for initial render");
-        // Still fetch from DB but use cache immediately
+        console.log("Service: Found cached profile, using it");
         const profileData = JSON.parse(cachedProfile) as UserType;
         
-        // Start DB fetch in the background
-        supabase
-          .from('Users')
-          .select('*')
-          .eq('id', userId)
-          .single()
-          .then(({ data, error }) => {
-            if (!error && data) {
-              // Only update localStorage if there's new data
-              localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
-            }
-          });
+        // Start DB fetch in the background without awaiting it
+        setTimeout(() => {
+          supabase
+            .from('Users')
+            .select('*')
+            .eq('id', userId)
+            .single()
+            .then(({ data, error }) => {
+              if (!error && data) {
+                localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
+              }
+            });
+        }, 0);
         
         return { data: profileData, error: null };
       }
     } catch (e) {
       console.error("Error retrieving profile from localStorage:", e);
-      // Continue with database fetch if localStorage fails
     }
     
     // Fetch from database if not in localStorage
@@ -53,10 +51,9 @@ export const fetchUserProfile = async (userId: string) => {
     if (data) {
       console.log("Service: User profile fetched successfully");
       
-      // Ensure data has proper structure - using explicit type assertions to handle potential nulls
+      // Ensure data has proper structure
       const sanitizedData = {
         ...data,
-        // Ensure non-null values by defaulting to empty strings
         name: data.name || '',
         city: data.city || '',
         completed_challenges: data.completed_challenges || 0,
@@ -66,7 +63,7 @@ export const fetchUserProfile = async (userId: string) => {
         selected_actions: data.selected_actions || []
       };
       
-      // Store the sanitized profile in localStorage as a fallback mechanism
+      // Store in localStorage for faster future access
       try {
         localStorage.setItem(`profile_${userId}`, JSON.stringify(sanitizedData));
       } catch (e) {

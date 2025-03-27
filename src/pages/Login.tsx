@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -28,16 +27,11 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Short timeout to allow toast to show before redirect
-        setTimeout(() => {
-          // Use navigate instead of location.href to avoid full page reload
-          navigate('/dashboard', { replace: true });
-        }, 100);
+        navigate('/dashboard', { replace: true });
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';
         
-        // Gestisci specificamente l'errore di email non confermata
         if (error?.code === 'email_not_confirmed') {
           errorMessage = 'Email non confermata. Controlla la tua casella email per confermare la registrazione.';
         } else if (error?.message) {
