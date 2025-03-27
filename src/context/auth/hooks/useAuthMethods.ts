@@ -10,7 +10,7 @@ export const useAuthMethods = (user: User | null) => {
   const { 
     fetchUserProfile,
     createUserProfileIfNotExists, 
-    updateUserProfile: updateUserProfileHook,
+    updateProfile: updateUserProfileHook,
   } = useUserProfile();
 
   const signUp = async (email: string, password: string) => {
