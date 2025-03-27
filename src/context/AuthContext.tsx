@@ -1,3 +1,4 @@
+
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -44,15 +45,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile
   } = useUserProfile();
 
-  const isLoading = (loading || (profileLoading && initialCheckDone === false));
+  // Simplify loading state to minimize UI flicker
+  const isLoading = loading || (profileLoading && !initialCheckDone);
 
   useEffect(() => {
     console.log("AuthProvider: Initializing auth state");
-    let isSubscribed = true;
+    let mounted = true;
     
+    // Initialize with cached profile if available
+    if (mounted && user) {
+      try {
+        const cachedProfile = localStorage.getItem(`profile_${user.id}`);
+        if (cachedProfile) {
+          setProfile(JSON.parse(cachedProfile));
+        }
+      } catch (e) {
+        console.error("Error retrieving cached profile:", e);
+      }
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (!isSubscribed) return;
+        if (!mounted) return;
         
         console.log("Auth state change event:", event);
         setSession(session);
@@ -67,26 +81,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } catch (e) {
             console.error("Error retrieving cached profile:", e);
           }
+          
+          if (event === 'SIGNED_IN') {
+            setTimeout(async () => {
+              if (!mounted) return;
+              try {
+                await createUserProfileIfNotExists(session.user.id, session.user.email);
+                if (mounted) await fetchUserProfile(session.user.id);
+              } catch (error) {
+                console.error("Error in auth state change handler:", error);
+              }
+            }, 0);
+          }
         }
         
-        if (event === 'SIGNED_IN' && session?.user) {
-          setTimeout(async () => {
-            try {
-              if (!isSubscribed) return;
-              await createUserProfileIfNotExists(session.user.id, session.user.email);
-              if (isSubscribed) await fetchUserProfile(session.user.id);
-            } catch (error) {
-              console.error("Error in auth state change handler:", error);
-            }
-          }, 0);
-        }
-        
-        setLoading(false);
+        // Don't set loading to false here to prevent UI flicker
+        // We'll set it after getSession completes
       }
     );
 
+    // Get session only once at initialization
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!isSubscribed) return;
+      if (!mounted) return;
       
       console.log("Got existing session:", !!session);
       setSession(session);
@@ -98,30 +114,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (cachedProfile) {
             setProfile(JSON.parse(cachedProfile));
           }
+          
+          setTimeout(async () => {
+            if (!mounted) return;
+            try {
+              await createUserProfileIfNotExists(session.user.id, session.user.email);
+              if (mounted) await fetchUserProfile(session.user.id);
+            } catch (error) {
+              console.error("Error during initial session check:", error);
+            } finally {
+              if (mounted) {
+                setInitialCheckDone(true);
+                setLoading(false);
+              }
+            }
+          }, 0);
         } catch (e) {
-          console.error("Error retrieving cached profile:", e);
-        }
-        
-        setTimeout(async () => {
-          try {
-            if (!isSubscribed) return;
-            await createUserProfileIfNotExists(session.user.id, session.user.email);
-            if (isSubscribed) await fetchUserProfile(session.user.id);
-          } catch (error) {
-            console.error("Error during initial session check:", error);
-          } finally {
-            if (isSubscribed) setInitialCheckDone(true);
+          console.error("Error retrieving/setting cached profile:", e);
+          if (mounted) {
+            setInitialCheckDone(true);
+            setLoading(false);
           }
-        }, 0);
+        }
       } else {
-        setInitialCheckDone(true);
+        if (mounted) {
+          setInitialCheckDone(true);
+          setLoading(false);
+        }
       }
-      
-      setLoading(false);
     });
 
     return () => {
-      isSubscribed = false;
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [fetchUserProfile, createUserProfileIfNotExists, setProfile]);

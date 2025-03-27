@@ -5,9 +5,11 @@ import Navbar from '@/components/layout/Navbar';
 import AuthForm from '@/components/auth/AuthForm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [loginSuccessful, setLoginSuccessful] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn } = useAuth();
@@ -19,13 +21,18 @@ const Login = () => {
       const { error, success } = await signIn(email, password);
       
       if (success) {
+        setLoginSuccessful(true);
         toast({
           title: 'Login effettuato',
           description: 'Hai effettuato l\'accesso con successo',
           variant: 'default',
         });
-        // Force immediate redirect to dashboard
-        window.location.href = '/dashboard';
+        
+        // Short timeout to allow toast to show before redirect
+        setTimeout(() => {
+          // Use navigate instead of location.href to avoid full page reload
+          navigate('/dashboard', { replace: true });
+        }, 100);
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';
@@ -42,6 +49,7 @@ const Login = () => {
           description: errorMessage,
           variant: 'destructive',
         });
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Unexpected error during login:", error);
@@ -50,10 +58,13 @@ const Login = () => {
         description: 'Si è verificato un errore imprevisto',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
+
+  if (loginSuccessful) {
+    return <DashboardLoadingState />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">

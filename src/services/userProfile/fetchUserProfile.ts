@@ -10,6 +10,35 @@ export const fetchUserProfile = async (userId: string) => {
     // Add console logs to track execution
     console.log("Service: Fetching user profile for ID:", userId);
     
+    // First try to get from localStorage as an optimization
+    try {
+      const cachedProfile = localStorage.getItem(`profile_${userId}`);
+      if (cachedProfile) {
+        console.log("Service: Found cached profile, using it for initial render");
+        // Still fetch from DB but use cache immediately
+        const profileData = JSON.parse(cachedProfile) as UserType;
+        
+        // Start DB fetch in the background
+        supabase
+          .from('Users')
+          .select('*')
+          .eq('id', userId)
+          .single()
+          .then(({ data, error }) => {
+            if (!error && data) {
+              // Only update localStorage if there's new data
+              localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
+            }
+          });
+        
+        return { data: profileData, error: null };
+      }
+    } catch (e) {
+      console.error("Error retrieving profile from localStorage:", e);
+      // Continue with database fetch if localStorage fails
+    }
+    
+    // Fetch from database if not in localStorage
     const { data, error } = await supabase
       .from('Users')
       .select('*')
@@ -22,7 +51,7 @@ export const fetchUserProfile = async (userId: string) => {
     }
     
     if (data) {
-      console.log("Service: User profile fetched successfully", data);
+      console.log("Service: User profile fetched successfully");
       
       // Ensure data has proper structure - using explicit type assertions to handle potential nulls
       const sanitizedData = {
@@ -47,18 +76,6 @@ export const fetchUserProfile = async (userId: string) => {
       return { data: sanitizedData as UserType, error: null };
     } else {
       console.log("Service: No user profile found");
-      
-      // Try to get profile from localStorage if database fetch failed
-      try {
-        const cachedProfile = localStorage.getItem(`profile_${userId}`);
-        if (cachedProfile) {
-          console.log("Service: Retrieved profile from localStorage");
-          return { data: JSON.parse(cachedProfile) as UserType, error: null };
-        }
-      } catch (e) {
-        console.error("Error retrieving profile from localStorage:", e);
-      }
-      
       return { data: null, error: new Error("No user profile found") };
     }
   } catch (error) {
