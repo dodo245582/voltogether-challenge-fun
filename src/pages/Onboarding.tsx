@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -132,9 +131,7 @@ const Onboarding = () => {
     setIsLoading(true);
     
     try {
-      console.log("Starting onboarding completion process");
-      console.log("User authentication status:", !!user);
-      console.log("User ID:", user.id);
+      console.log("Inizio aggiornamento profilo:", { name, city, selected_actions: selectedActions, discovery_source: discoverySource });
       
       localStorage.setItem('userSelectedActions', JSON.stringify(selectedActions));
       
@@ -163,7 +160,7 @@ const Onboarding = () => {
       console.log("Calling updateProfile with data:", profileData);
       const { error, success } = await updateProfile(profileData);
       
-      console.log("Update profile result:", { error, success });
+      console.log("Risultato aggiornamento profilo:", { error, success });
       
       if (error) {
         console.error("Error in onboarding profile update:", error);
