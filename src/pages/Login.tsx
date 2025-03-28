@@ -12,24 +12,47 @@ const Login = () => {
   const [redirecting, setRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, user, authInitialized, profile } = useAuth();
+  const { signIn, user, authInitialized, profile, refreshProfile } = useAuth();
 
   // Quick redirect if already authenticated
   useEffect(() => {
-    if (authInitialized && user) {
+    if (!authInitialized) return;
+    
+    if (user) {
       console.log("Login: User already authenticated, redirecting");
       setRedirecting(true);
       
-      // Check if profile is completed to determine where to redirect
-      if (profile?.profile_completed) {
-        console.log("Login: Profile completed, redirecting to dashboard");
-        navigate('/dashboard', { replace: true });
+      // Make sure profile is loaded
+      if (user.id && !profile) {
+        console.log("Login: Profile not loaded, fetching profile before redirect");
+        refreshProfile(user.id)
+          .then(() => {
+            // After profile fetch, determine where to go
+            if (profile?.profile_completed) {
+              console.log("Login: Profile completed, redirecting to dashboard");
+              navigate('/dashboard', { replace: true });
+            } else {
+              console.log("Login: Profile not completed, redirecting to onboarding");
+              navigate('/onboarding', { replace: true });
+            }
+          })
+          .catch(error => {
+            console.error("Failed to refresh profile:", error);
+            // Default to onboarding if profile fetch fails
+            navigate('/onboarding', { replace: true });
+          });
       } else {
-        console.log("Login: Profile not completed, redirecting to onboarding");
-        navigate('/onboarding', { replace: true });
+        // Profile already loaded, determine where to go
+        if (profile?.profile_completed) {
+          console.log("Login: Profile completed, redirecting to dashboard");
+          navigate('/dashboard', { replace: true });
+        } else {
+          console.log("Login: Profile not completed, redirecting to onboarding");
+          navigate('/onboarding', { replace: true });
+        }
       }
     }
-  }, [user, authInitialized, navigate, profile]);
+  }, [user, authInitialized, navigate, profile, refreshProfile]);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
