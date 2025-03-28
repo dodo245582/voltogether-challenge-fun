@@ -9,36 +9,20 @@ import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState'
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, user, authInitialized, profile } = useAuth();
-
-  // Handle redirect if already authenticated
+  const { signIn, user, authInitialized } = useAuth();
+  
+  // Simplify redirect logic
   useEffect(() => {
     if (!authInitialized) return;
     
     if (user) {
-      console.log("Login: User already authenticated, preparing redirect");
-      setIsRedirecting(true);
-      
-      // Determine where to redirect based on profile completion
-      if (profile) {
-        if (profile.profile_completed) {
-          console.log("Login: Profile completed, redirecting to dashboard");
-          navigate('/dashboard', { replace: true });
-        } else {
-          console.log("Login: Profile not completed, redirecting to onboarding");
-          navigate('/onboarding', { replace: true });
-        }
-      } else {
-        // If profile isn't loaded yet, default to onboarding
-        // The onboarding page will handle further redirection if needed
-        console.log("Login: Profile not loaded yet, defaulting to onboarding");
-        navigate('/onboarding', { replace: true });
-      }
+      console.log("Login: User already authenticated, redirecting to onboarding");
+      // Always redirect to onboarding first, which will handle further redirect if needed
+      navigate('/onboarding', { replace: true });
     }
-  }, [user, profile, authInitialized, navigate]);
+  }, [user, authInitialized, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -55,9 +39,8 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Show loading state while the auth state updates
-        setIsRedirecting(true);
-        // Redirect is handled by the useEffect above
+        // Don't set redirecting state, let the useEffect handle redirection
+        // This avoids potential race conditions
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';
@@ -86,7 +69,8 @@ const Login = () => {
     }
   };
   
-  if (isRedirecting) {
+  // If already authenticated and initialized, show loading state
+  if (authInitialized && user) {
     return <DashboardLoadingState />;
   }
 

@@ -1,10 +1,12 @@
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useAuthState } from './hooks/useAuthState';
 import { useAuthMethods } from './hooks/useAuthMethods';
 import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [retryCount, setRetryCount] = useState(0);
+  
   // Get authentication state with optimized profile handling
   const { 
     session, 
@@ -34,9 +36,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userExists: !!user, 
       profileExists: !!profile, 
       authInitialized, 
-      loading 
+      loading,
+      retryCount 
     });
-  }, [user, profile, authInitialized, loading]);
+    
+    // If authentication has initialized but we have a user with no profile,
+    // try to fetch the profile as a fallback
+    if (authInitialized && user && !profile && !loading && retryCount < 2) {
+      console.log(`Auth Provider: User exists but no profile, retrying profile fetch (attempt ${retryCount + 1})`);
+      setRetryCount(prev => prev + 1);
+      
+      // Use timeout to prevent potential recursive state updates
+      setTimeout(() => {
+        refreshProfile(user.id).catch(e => {
+          console.error("Profile refresh error:", e);
+        });
+      }, 100);
+    }
+  }, [user, profile, authInitialized, loading, refreshProfile, retryCount]);
 
   const value = {
     session,

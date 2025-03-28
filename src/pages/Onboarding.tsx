@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Onboarding = () => {
-  const { user, profile, authInitialized, loading, refreshProfile } = useAuth();
+  const { user, profile, authInitialized, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
   
@@ -18,6 +18,12 @@ const Onboarding = () => {
       // Wait for auth to initialize
       if (!authInitialized) return;
       
+      console.log("Onboarding: Auth initialized, checking status", { 
+        hasUser: !!user, 
+        hasProfile: !!profile,
+        profileCompleted: profile?.profile_completed 
+      });
+      
       // No user = redirect to login
       if (!user) {
         console.log("Onboarding: No user, redirecting to login");
@@ -25,7 +31,7 @@ const Onboarding = () => {
         return;
       }
       
-      // If profile isn't loaded yet but we have a user, try to fetch it
+      // If we have a user but no profile, try to fetch it once
       if (user && !profile) {
         console.log("Onboarding: User authenticated but no profile, fetching profile");
         try {
@@ -35,8 +41,8 @@ const Onboarding = () => {
         }
       }
       
-      // If profile is completed, redirect to dashboard
-      if (profile?.profile_completed) {
+      // After potential profile fetch, check if profile is completed
+      if (user && profile?.profile_completed) {
         console.log("Onboarding: Profile already completed, redirecting to dashboard");
         navigate('/dashboard', { replace: true });
         return;
@@ -44,6 +50,7 @@ const Onboarding = () => {
       
       // If we get here, user is logged in but profile is incomplete or not loaded
       if (mounted) {
+        console.log("Onboarding: Ready to show onboarding form");
         setIsChecking(false);
       }
     };
@@ -56,7 +63,7 @@ const Onboarding = () => {
   }, [user, profile, authInitialized, navigate, refreshProfile]);
   
   // Show loading state while checking auth
-  if (!authInitialized || loading || isChecking) {
+  if (!authInitialized || isChecking) {
     return <DashboardLoadingState />;
   }
   
@@ -67,6 +74,7 @@ const Onboarding = () => {
   if (profile?.profile_completed) return null;
   
   // Render onboarding for users with incomplete profiles
+  console.log("Onboarding: Rendering onboarding container");
   return <OnboardingContainer />;
 };
 

@@ -8,23 +8,37 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, authInitialized, profile, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   
-  // Fetch profile data if needed
   useEffect(() => {
     let mounted = true;
     
     const checkAuth = async () => {
+      // Wait for auth to initialize
       if (!authInitialized) return;
       
+      console.log("ProtectedRoute: Auth state:", { 
+        hasUser: !!user, 
+        hasProfile: !!profile, 
+        authInitialized 
+      });
+      
+      // Simple case: No user = redirect to login
+      if (!user) {
+        console.log("ProtectedRoute: No user, will redirect to login");
+        if (mounted) setIsLoading(false);
+        return;
+      }
+      
+      // If we have a user but no profile, try to fetch it ONCE
       if (user && !profile) {
-        console.log("ProtectedRoute: Fetching profile data for user", user.id);
-        
+        console.log("ProtectedRoute: User exists but no profile, fetching profile");
         try {
           await refreshProfile(user.id);
         } catch (err) {
-          console.error("ProtectedRoute: Failed to fetch profile", err);
+          console.error("ProtectedRoute: Error fetching profile", err);
         }
       }
       
+      // Whether profile fetch succeeded or not, continue with what we have
       if (mounted) {
         setIsLoading(false);
       }
@@ -39,13 +53,11 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   
   // Show loading state while checking authentication
   if (!authInitialized || isLoading) {
-    console.log("ProtectedRoute: Still initializing or loading, showing loading state");
     return <DashboardLoadingState />;
   }
   
   // If no user after auth is initialized, redirect to login
   if (!user) {
-    console.log("ProtectedRoute: No user found, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
