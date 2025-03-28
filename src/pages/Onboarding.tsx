@@ -6,11 +6,11 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Onboarding = () => {
-  const { user, loading, profile, refreshProfile, authInitialized } = useAuth();
+  const { user, profile, refreshProfile, authInitialized } = useAuth();
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Check for existing completed profile once
+  // Quick check for completed profile - redirect to dashboard if needed
   useEffect(() => {
     if (!authInitialized) return;
     
@@ -27,12 +27,12 @@ const Onboarding = () => {
       return;
     }
     
-    // Only refresh profile if we have a user and we're not already refreshing
+    // Only refresh profile in background if needed, don't block UI
     if (user.id && !isRefreshing && !profile) {
       console.log("Onboarding: refreshing profile in background");
       setIsRefreshing(true);
       
-      // Refresh profile in background without blocking UI
+      // Don't wait for this to complete before showing UI
       refreshProfile(user.id).catch(error => {
         console.error("Error refreshing profile:", error);
       }).finally(() => {
@@ -49,7 +49,7 @@ const Onboarding = () => {
   // If no user, component will be unmounted by effect above
   if (!user) return null;
   
-  // Don't wait for profile refreshing - show onboarding immediately
+  // Show onboarding immediately, don't wait for profile data
   console.log("Onboarding: rendering onboarding container");
   return <OnboardingContainer />;
 };

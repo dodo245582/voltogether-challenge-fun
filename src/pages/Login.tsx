@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import AuthForm from '@/components/auth/AuthForm';
@@ -10,7 +10,19 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, profile } = useAuth();
+  const { signIn, profile, user, authInitialized } = useAuth();
+
+  // Quick redirect if already authenticated
+  useEffect(() => {
+    if (authInitialized && user) {
+      console.log("Login: User already authenticated, redirecting");
+      if (profile && !profile.profile_completed) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [user, profile, authInitialized, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -27,7 +39,8 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Immediate redirect based on profile completion status
+        // We'll do a quick local check based on any available profile info
+        // but don't wait for full profile loading
         if (profile && !profile.profile_completed) {
           navigate('/onboarding', { replace: true });
         } else {

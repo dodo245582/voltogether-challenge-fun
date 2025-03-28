@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User as UserType } from '@/types';
 
 /**
- * Fetches a user profile by user ID
+ * Fetches a user profile by user ID with optimized caching
  */
 export const fetchUserProfile = async (userId: string) => {
   try {
@@ -18,7 +18,9 @@ export const fetchUserProfile = async (userId: string) => {
         
         // Fetch fresh data in background without blocking
         setTimeout(() => {
-          fetchProfileFromDatabase(userId);
+          fetchProfileFromDatabase(userId).catch(e => 
+            console.error("Background fetch error:", e)
+          );
         }, 0);
         
         return { data: profileData, error: null };
@@ -35,12 +37,13 @@ export const fetchUserProfile = async (userId: string) => {
   }
 };
 
-// Separate function to fetch from database and update localStorage
+// Optimized function to fetch from database and update localStorage
 const fetchProfileFromDatabase = async (userId: string) => {
   try {
+    // Use a more targeted query with column selection
     const { data, error } = await supabase
       .from('Users')
-      .select('*')
+      .select('id, name, city, completed_challenges, total_points, streak, discovery_source, selected_actions, profile_completed, email')
       .eq('id', userId)
       .single();
     

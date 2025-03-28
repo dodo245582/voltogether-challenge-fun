@@ -32,15 +32,20 @@ export const useAuthState = () => {
           setSession(session);
           setUser(session.user);
           
+          // For certain events, run post-login tasks but don't block UI
           if (mounted && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
             console.log("Processing post-login tasks for user:", session.user.id);
-            // Execute operations in parallel instead of sequence
-            Promise.all([
-              createUserProfileIfNotExists(session.user.id, session.user.email),
-              fetchUserProfile(session.user.id)
-            ]).catch(error => {
-              console.error("Error in post-login tasks:", error);
-            });
+            
+            // Only trigger background operations, don't block the UI flow
+            setTimeout(() => {
+              if (!mounted) return;
+              Promise.all([
+                createUserProfileIfNotExists(session.user.id, session.user.email),
+                fetchUserProfile(session.user.id)
+              ]).catch(error => {
+                console.error("Error in post-login tasks:", error);
+              });
+            }, 0);
           }
         } else {
           console.log("No authenticated user");
@@ -54,7 +59,7 @@ export const useAuthState = () => {
       }
     );
 
-    // Check for existing session once
+    // Initial session check - prioritize speed
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
@@ -64,20 +69,36 @@ export const useAuthState = () => {
         setSession(session);
         setUser(session.user);
         
-        // Optimization: execute operations in parallel
-        Promise.all([
-          createUserProfileIfNotExists(session.user.id, session.user.email),
-          fetchUserProfile(session.user.id)
-        ])
-        .catch(err => {
-          console.error("Error initializing user profile:", err);
-        })
-        .finally(() => {
-          if (mounted) {
-            setAuthInitialized(true);
+        // Update auth initialized immediately for faster route decisions
+        setAuthInitialized(true);
+        
+        // Check for cached profile data immediately
+        try {
+          const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
+          if (cachedProfile) {
+            setProfile(JSON.parse(cachedProfile));
             setLoading(false);
           }
-        });
+        } catch (e) {
+          console.error("Error accessing cached profile:", e);
+        }
+        
+        // Fetch/create profile in background without blocking the UI
+        setTimeout(() => {
+          if (!mounted) return;
+          Promise.all([
+            createUserProfileIfNotExists(session.user.id, session.user.email),
+            fetchUserProfile(session.user.id)
+          ])
+          .catch(err => {
+            console.error("Error initializing user profile:", err);
+          })
+          .finally(() => {
+            if (mounted) {
+              setLoading(false);
+            }
+          });
+        }, 0);
       } else {
         setAuthInitialized(true);
         setLoading(false);

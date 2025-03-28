@@ -14,7 +14,7 @@ export const useUserProfile = () => {
   const fetchUserProfile = async (userId: string) => {
     if (!userId) return null;
     
-    // First check localStorage for immediate response
+    // Always check localStorage first for immediate response
     try {
       const cachedData = localStorage.getItem(`profile_${userId}`);
       if (cachedData) {
@@ -22,11 +22,13 @@ export const useUserProfile = () => {
         // Update state immediately with cached data
         setProfile(cachedProfile);
         
-        // Don't show loading state if we have cached data
+        // If we're not already loading, fetch fresh data in background
         if (!loading) {
-          // Fetch fresh data in background
+          // Use setTimeout to prevent blocking the main thread
           setTimeout(() => {
-            fetchFromService(userId);
+            fetchFromService(userId).catch(e => 
+              console.error("Background profile fetch error:", e)
+            );
           }, 0);
           return cachedProfile;
         }
@@ -53,11 +55,11 @@ export const useUserProfile = () => {
       if (data) {
         setProfile(data);
         
-        // Update localStorage cache
+        // Update localStorage cache without blocking
         try {
           localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
           
-          // Also update specific values in localStorage
+          // Update specific values individually
           if (data.total_points !== undefined) {
             localStorage.setItem('totalPoints', data.total_points.toString());
           }
@@ -86,6 +88,7 @@ export const useUserProfile = () => {
     }
   };
 
+  // Optimize profile creation check to use caching
   const createUserProfileIfNotExists = async (userId: string, email: string | undefined) => {
     if (!userId || !email) {
       console.error("Missing userId or email in createUserProfileIfNotExists");
@@ -94,8 +97,11 @@ export const useUserProfile = () => {
     
     try {
       console.log("Creating/checking user profile for:", userId, email);
-      // Don't show loading if we have a cached profile
+      
+      // Check if we already have a cached profile
       const hasCache = !!localStorage.getItem(`profile_${userId}`);
+      
+      // Only show loading if no cache exists
       if (!hasCache) {
         setLoading(true);
       }
@@ -127,6 +133,7 @@ export const useUserProfile = () => {
     }
   };
 
+  // Optimize profile updates to update local state immediately
   const updateProfile = async (userId: string, data: Partial<UserType>) => {
     if (!userId) {
       return { 
@@ -141,11 +148,11 @@ export const useUserProfile = () => {
         const updatedProfile = { ...profile, ...data };
         setProfile(updatedProfile);
         
-        // Also pre-cache the update
+        // Also pre-cache the update for faster access
         try {
           localStorage.setItem(`profile_${userId}`, JSON.stringify(updatedProfile));
           
-          // Update specific localStorage values for immediate UI updates
+          // Update specific values for immediate UI updates
           if (data.total_points !== undefined) {
             localStorage.setItem('totalPoints', data.total_points.toString());
           }
@@ -163,13 +170,14 @@ export const useUserProfile = () => {
         }
       }
       
-      // Update in database with verbose logging
+      // Update database in background
       setLoading(true);
       console.log("useUserProfile: Sending profile update to database:", data);
+      
       const { error, success } = await updateUserProfileService(userId, data);
       
       if (error) {
-        console.log("useUserProfile: Update failed:", error);
+        console.error("useUserProfile: Update failed:", error);
       } else {
         console.log("useUserProfile: Profile updated successfully in database");
       }
