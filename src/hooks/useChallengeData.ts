@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Challenge } from '@/types';
 import { useAuth } from '@/context/auth';
@@ -40,23 +41,30 @@ export const useChallengeData = (initialChallenge: Challenge) => {
       userActions
     });
     
-    // For today's challenge, ensure it's showing the correct initial state
+    // Determine the participation status based on challenge date and stored value
     let finalParticipating;
-    if (isToday && participating === null) {
-      // For today's challenge with no response yet, it should be undefined
-      finalParticipating = undefined;
-    } else {
-      // Otherwise use the stored value
+    
+    if (isToday) {
+      // For today's challenge, undefined means waiting for response
       finalParticipating = participating === 'true' ? true : 
                            participating === 'false' ? false : 
                            undefined;
+    } else if (isPastChallenge) {
+      // For past challenges, default to false if no value stored
+      finalParticipating = participating === 'true' ? true : false;
+    } else {
+      // For future challenges, always undefined (waiting)
+      finalParticipating = undefined;
     }
+    
+    // Only mark as completed if explicitly completed
+    const isCompleted = completed === true;
     
     // Set challenge data based on loaded state and date
     setChallengeData({
       ...initialChallenge,
       participating: finalParticipating,
-      completed,
+      completed: isCompleted,
       userActions
     });
   }, [initialChallenge]);

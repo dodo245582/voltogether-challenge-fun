@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -43,16 +44,20 @@ const Dashboard = () => {
     const dateToUse = todayIndex >= 0 ? CHALLENGE_DATES[todayIndex] : CHALLENGE_DATES[0];
     
     const challengeId = todayIndex >= 0 ? todayIndex + 1 : 1;
+    
+    // Check if we have saved participation status
     const participating = localStorage.getItem(`challenge_${challengeId}_participating`);
     const completed = localStorage.getItem(`challenge_${challengeId}_completed`) === 'true';
     
+    // For today's challenge, undefined means "waiting for response"
+    // Only set a specific value if user has explicitly responded
     let participationStatus;
-    if (todayIndex >= 0 && participating === null) {
-      participationStatus = undefined;
+    if (participating === 'true') {
+      participationStatus = true;
+    } else if (participating === 'false') {
+      participationStatus = false;
     } else {
-      participationStatus = participating === 'true' ? true : 
-                           participating === 'false' ? false : 
-                           undefined;
+      participationStatus = undefined; // In attesa
     }
     
     return {

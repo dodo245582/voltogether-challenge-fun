@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { CHALLENGE_DATES } from '@/types';
 import { getCurrentChallengeId } from '@/types/notifications';
@@ -40,7 +39,10 @@ export const useNotificationScheduler = (
         isToday(parseISO(n.timestamp))
       );
       
-      const hasResponded = localStorage.getItem(`challenge_${challengeId}_participating`) !== null;
+      // Only check localStorage if we haven't already sent a notification
+      const hasResponded = alreadySentParticipation ? 
+        true : 
+        localStorage.getItem(`challenge_${challengeId}_participating`) !== null;
       
       if (!alreadySentParticipation && !hasResponded) {
         console.log('Creating participation notification for challenge', challengeId);
