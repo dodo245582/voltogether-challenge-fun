@@ -7,26 +7,27 @@ import { User as UserType } from '@/types';
  */
 export const fetchUserProfile = async (userId: string) => {
   try {
-    // Always check localStorage first for immediate response
+    // Always prioritize localStorage for immediate response
     try {
       const cachedProfile = localStorage.getItem(`profile_${userId}`);
       if (cachedProfile) {
         const profileData = JSON.parse(cachedProfile) as UserType;
         
-        // Fetch fresh data in background without blocking UI
+        // Fetch fresh data in background WITHOUT waiting
         setTimeout(() => {
           fetchProfileFromDatabase(userId).catch(e => 
             console.error("Background fetch error:", e)
           );
         }, 100);
         
+        // Return cached data immediately
         return { data: profileData, error: null };
       }
     } catch (e) {
       console.error("Error retrieving profile from localStorage:", e);
     }
     
-    // If no cache, fetch directly from database
+    // If no cache, fetch from database - but this is the slow path
     return await fetchProfileFromDatabase(userId);
   } catch (error) {
     console.error("fetchUserProfile exception:", error);
@@ -34,7 +35,7 @@ export const fetchUserProfile = async (userId: string) => {
   }
 };
 
-// Optimized function to fetch from database and update localStorage
+// Optimized database fetch
 const fetchProfileFromDatabase = async (userId: string) => {
   try {
     console.log("Fetching user profile from database for ID:", userId);
@@ -52,7 +53,7 @@ const fetchProfileFromDatabase = async (userId: string) => {
     }
     
     if (data) {
-      // Sanitize data
+      // Only sanitize critical fields
       const sanitizedData = {
         ...data,
         name: data.name || '',
@@ -64,7 +65,7 @@ const fetchProfileFromDatabase = async (userId: string) => {
         selected_actions: data.selected_actions || []
       };
       
-      // Update cache
+      // Update cache for future fast access
       try {
         localStorage.setItem(`profile_${userId}`, JSON.stringify(sanitizedData));
       } catch (e) {

@@ -6,42 +6,34 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Onboarding = () => {
-  const { user, profile, refreshProfile, authInitialized } = useAuth();
+  const { user, profile, authInitialized } = useAuth();
   const navigate = useNavigate();
-  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Handle redirects and profile refresh
+  // Handle redirects based on auth state
   useEffect(() => {
     if (!authInitialized) return;
     
+    // No user = redirect to login
     if (!user) {
       navigate('/login', { replace: true });
       return;
     }
     
-    // Redirect to dashboard if profile already completed
+    // Completed profile = redirect to dashboard
     if (profile && profile.profile_completed) {
       navigate('/dashboard', { replace: true });
-      return;
     }
-    
-    // Background refresh if needed
-    if (user.id && !isRefreshing && !profile) {
-      setIsRefreshing(true);
-      refreshProfile(user.id).catch(console.error).finally(() => {
-        setIsRefreshing(false);
-      });
-    }
-  }, [user, profile, authInitialized, navigate, refreshProfile, isRefreshing]);
+  }, [user, profile, authInitialized, navigate]);
   
-  // Show minimal loading only during initial auth check
+  // Check auth initialization only
   if (!authInitialized) {
     return <DashboardLoadingState />;
   }
   
-  // Render onboarding immediately, don't wait for profile
+  // No user = don't render anything (redirect will happen)
   if (!user) return null;
   
+  // Render onboarding immediately - don't wait for profile
   return <OnboardingContainer />;
 };
 

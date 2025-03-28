@@ -8,7 +8,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading, profile, authInitialized } = useAuth();
   const location = useLocation();
   
-  // Show minimal loading only during initial auth check
+  // Not initialized = show minimal loading
   if (!authInitialized) {
     return <DashboardLoadingState />;
   }
@@ -18,19 +18,19 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Check if already on onboarding
+  // Fast path: Already on onboarding page - don't check profile
   const isOnboardingRoute = location.pathname === "/onboarding";
   
-  // Onboarding redirect check - only if not already on onboarding
+  // Fast path: Check if profile is incomplete and not on onboarding
   if (!isOnboardingRoute && profile && !profile.profile_completed) {
     return <Navigate to="/onboarding" replace />;
   }
   
-  // Don't show loading on onboarding page
+  // Fast path: Hide loading on onboarding page 
   if (loading && !isOnboardingRoute) {
     return <DashboardLoadingState />;
   }
   
-  // Render content immediately for all other cases
+  // Fast path: Render content immediately
   return <>{children}</>;
 };
