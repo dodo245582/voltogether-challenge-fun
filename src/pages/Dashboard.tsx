@@ -46,15 +46,22 @@ const Dashboard = () => {
     const participating = localStorage.getItem(`challenge_${challengeId}_participating`);
     const completed = localStorage.getItem(`challenge_${challengeId}_completed`) === 'true';
     
+    let participationStatus;
+    if (todayIndex >= 0 && participating === null) {
+      participationStatus = undefined;
+    } else {
+      participationStatus = participating === 'true' ? true : 
+                           participating === 'false' ? false : 
+                           undefined;
+    }
+    
     return {
       id: challengeId,
       date: dateToUse,
       startTime: '19:00',
       endTime: '20:00',
       completed: completed || false,
-      participating: participating === 'true' ? true : 
-                     participating === 'false' ? false : 
-                     undefined
+      participating: participationStatus
     };
   }, []);
 

@@ -1,37 +1,43 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingContainer from '@/components/onboarding/OnboardingContainer';
 import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Onboarding = () => {
-  const { user, profile, authInitialized } = useAuth();
+  const { user, profile, authInitialized, loading } = useAuth();
   const navigate = useNavigate();
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   
   // Handle redirects based on auth state
   useEffect(() => {
-    if (!authInitialized) return;
+    if (!authInitialized || loading) return;
     
-    // No user = redirect to login
-    if (!user) {
-      console.log("Onboarding: No user, redirecting to login");
-      navigate('/login', { replace: true });
-      return;
+    // Only run once after initial auth state is loaded
+    if (isFirstLoad) {
+      setIsFirstLoad(false);
+      
+      // No user = redirect to login
+      if (!user) {
+        console.log("Onboarding: No user, redirecting to login");
+        navigate('/login', { replace: true });
+        return;
+      }
+      
+      // Check for profile completion in cached data
+      if (profile?.profile_completed) {
+        console.log("Onboarding: Profile already completed, redirecting to dashboard");
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+      
+      console.log("Onboarding: User authenticated with incomplete profile, showing onboarding");
     }
-    
-    // Check for profile completion in cached data
-    if (profile?.profile_completed) {
-      console.log("Onboarding: Profile already completed, redirecting to dashboard");
-      navigate('/dashboard', { replace: true });
-      return;
-    }
-    
-    console.log("Onboarding: User authenticated with incomplete profile, showing onboarding");
-  }, [user, profile, authInitialized, navigate]);
+  }, [user, profile, authInitialized, navigate, isFirstLoad, loading]);
   
   // Check auth initialization only
-  if (!authInitialized) {
+  if (!authInitialized || loading) {
     return <DashboardLoadingState />;
   }
   

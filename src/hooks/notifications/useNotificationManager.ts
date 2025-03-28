@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Notification, NotificationType } from '@/types/notifications';
@@ -78,6 +77,16 @@ export const useNotificationManager = () => {
           console.log('Setting participation modal to show');
           setCurrentChallengeId(challengeId || null);
           setShowParticipationModal(true);
+          
+          // Also ensure the value in localStorage is undefined (not false)
+          // This ensures the challenge card shows "In attesa" instead of "Partecipi"
+          if (challengeId) {
+            const currentValue = localStorage.getItem(`challenge_${challengeId}_participating`);
+            if (currentValue === null) {
+              // Don't set anything - keep it undefined
+              console.log(`Keeping participation for challenge ${challengeId} as undefined`);
+            }
+          }
         } else if (type === 'challenge-completion') {
           console.log('Setting completion modal to show');
           setCurrentChallengeId(challengeId || null);
