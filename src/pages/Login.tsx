@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import AuthForm from '@/components/auth/AuthForm';
 import { useToast } from '@/hooks/use-toast';
@@ -9,34 +9,27 @@ import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState'
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, user, authInitialized } = useAuth();
   
-  // Add a timeout to prevent getting stuck on loading state
+  // Failsafe timeout to ensure the page never gets stuck
   useEffect(() => {
-    if (redirecting) {
+    if (isLoading) {
       const timeoutId = setTimeout(() => {
-        console.log("Login: Redirect timeout, forcing navigation");
+        console.log("Login: Fallback timeout reached, forcing navigation");
         navigate('/onboarding', { replace: true });
-      }, 3000);
+      }, 5000); // 5 second max loading after login attempt
       
       return () => clearTimeout(timeoutId);
     }
-  }, [redirecting, navigate]);
+  }, [isLoading, navigate]);
   
-  // Simplified redirect logic with timeout
-  useEffect(() => {
-    if (!authInitialized) return;
-    
-    if (user) {
-      console.log("Login: User authenticated, redirecting to onboarding");
-      setRedirecting(true);
-      // Force redirect to onboarding, which will handle further redirect if needed
-      navigate('/onboarding', { replace: true });
-    }
-  }, [user, authInitialized, navigate]);
+  // Immediate redirect if already authenticated
+  if (authInitialized && user) {
+    console.log("Login: User already authenticated, redirecting");
+    return <Navigate to="/onboarding" replace />;
+  }
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -53,8 +46,10 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Set redirecting state for the fallback timeout
-        setRedirecting(true);
+        // Immediately redirect rather than waiting for auth state change
+        setTimeout(() => {
+          navigate('/onboarding', { replace: true });
+        }, 500);
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';
@@ -83,8 +78,8 @@ const Login = () => {
     }
   };
   
-  // If already authenticated or redirecting, show loading state
-  if ((authInitialized && user) || redirecting) {
+  // Show loading state if login is in progress
+  if (isLoading) {
     return <DashboardLoadingState />;
   }
 

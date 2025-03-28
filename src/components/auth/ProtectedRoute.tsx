@@ -1,72 +1,50 @@
+
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '../dashboard/DashboardLoadingState';
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, authInitialized, profile, refreshProfile } = useAuth();
+  const { user, authInitialized, profile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   
+  // Set a failsafe timeout to prevent infinite loading
   useEffect(() => {
-    let mounted = true;
+    const timeoutId = setTimeout(() => {
+      console.log("ProtectedRoute: Safety timeout triggered, forcing navigation decision");
+      setIsLoading(false);
+    }, 2000); // 2 second max loading state
     
-    const checkAuth = async () => {
-      // Wait for auth to initialize
-      if (!authInitialized) return;
-      
-      console.log("ProtectedRoute: Auth state:", { 
-        hasUser: !!user, 
-        hasProfile: !!profile, 
-        authInitialized 
-      });
-      
-      // Simple case: No user = redirect to login
-      if (!user) {
-        console.log("ProtectedRoute: No user, will redirect to login");
-        if (mounted) setIsLoading(false);
-        return;
-      }
-      
-      // If we have a user but no profile, try to fetch it ONCE
-      if (user && !profile) {
-        console.log("ProtectedRoute: User exists but no profile, fetching profile");
-        try {
-          await refreshProfile(user.id);
-        } catch (err) {
-          console.error("ProtectedRoute: Error fetching profile", err);
-        }
-      }
-      
-      // Whether profile fetch succeeded or not, continue with what we have
-      if (mounted) {
-        setIsLoading(false);
-      }
-    };
-    
-    checkAuth();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [user, authInitialized, profile, refreshProfile]);
+    return () => clearTimeout(timeoutId);
+  }, []);
   
-  // Show loading state while checking authentication
-  if (!authInitialized || isLoading) {
+  // Handle authentication state
+  useEffect(() => {
+    if (authInitialized) {
+      console.log("ProtectedRoute: Auth initialized, making navigation decision");
+      setIsLoading(false);
+    }
+  }, [authInitialized]);
+  
+  // Show loading state while checking auth
+  if (isLoading) {
     return <DashboardLoadingState />;
   }
   
-  // If no user after auth is initialized, redirect to login
+  // No user = redirect to login
   if (!user) {
+    console.log("ProtectedRoute: No user, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
-  // If user exists but profile is not completed, redirect to onboarding
+  // User exists but profile not completed = redirect to onboarding
   if (user && profile && !profile.profile_completed) {
     console.log("ProtectedRoute: User found but profile not completed, redirecting to onboarding");
     return <Navigate to="/onboarding" replace />;
   }
   
-  // If we have a user with a completed profile, render the protected content
-  console.log("ProtectedRoute: User authenticated with completed profile, rendering protected content");
+  // User with completed profile (or no profile yet) = render protected content
+  console.log("ProtectedRoute: Rendering protected content");
   return <>{children}</>;
 };
