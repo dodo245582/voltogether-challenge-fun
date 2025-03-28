@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingContainer from '@/components/onboarding/OnboardingContainer';
 import { useAuth } from '@/context/AuthContext';
@@ -19,8 +19,9 @@ const Onboarding = () => {
       return;
     }
     
-    // Completed profile = redirect to dashboard
-    if (profile && profile.profile_completed) {
+    // Check for profile completion in cached data first
+    if (profile?.profile_completed) {
+      console.log("Onboarding: Profile already completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
     }
   }, [user, profile, authInitialized, navigate]);

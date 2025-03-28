@@ -5,24 +5,23 @@ import Navbar from '@/components/layout/Navbar';
 import AuthForm from '@/components/auth/AuthForm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, profile, user, authInitialized } = useAuth();
+  const { signIn, user, authInitialized } = useAuth();
 
   // Quick redirect if already authenticated
   useEffect(() => {
     if (authInitialized && user) {
       console.log("Login: User already authenticated, redirecting");
-      if (profile && !profile.profile_completed) {
-        navigate('/onboarding', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      setRedirecting(true);
+      navigate('/dashboard', { replace: true });
     }
-  }, [user, profile, authInitialized, navigate]);
+  }, [user, authInitialized, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -39,13 +38,9 @@ const Login = () => {
           variant: 'default',
         });
         
-        // We'll do a quick local check based on any available profile info
-        // but don't wait for full profile loading
-        if (profile && !profile.profile_completed) {
-          navigate('/onboarding', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+        // Show loading state to avoid flicker
+        setRedirecting(true);
+        navigate('/dashboard', { replace: true });
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';
@@ -73,6 +68,10 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+  
+  if (redirecting) {
+    return <DashboardLoadingState />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">

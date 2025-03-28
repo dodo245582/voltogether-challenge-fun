@@ -2,16 +2,13 @@
 import { useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserProfile } from '@/hooks/useUserProfile';
 import { User as UserType } from '@/types';
 
-export const useAuthMethods = (user: User | null) => {
+export const useAuthMethods = (
+  user: User | null, 
+  setProfile: (profile: UserType | null) => void
+) => {
   const [loading, setLoading] = useState(false);
-  const { 
-    fetchUserProfile,
-    createUserProfileIfNotExists, 
-    updateProfile: updateUserProfileHook,
-  } = useUserProfile();
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -27,14 +24,30 @@ export const useAuthMethods = (user: User | null) => {
         console.log("Signup successful for user ID:", data.user.id);
         
         try {
-          // Create profile immediately without waiting
-          // This will run in background and not block the UI
-          createUserProfileIfNotExists(data.user.id, data.user.email);
-          
-          // Don't wait for full profile fetch - will happen on redirect
-          // This removes a major source of delay
+          // Create profile immediately
+          const { data: profile, error: profileError } = await supabase
+            .from('Users')
+            .insert([
+              { 
+                id: data.user.id, 
+                email: data.user.email, 
+                password: Math.random().toString(36).substring(2, 15),
+                profile_completed: false,
+                completed_challenges: 0,
+                total_points: 0,
+                streak: 0
+              }
+            ])
+            .select()
+            .single();
+            
+          if (profile && !profileError) {
+            // Update local state and cache
+            setProfile(profile);
+            localStorage.setItem(`profile_${data.user.id}`, JSON.stringify(profile));
+          }
         } catch (err) {
-          console.error("Error creating user profile after signup:", err);
+          console.error("Error creating user profile:", err);
           // Continue anyway - don't block the flow
         }
       } else if (error) {
@@ -68,13 +81,6 @@ export const useAuthMethods = (user: User | null) => {
         setLoading(false);
       } else if (data.user) {
         console.log("Sign in successful for user ID:", data.user.id);
-        
-        try {
-          // Create/verify profile immediately
-          await createUserProfileIfNotExists(data.user.id, data.user.email);
-        } catch (err) {
-          console.error("Error ensuring profile exists:", err);
-        }
       }
       
       return { 
@@ -117,27 +123,99 @@ export const useAuthMethods = (user: User | null) => {
     }
     
     console.log("Updating profile with data:", data);
-    const result = await updateUserProfileHook(user.id, data);
-    
-    if (result.success) {
-      console.log("Profile update successful, refreshing profile data");
-      setTimeout(async () => {
-        await fetchUserProfile(user.id);
-      }, 0);
+    try {
+      setLoading(true);
+      
+      // Update local cache and state immediately for faster UI updates
+      if (user.id) {
+        try {
+          const cachedProfile = localStorage.getItem(`profile_${user.id}`);
+          if (cachedProfile) {
+            const updatedProfile = { ...JSON.parse(cachedProfile), ...data };
+            localStorage.setItem(`profile_${user.id}`, JSON.stringify(updatedProfile));
+            setProfile(updatedProfile);
+          }
+        } catch (e) {
+          console.error("Error updating cache:", e);
+        }
+      }
+      
+      // Update database
+      const { error } = await supabase
+        .from('Users')
+        .update(data)
+        .eq('id', user.id);
+      
+      setLoading(false);
+      
+      if (error) {
+        console.error("Error updating profile:", error);
+        return { error, success: false };
+      }
+      
+      return { error: null, success: true };
+    } catch (error) {
+      console.error("Exception in updateProfile:", error);
+      setLoading(false);
+      return { error, success: false };
     }
-    
-    return result;
   };
 
   const refreshProfile = async (userId: string) => {
     if (!userId) return { success: false, error: "No user ID provided" };
-    console.log("AuthProvider: Refreshing profile for user:", userId);
     
     try {
-      const result = await fetchUserProfile(userId);
-      return { success: !!result, error: result ? null : "Failed to fetch profile" };
+      // Check cache first for immediate response
+      try {
+        const cachedProfile = localStorage.getItem(`profile_${userId}`);
+        if (cachedProfile) {
+          const profileData = JSON.parse(cachedProfile);
+          setProfile(profileData);
+          
+          // Background fetch for fresh data
+          setTimeout(async () => {
+            try {
+              const { data, error } = await supabase
+                .from('Users')
+                .select('*')
+                .eq('id', userId)
+                .single();
+                
+              if (data && !error) {
+                localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
+                setProfile(data);
+              }
+            } catch (e) {
+              console.error("Background refresh error:", e);
+            }
+          }, 10);
+          
+          return { success: true, error: null };
+        }
+      } catch (e) {
+        console.error("Cache check error:", e);
+      }
+      
+      // If no cache, do a direct fetch
+      const { data, error } = await supabase
+        .from('Users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error("Error refreshing profile:", error);
+        return { success: false, error: error.message };
+      }
+      
+      if (data) {
+        localStorage.setItem(`profile_${userId}`, JSON.stringify(data));
+        setProfile(data);
+      }
+      
+      return { success: !!data, error: data ? null : "Profile not found" };
     } catch (error) {
-      console.error("Error refreshing profile:", error);
+      console.error("Exception in refreshProfile:", error);
       return { success: false, error: error?.message || "Unknown error" };
     }
   };

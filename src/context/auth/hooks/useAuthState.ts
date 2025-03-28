@@ -2,129 +2,102 @@
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { User as UserType } from '@/types';
 
 export const useAuthState = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
-  
-  const { 
-    fetchUserProfile,
-    createUserProfileIfNotExists,
-    setProfile
-  } = useUserProfile();
 
   useEffect(() => {
     console.log("useAuthState: Initializing auth state");
     let mounted = true;
 
+    // Helper function to process auth - non-blocking
+    const processAuthChange = (newSession: Session | null) => {
+      if (!mounted) return;
+      
+      if (newSession?.user) {
+        console.log("User authenticated:", newSession.user.email);
+        
+        // Set auth state immediately to prevent flicker
+        setSession(newSession);
+        setUser(newSession.user);
+        setAuthInitialized(true);
+        
+        // Try to load cached profile immediately
+        try {
+          const cachedProfile = localStorage.getItem(`profile_${newSession.user.id}`);
+          if (cachedProfile) {
+            setProfile(JSON.parse(cachedProfile));
+            
+            // Cached profile means basic state is ready
+            setLoading(false);
+          }
+        } catch (e) {
+          console.error("Error accessing cached profile:", e);
+        }
+      } else {
+        console.log("No authenticated user");
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setAuthInitialized(true);
+        setLoading(false);
+      }
+    };
+
     // Set up auth state listener - highest priority
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!mounted) return;
-        
+      async (event, session) => {
         console.log("Auth state change event:", event);
+        processAuthChange(session);
         
-        if (session?.user) {
-          console.log("User authenticated:", session.user.email);
-          setSession(session);
-          setUser(session.user);
-          
-          // For SIGNED_IN and TOKEN_REFRESHED - only fetch cached data first
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            // Try to load cached profile immediately
+        // Background fetch for non-cached updates (completely non-blocking)
+        if (session?.user && event === 'SIGNED_IN') {
+          setTimeout(async () => {
+            if (!mounted) return;
             try {
-              const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
-              if (cachedProfile) {
-                setProfile(JSON.parse(cachedProfile));
+              const { data: profile } = await supabase
+                .from('Users')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle();
+                
+              if (profile && mounted) {
+                // Update cache and state
+                localStorage.setItem(`profile_${session.user.id}`, JSON.stringify(profile));
+                setProfile(profile);
+                setLoading(false);
               }
-            } catch (e) {
-              console.error("Error accessing cached profile:", e);
+            } catch (err) {
+              console.error("Background profile check error:", err);
             }
-            
-            // Run other operations in background, completely non-blocking
-            setTimeout(() => {
-              if (!mounted) return;
-              Promise.all([
-                createUserProfileIfNotExists(session.user.id, session.user.email),
-                fetchUserProfile(session.user.id)
-              ]).catch(err => {
-                console.error("Background profile operations error:", err);
-              });
-            }, 0);
-          }
-        } else {
-          console.log("No authenticated user");
-          setSession(null);
-          setUser(null);
-          setProfile(null);
+          }, 10);
         }
-        
-        // Always update loading state
-        setLoading(false);
       }
     );
 
     // Initial session check - highest priority for speed
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
-      
-      console.log("Got existing session:", !!session);
-      
-      if (session?.user) {
-        // Set auth state immediately
-        setSession(session);
-        setUser(session.user);
-        setAuthInitialized(true);
-        
-        // Check for cached profile - faster than database
-        let hasCache = false;
-        try {
-          const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
-          if (cachedProfile) {
-            setProfile(JSON.parse(cachedProfile));
-            setLoading(false);
-            hasCache = true;
-          }
-        } catch (e) {
-          console.error("Error accessing cached profile:", e);
-        }
-        
-        // Background tasks - completely non-blocking
-        setTimeout(() => {
-          if (!mounted) return;
-          Promise.all([
-            createUserProfileIfNotExists(session.user.id, session.user.email),
-            fetchUserProfile(session.user.id)
-          ])
-          .catch(err => {
-            console.error("Background profile operations error:", err);
-          })
-          .finally(() => {
-            if (mounted) {
-              setLoading(false);
-            }
-          });
-        }, 0);
-      } else {
-        // No user - finish immediately
-        setAuthInitialized(true);
-        setLoading(false);
-      }
+      processAuthChange(session);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserProfile, createUserProfileIfNotExists, setProfile]);
+  }, []);
 
   return {
     session,
     user,
+    profile,
     loading,
-    authInitialized
+    authInitialized,
+    setProfile
   };
 };
