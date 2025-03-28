@@ -9,50 +9,36 @@ import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState'
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, user, authInitialized, profile, refreshProfile } = useAuth();
+  const { signIn, user, authInitialized, profile } = useAuth();
 
-  // Quick redirect if already authenticated
+  // Handle redirect if already authenticated
   useEffect(() => {
     if (!authInitialized) return;
     
     if (user) {
-      console.log("Login: User already authenticated, redirecting");
-      setRedirecting(true);
+      console.log("Login: User already authenticated, preparing redirect");
+      setIsRedirecting(true);
       
-      // Make sure profile is loaded
-      if (user.id && !profile) {
-        console.log("Login: Profile not loaded, fetching profile before redirect");
-        refreshProfile(user.id)
-          .then(() => {
-            // After profile fetch, determine where to go
-            if (profile?.profile_completed) {
-              console.log("Login: Profile completed, redirecting to dashboard");
-              navigate('/dashboard', { replace: true });
-            } else {
-              console.log("Login: Profile not completed, redirecting to onboarding");
-              navigate('/onboarding', { replace: true });
-            }
-          })
-          .catch(error => {
-            console.error("Failed to refresh profile:", error);
-            // Default to onboarding if profile fetch fails
-            navigate('/onboarding', { replace: true });
-          });
-      } else {
-        // Profile already loaded, determine where to go
-        if (profile?.profile_completed) {
+      // Determine where to redirect based on profile completion
+      if (profile) {
+        if (profile.profile_completed) {
           console.log("Login: Profile completed, redirecting to dashboard");
           navigate('/dashboard', { replace: true });
         } else {
           console.log("Login: Profile not completed, redirecting to onboarding");
           navigate('/onboarding', { replace: true });
         }
+      } else {
+        // If profile isn't loaded yet, default to onboarding
+        // The onboarding page will handle further redirection if needed
+        console.log("Login: Profile not loaded yet, defaulting to onboarding");
+        navigate('/onboarding', { replace: true });
       }
     }
-  }, [user, authInitialized, navigate, profile, refreshProfile]);
+  }, [user, profile, authInitialized, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -62,18 +48,16 @@ const Login = () => {
       const { error, success } = await signIn(email, password);
       
       if (success) {
-        console.log("Login successful, preparing redirect");
+        console.log("Login successful");
         toast({
           title: 'Login effettuato',
           description: 'Hai effettuato l\'accesso con successo',
           variant: 'default',
         });
         
-        // Show loading state to avoid flicker
-        setRedirecting(true);
-        
-        // Profile status check is now handled by the useEffect above
-        // The redirect will happen once the profile is loaded
+        // Show loading state while the auth state updates
+        setIsRedirecting(true);
+        // Redirect is handled by the useEffect above
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';
@@ -102,7 +86,7 @@ const Login = () => {
     }
   };
   
-  if (redirecting) {
+  if (isRedirecting) {
     return <DashboardLoadingState />;
   }
 

@@ -6,39 +6,40 @@ import DashboardLoadingState from '../dashboard/DashboardLoadingState';
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, authInitialized, profile, refreshProfile } = useAuth();
-  const [isCheckingProfile, setIsCheckingProfile] = useState(false);
-  const [profileChecked, setProfileChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Fetch profile data if needed
   useEffect(() => {
-    if (authInitialized && user && !profile && !isCheckingProfile && !profileChecked) {
-      setIsCheckingProfile(true);
-      console.log("ProtectedRoute: Fetching profile data for user", user.id);
+    let mounted = true;
+    
+    const checkAuth = async () => {
+      if (!authInitialized) return;
       
-      refreshProfile(user.id)
-        .then(() => {
-          console.log("ProtectedRoute: Profile data fetched");
-          setProfileChecked(true);
-        })
-        .catch(err => {
+      if (user && !profile) {
+        console.log("ProtectedRoute: Fetching profile data for user", user.id);
+        
+        try {
+          await refreshProfile(user.id);
+        } catch (err) {
           console.error("ProtectedRoute: Failed to fetch profile", err);
-          setProfileChecked(true);
-        })
-        .finally(() => {
-          setIsCheckingProfile(false);
-        });
-    } else if (authInitialized && !user) {
-      // Mark as checked if no user
-      setProfileChecked(true);
-    } else if (authInitialized && user && profile) {
-      // Mark as checked if we already have profile
-      setProfileChecked(true);
-    }
-  }, [user, authInitialized, profile, refreshProfile, isCheckingProfile, profileChecked]);
+        }
+      }
+      
+      if (mounted) {
+        setIsLoading(false);
+      }
+    };
+    
+    checkAuth();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [user, authInitialized, profile, refreshProfile]);
   
-  // If auth is not initialized yet or we're checking the profile, show loading state
-  if (!authInitialized || isCheckingProfile) {
-    console.log("ProtectedRoute: Auth not fully initialized yet, showing loading state");
+  // Show loading state while checking authentication
+  if (!authInitialized || isLoading) {
+    console.log("ProtectedRoute: Still initializing or loading, showing loading state");
     return <DashboardLoadingState />;
   }
   

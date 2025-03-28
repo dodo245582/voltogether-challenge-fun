@@ -6,17 +6,17 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 
 const Onboarding = () => {
-  const { user, profile, authInitialized, loading } = useAuth();
+  const { user, profile, authInitialized, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isChecking, setIsChecking] = useState(true);
   
   // Handle redirects based on auth state
   useEffect(() => {
-    if (!authInitialized || loading) return;
+    let mounted = true;
     
-    // Only run once after initial auth state is loaded
-    if (isFirstLoad) {
-      setIsFirstLoad(false);
+    const checkAuthStatus = async () => {
+      // Wait for auth to initialize
+      if (!authInitialized) return;
       
       // No user = redirect to login
       if (!user) {
@@ -25,19 +25,38 @@ const Onboarding = () => {
         return;
       }
       
-      // Check for profile completion in cached data
+      // If profile isn't loaded yet but we have a user, try to fetch it
+      if (user && !profile) {
+        console.log("Onboarding: User authenticated but no profile, fetching profile");
+        try {
+          await refreshProfile(user.id);
+        } catch (err) {
+          console.error("Error fetching profile in onboarding:", err);
+        }
+      }
+      
+      // If profile is completed, redirect to dashboard
       if (profile?.profile_completed) {
         console.log("Onboarding: Profile already completed, redirecting to dashboard");
         navigate('/dashboard', { replace: true });
         return;
       }
       
-      console.log("Onboarding: User authenticated with incomplete profile, showing onboarding");
-    }
-  }, [user, profile, authInitialized, navigate, isFirstLoad, loading]);
+      // If we get here, user is logged in but profile is incomplete or not loaded
+      if (mounted) {
+        setIsChecking(false);
+      }
+    };
+    
+    checkAuthStatus();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [user, profile, authInitialized, navigate, refreshProfile]);
   
-  // Check auth initialization only
-  if (!authInitialized || loading) {
+  // Show loading state while checking auth
+  if (!authInitialized || loading || isChecking) {
     return <DashboardLoadingState />;
   }
   
