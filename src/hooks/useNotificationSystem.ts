@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentChallengeId } from '@/types/notifications';
@@ -151,6 +152,19 @@ export const useNotificationSystem = () => {
       }
     }
   }, [currentChallenge, notifications, createNotification, setCurrentChallengeId]);
+
+  // Make sure we're checking for scheduled notifications regularly
+  useEffect(() => {
+    // Initial check
+    checkForScheduledNotifications();
+    
+    // Set up interval for regular checks
+    const interval = setInterval(() => {
+      checkForScheduledNotifications();
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [checkForScheduledNotifications]);
 
   const notificationSystemContext = {
     notifications,
