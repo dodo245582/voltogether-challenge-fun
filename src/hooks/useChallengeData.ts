@@ -46,9 +46,10 @@ export const useChallengeData = (initialChallenge: Challenge) => {
     
     if (isToday) {
       // For today's challenge, undefined means waiting for response
+      // IMPORTANT: Never default to true for participation unless the user explicitly chose it
       finalParticipating = participating === 'true' ? true : 
-                           participating === 'false' ? false : 
-                           undefined;
+                          participating === 'false' ? false : 
+                          undefined;
     } else if (isPastChallenge) {
       // For past challenges, default to false if no value stored
       finalParticipating = participating === 'true' ? true : false;

@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentChallengeId } from '@/types/notifications';
@@ -90,6 +89,26 @@ export const useNotificationSystem = () => {
     // Use the current challenge from state instead of getting it each time
     const activeChallenge = currentChallenge || getCurrentChallengeId();
     console.log("Checking if participation box should show for challenge:", activeChallenge);
+    
+    // For new users, ensure we don't default to "participating" without asking
+    // Check if there's no explicit participation value in localStorage
+    const challengeParticipation = localStorage.getItem(`challenge_${activeChallenge}_participating`);
+    
+    console.log("Challenge participation from localStorage:", challengeParticipation);
+    
+    // If the user hasn't explicitly responded (null) and we're within participation window,
+    // we should show the participation box
+    if (challengeParticipation === null) {
+      const today = new Date();
+      const participationDeadline = set(today, { hours: 18, minutes: 54, seconds: 0 });
+      const now = new Date();
+      
+      // Show participation box if we're before the deadline and it's after 9AM
+      if (isBefore(now, participationDeadline) && today.getHours() >= 9) {
+        console.log("New user or no participation response yet, showing participation box");
+        return true;
+      }
+    }
     
     return checkShouldShowParticipationBox(activeChallenge, notifications);
   }, [currentChallenge, notifications, forceHideParticipationBox]);
