@@ -34,8 +34,6 @@ export const useAuthState = () => {
           
           // For certain events, run post-login tasks but don't block UI
           if (mounted && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-            console.log("Processing post-login tasks for user:", session.user.id);
-            
             // Only trigger background operations, don't block the UI flow
             setTimeout(() => {
               if (!mounted) return;
@@ -54,7 +52,7 @@ export const useAuthState = () => {
           setProfile(null);
         }
         
-        // Always ensure loading is set to false after auth state is updated
+        // Always set loading false
         setLoading(false);
       }
     );
@@ -72,7 +70,7 @@ export const useAuthState = () => {
         // Update auth initialized immediately for faster route decisions
         setAuthInitialized(true);
         
-        // Check for cached profile data immediately
+        // Check for cached profile immediately
         try {
           const cachedProfile = localStorage.getItem(`profile_${session.user.id}`);
           if (cachedProfile) {

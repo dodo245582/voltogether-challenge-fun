@@ -10,47 +10,38 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Quick check for completed profile - redirect to dashboard if needed
+  // Handle redirects and profile refresh
   useEffect(() => {
     if (!authInitialized) return;
     
     if (!user) {
-      console.log("Onboarding: no user, redirecting to login");
       navigate('/login', { replace: true });
       return;
     }
     
-    // If profile is loaded and completed, go to dashboard immediately
+    // Redirect to dashboard if profile already completed
     if (profile && profile.profile_completed) {
-      console.log("Onboarding: profile already completed, redirecting to dashboard");
       navigate('/dashboard', { replace: true });
       return;
     }
     
-    // Only refresh profile in background if needed, don't block UI
+    // Background refresh if needed
     if (user.id && !isRefreshing && !profile) {
-      console.log("Onboarding: refreshing profile in background");
       setIsRefreshing(true);
-      
-      // Don't wait for this to complete before showing UI
-      refreshProfile(user.id).catch(error => {
-        console.error("Error refreshing profile:", error);
-      }).finally(() => {
+      refreshProfile(user.id).catch(console.error).finally(() => {
         setIsRefreshing(false);
       });
     }
   }, [user, profile, authInitialized, navigate, refreshProfile, isRefreshing]);
   
-  // Show minimal loading state only during initial auth check
+  // Show minimal loading only during initial auth check
   if (!authInitialized) {
     return <DashboardLoadingState />;
   }
   
-  // If no user, component will be unmounted by effect above
+  // Render onboarding immediately, don't wait for profile
   if (!user) return null;
   
-  // Show onboarding immediately, don't wait for profile data
-  console.log("Onboarding: rendering onboarding container");
   return <OnboardingContainer />;
 };
 
