@@ -30,18 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Simplified profile fetch - only if we have a user but no profile
   useEffect(() => {
-    // Only run once authentication is initialized and we have a user but no profile
     if (authInitialized && user && !profile && !loading) {
       console.log("AuthProvider: User exists but no profile, fetching profile");
-      
-      // Set a timeout to fetch the profile without blocking the UI
-      const timeoutId = setTimeout(() => {
-        refreshProfile(user.id).catch(e => {
-          console.error("Profile refresh error:", e);
-        });
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
+      refreshProfile(user.id).catch(e => {
+        console.error("Profile refresh error:", e);
+      });
     }
   }, [user, profile, authInitialized, loading, refreshProfile]);
 
@@ -58,6 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshProfile,
     authInitialized
   };
+
+  console.log("AuthProvider: Current state:", { 
+    user: !!user, 
+    profile: !!profile, 
+    authInitialized,
+    loading
+  });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -8,33 +8,50 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, authInitialized, profile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   
-  // Semplice controllo dell'autenticazione
+  // Simplified auth check with clear console logs
   useEffect(() => {
+    console.log("ProtectedRoute: Auth state:", { 
+      user: !!user, 
+      authInitialized, 
+      profile: !!profile,
+      profileCompleted: profile?.profile_completed 
+    });
+    
     if (authInitialized) {
-      console.log("ProtectedRoute: Auth initialized, making navigation decision");
-      console.log("User:", !!user, "Profile:", !!profile, "Profile completed:", profile?.profile_completed);
       setIsLoading(false);
     }
   }, [authInitialized, user, profile]);
   
-  // Mostra loading state mentre verifichi auth
+  // Show loading state for maximum 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.log("ProtectedRoute: Force ending loading state after timeout");
+        setIsLoading(false);
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+  
   if (isLoading) {
     return <DashboardLoadingState />;
   }
   
-  // No user = redirect to login
+  // If no user, redirect to login
   if (!user) {
-    console.log("ProtectedRoute: No user, redirecting to login");
+    console.log("ProtectedRoute: No authenticated user, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
-  // Utente esiste ma profilo non completato = redirect to onboarding
-  if (user && profile && !profile.profile_completed) {
-    console.log("ProtectedRoute: User found but profile not completed, redirecting to onboarding");
+  // If user exists but profile is not completed, redirect to onboarding
+  // ONLY if we're not already on the onboarding page
+  if (user && profile && !profile.profile_completed && window.location.pathname !== '/onboarding') {
+    console.log("ProtectedRoute: Profile not completed, redirecting to onboarding");
     return <Navigate to="/onboarding" replace />;
   }
   
-  // Utente con profilo completato = render contenuto protetto
+  // User with completed profile or already on onboarding page - render content
   console.log("ProtectedRoute: Rendering protected content");
   return <>{children}</>;
 };

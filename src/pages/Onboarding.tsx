@@ -10,32 +10,49 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   
-  // Semplice verifica: appena sappiamo lo stato di autenticazione, decidiamo cosa mostrare
+  // Clear and simple auth check
   useEffect(() => {
+    console.log("Onboarding: Auth state:", { 
+      user: !!user, 
+      authInitialized, 
+      profile: !!profile,
+      profileCompleted: profile?.profile_completed 
+    });
+    
     if (authInitialized) {
-      console.log("Onboarding: Auth initialized, user:", !!user, "profile:", !!profile, "profile_completed:", profile?.profile_completed);
       setIsLoading(false);
     }
   }, [authInitialized, user, profile]);
   
-  // Mostra loading state mentre verifichi auth
+  // Force end loading state after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.log("Onboarding: Force ending loading state after timeout");
+        setIsLoading(false);
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+  
   if (isLoading) {
     return <DashboardLoadingState />;
   }
   
   // No user = redirect to login
   if (!user) {
-    console.log("Onboarding: No user, redirecting to login");
+    console.log("Onboarding: No authenticated user, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
-  // Profilo già completato = redirect to dashboard
+  // If profile is already completed, redirect to dashboard
   if (profile?.profile_completed) {
     console.log("Onboarding: Profile already completed, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
   
-  // Utente con profilo incompleto - mostra onboarding
+  // User with incomplete profile - show onboarding
   console.log("Onboarding: Showing onboarding form for user with incomplete profile");
   return <OnboardingContainer />;
 };
