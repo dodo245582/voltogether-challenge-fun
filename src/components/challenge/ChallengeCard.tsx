@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,13 +34,11 @@ const ChallengeCard = ({
   const isChallengeFuture = isBefore(now, startTime);
   const isChallengeOver = isAfter(now, endTime);
   
-  // Participation question should be shown from 9:00 to 18:54 on the day of the challenge
   const showParticipationQuestion = isToday(challengeDate) && 
     isAfter(now, set(new Date(), { hours: 9, minutes: 0 })) && 
     isBefore(now, set(new Date(), { hours: 18, minutes: 54 })) &&
     challenge.participating === undefined;
   
-  // Completion question should be shown from end of challenge until 8:59 the next day
   const completionDeadline = set(addDays(challengeDate, 1), { hours: 8, minutes: 59 });
   const showCompletionQuestion = isChallengeOver && 
     !challenge.completed && 
@@ -67,7 +64,6 @@ const ChallengeCard = ({
     }
   };
 
-  // Helper to correctly determine if the user has explicitly declined participation
   const hasDeclinedParticipation = challenge.participating === false;
 
   return (
@@ -227,11 +223,11 @@ const ChallengeCard = ({
           />
         </div>
         
-        {challenge.completed && challenge.userActions && !challenge.userActions.includes('none') ? (
+        {challenge.completed && challenge.userActions && !challenge.userActions.includes('none') && challenge.userActions.length > 0 && (
           <div className="flex items-center text-voltgreen-700">
             <span className="font-medium">+{challenge.userActions.length * 10} punti</span>
           </div>
-        ) : null}
+        )}
       </CardFooter>
     </Card>
   );
