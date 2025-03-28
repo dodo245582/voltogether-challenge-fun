@@ -42,13 +42,19 @@ const Dashboard = () => {
     const todayIndex = CHALLENGE_DATES.findIndex(date => date === todayStr);
     const dateToUse = todayIndex >= 0 ? CHALLENGE_DATES[todayIndex] : CHALLENGE_DATES[0];
     
+    const challengeId = todayIndex >= 0 ? todayIndex + 1 : 1;
+    const participating = localStorage.getItem(`challenge_${challengeId}_participating`);
+    const completed = localStorage.getItem(`challenge_${challengeId}_completed`) === 'true';
+    
     return {
-      id: todayIndex >= 0 ? todayIndex + 1 : 1,
+      id: challengeId,
       date: dateToUse,
       startTime: '19:00',
       endTime: '20:00',
-      completed: false,
-      participating: undefined
+      completed: completed || false,
+      participating: participating === 'true' ? true : 
+                     participating === 'false' ? false : 
+                     undefined
     };
   }, []);
 

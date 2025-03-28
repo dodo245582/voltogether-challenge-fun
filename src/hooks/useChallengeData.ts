@@ -13,6 +13,13 @@ export const useChallengeData = (initialChallenge: Challenge) => {
 
   // Use useCallback to avoid recreating the function on every render
   const loadChallengeData = useCallback(() => {
+    // Get the current date to check if this is a future, current, or past challenge
+    const today = new Date();
+    const challengeDate = new Date(initialChallenge.date);
+    const isToday = today.toDateString() === challengeDate.toDateString();
+    const isPastChallenge = challengeDate < new Date(today.setHours(0, 0, 0, 0));
+    
+    // Only load challenge state from localStorage if it exists
     const participating = localStorage.getItem(`challenge_${initialChallenge.id}_participating`);
     const completed = localStorage.getItem(`challenge_${initialChallenge.id}_completed`) === 'true';
     const userActionsStr = localStorage.getItem(`challenge_${initialChallenge.id}_actions`);
@@ -27,11 +34,14 @@ export const useChallengeData = (initialChallenge: Challenge) => {
     }
     
     console.log(`Challenge ${initialChallenge.id} data:`, {
+      isTodayChallenge: isToday,
+      isPastChallenge,
       participating: participating === 'true' ? true : participating === 'false' ? false : undefined,
       completed,
       userActions
     });
     
+    // Set challenge data based on loaded state and date
     setChallengeData({
       ...initialChallenge,
       participating: participating === 'true' ? true : participating === 'false' ? false : undefined,
