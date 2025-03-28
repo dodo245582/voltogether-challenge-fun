@@ -12,16 +12,24 @@ const Login = () => {
   const [redirecting, setRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, user, authInitialized } = useAuth();
+  const { signIn, user, authInitialized, profile } = useAuth();
 
   // Quick redirect if already authenticated
   useEffect(() => {
     if (authInitialized && user) {
       console.log("Login: User already authenticated, redirecting");
       setRedirecting(true);
-      navigate('/dashboard', { replace: true });
+      
+      // Check if profile is completed to determine where to redirect
+      if (profile?.profile_completed) {
+        console.log("Login: Profile completed, redirecting to dashboard");
+        navigate('/dashboard', { replace: true });
+      } else {
+        console.log("Login: Profile not completed, redirecting to onboarding");
+        navigate('/onboarding', { replace: true });
+      }
     }
-  }, [user, authInitialized, navigate]);
+  }, [user, authInitialized, navigate, profile]);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -31,7 +39,7 @@ const Login = () => {
       const { error, success } = await signIn(email, password);
       
       if (success) {
-        console.log("Login successful, redirecting");
+        console.log("Login successful, preparing redirect");
         toast({
           title: 'Login effettuato',
           description: 'Hai effettuato l\'accesso con successo',
@@ -40,7 +48,9 @@ const Login = () => {
         
         // Show loading state to avoid flicker
         setRedirecting(true);
-        navigate('/dashboard', { replace: true });
+        
+        // Profile status check is now handled by the useEffect above
+        // The redirect will happen once the profile is loaded
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';

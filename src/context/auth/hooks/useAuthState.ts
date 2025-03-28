@@ -31,7 +31,9 @@ export const useAuthState = () => {
         try {
           const cachedProfile = localStorage.getItem(`profile_${newSession.user.id}`);
           if (cachedProfile) {
-            setProfile(JSON.parse(cachedProfile));
+            const parsedProfile = JSON.parse(cachedProfile);
+            setProfile(parsedProfile);
+            console.log("Loaded cached profile, profile_completed:", parsedProfile.profile_completed);
             
             // Cached profile means basic state is ready
             setLoading(false);
@@ -56,7 +58,7 @@ export const useAuthState = () => {
         processAuthChange(session);
         
         // Background fetch for non-cached updates (completely non-blocking)
-        if (session?.user && event === 'SIGNED_IN') {
+        if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
           setTimeout(async () => {
             if (!mounted) return;
             try {
@@ -67,6 +69,7 @@ export const useAuthState = () => {
                 .maybeSingle();
                 
               if (profile && mounted) {
+                console.log("Fetched fresh profile data, profile_completed:", profile.profile_completed);
                 // Update cache and state
                 localStorage.setItem(`profile_${session.user.id}`, JSON.stringify(profile));
                 setProfile(profile);

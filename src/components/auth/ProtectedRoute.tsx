@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardLoadingState from '../dashboard/DashboardLoadingState';
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, authInitialized } = useAuth();
+  const { user, authInitialized, profile } = useAuth();
   
   // If auth is not initialized yet, show loading state
   if (!authInitialized) {
@@ -19,6 +19,13 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // If we have a user, render the protected content
+  // If user exists but profile is not completed, redirect to onboarding
+  if (user && profile && !profile.profile_completed) {
+    console.log("ProtectedRoute: User found but profile not completed, redirecting to onboarding");
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // If we have a user with a completed profile, render the protected content
+  console.log("ProtectedRoute: User authenticated with completed profile, rendering protected content");
   return <>{children}</>;
 };
