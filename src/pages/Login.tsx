@@ -9,17 +9,31 @@ import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState'
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, user, authInitialized } = useAuth();
   
-  // Simplify redirect logic
+  // Add a timeout to prevent getting stuck on loading state
+  useEffect(() => {
+    if (redirecting) {
+      const timeoutId = setTimeout(() => {
+        console.log("Login: Redirect timeout, forcing navigation");
+        navigate('/onboarding', { replace: true });
+      }, 3000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [redirecting, navigate]);
+  
+  // Simplified redirect logic with timeout
   useEffect(() => {
     if (!authInitialized) return;
     
     if (user) {
-      console.log("Login: User already authenticated, redirecting to onboarding");
-      // Always redirect to onboarding first, which will handle further redirect if needed
+      console.log("Login: User authenticated, redirecting to onboarding");
+      setRedirecting(true);
+      // Force redirect to onboarding, which will handle further redirect if needed
       navigate('/onboarding', { replace: true });
     }
   }, [user, authInitialized, navigate]);
@@ -39,8 +53,8 @@ const Login = () => {
           variant: 'default',
         });
         
-        // Don't set redirecting state, let the useEffect handle redirection
-        // This avoids potential race conditions
+        // Set redirecting state for the fallback timeout
+        setRedirecting(true);
       } else {
         console.error("Login error:", error);
         let errorMessage = 'Email o password non validi';
@@ -69,8 +83,8 @@ const Login = () => {
     }
   };
   
-  // If already authenticated and initialized, show loading state
-  if (authInitialized && user) {
+  // If already authenticated or redirecting, show loading state
+  if ((authInitialized && user) || redirecting) {
     return <DashboardLoadingState />;
   }
 

@@ -40,11 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       retryCount 
     });
     
-    // If authentication has initialized but we have a user with no profile,
-    // try to fetch the profile as a fallback
-    if (authInitialized && user && !profile && !loading && retryCount < 2) {
+    // Only try to fetch profile once to avoid infinite loops
+    if (authInitialized && user && !profile && !loading && retryCount === 0) {
       console.log(`Auth Provider: User exists but no profile, retrying profile fetch (attempt ${retryCount + 1})`);
-      setRetryCount(prev => prev + 1);
+      setRetryCount(1); // Set directly to 1 to ensure we only try once
       
       // Use timeout to prevent potential recursive state updates
       setTimeout(() => {
