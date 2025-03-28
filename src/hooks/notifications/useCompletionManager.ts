@@ -22,29 +22,32 @@ export const useCompletionManager = (
     const pointsPerAction = 10;
     const totalPoints = actionIds.includes('none') ? 0 : actionIds.length * pointsPerAction;
     
+    // Recupera i valori attuali dal profilo utente o dal localStorage
     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-    const newStreak = totalPoints > 0 ? currentStreak + 1 : 0;
-    const streakBonus = newStreak >= 3 ? 5 : 0;
-    
-    localStorage.setItem('streak', newStreak.toString());
-    
     const currentPoints = parseInt(localStorage.getItem('totalPoints') || '0');
-    const newTotalPoints = currentPoints + totalPoints + streakBonus;
-    localStorage.setItem('totalPoints', newTotalPoints.toString());
+    const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0');
     
-    const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0') + 1;
-    localStorage.setItem('completedChallenges', (completedChallenges).toString());
+    // Calcola i nuovi valori
+    const newStreak = totalPoints > 0 ? currentStreak + 1 : 0;
+    const streakBonus = newStreak >= 3 ? 5 : 0;    
+    const newTotalPoints = currentPoints + totalPoints + streakBonus;
+    const newCompletedChallenges = completedChallenges + 1;
+    
+    // Aggiorna i valori in localStorage
+    localStorage.setItem('streak', newStreak.toString());
+    localStorage.setItem('totalPoints', newTotalPoints.toString());
+    localStorage.setItem('completedChallenges', newCompletedChallenges.toString());
     
     if (user) {
       console.log("Updating profile after challenge completion with immediate values:", {
-        completed_challenges: completedChallenges,
+        completed_challenges: newCompletedChallenges,
         total_points: newTotalPoints,
         streak: newStreak
       });
       
-      // Update the user's profile in Supabase
+      // Aggiorna il profilo utente nel database
       await updateProfile(user.id, {
-        completed_challenges: completedChallenges,
+        completed_challenges: newCompletedChallenges,
         total_points: newTotalPoints,
         streak: newStreak
       });

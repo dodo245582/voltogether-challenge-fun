@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -223,7 +224,9 @@ const ChallengeCard = ({
           />
         </div>
         
-        {challenge.completed && challenge.userActions && !challenge.userActions.includes('none') && challenge.userActions.length > 0 && (
+        {/* Mostra i punti solo se la sfida corrente è completata e ci sono azioni registrate */}
+        {isToday(challengeDate) && challenge.completed && challenge.userActions && 
+         !challenge.userActions.includes('none') && challenge.userActions.length > 0 && (
           <div className="flex items-center text-voltgreen-700">
             <span className="font-medium">+{challenge.userActions.length * 10} punti</span>
           </div>
