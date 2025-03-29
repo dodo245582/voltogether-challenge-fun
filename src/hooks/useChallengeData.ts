@@ -61,6 +61,11 @@ export const useChallengeData = (initialChallenge: Challenge) => {
     // Only mark as completed if explicitly completed
     const isCompleted = completed === true;
     
+    // 👉 Codice per forzare un test (solo per sviluppo!)
+    // const testChallengeId = initialChallenge.id;
+    // localStorage.setItem(`challenge_${testChallengeId}_participating`, "true");
+    // localStorage.removeItem(`challenge_${testChallengeId}_completed`);
+
     // Set challenge data based on loaded state and date
     setChallengeData({
       ...initialChallenge,
@@ -137,8 +142,10 @@ export const useChallengeData = (initialChallenge: Challenge) => {
     try {
       // Calculate points
       const pointsPerAction = 10;
-      const actionsPoints = actionIds.includes('none') ? 0 : actionIds.length * pointsPerAction;
-      
+      // const actionsPoints = actionIds.includes('none') ? 0 : actionIds.length * pointsPerAction;
+      const validActions = actionIds.filter(id => id !== 'none');
+      const actionsPoints = validActions.length * pointsPerAction;
+
       // Calculate streak
       const currentStreak = parseInt(localStorage.getItem('streak') || '0');
       const newStreak = actionsPoints > 0 ? currentStreak + 1 : 0;
