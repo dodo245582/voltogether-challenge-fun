@@ -1,11 +1,10 @@
 
-import { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
 import { Challenge, SustainableAction } from '@/types';
 import ChallengeCard from '@/components/challenge/ChallengeCard';
 import ParticipationBox from './ParticipationBox';
 import CompletionBox from './CompletionBox';
-
-const NextEvents = lazy(() => import('@/components/dashboard/NextEvents'));
+import NextEvents from '@/components/dashboard/NextEvents';
 
 interface DashboardContentProps {
   shouldShowParticipationBox: boolean;
@@ -65,9 +64,9 @@ const DashboardContent = ({
         onCompleteChallenge={onCompleteChallenge}
       />
       
-      <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <NextEvents />
-      </Suspense>
+      </div>
     </div>
   );
 };

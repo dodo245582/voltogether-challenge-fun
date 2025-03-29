@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import Stats from '@/components/profile/Stats';
@@ -10,8 +9,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 import { useChallengeData } from '@/hooks/useChallengeData';
 import DashboardContent from '@/components/dashboard/DashboardContent';
-
-const CommunityStats = lazy(() => import('@/components/dashboard/CommunityStats'));
+import CommunityStats from '@/components/dashboard/CommunityStats';
 
 const Dashboard = () => {
   const { profile, user, signOut, refreshProfile } = useAuth();
