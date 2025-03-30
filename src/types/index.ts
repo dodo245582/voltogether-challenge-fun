@@ -35,13 +35,15 @@ export interface Challenge {
 }
 
 export type DiscoverySource = 
-  | 'social-media'
-  | 'friend'
-  | 'search'
-  | 'advertisement'
-  | 'news'
-  | 'event'
-  | 'other';
+    | 'social-media'
+    | 'friend'
+    | 'advertisement'
+    | 'previous-experiment'
+    | 'atmospheralab'
+    | 'cs1bc'
+    // | 'news-article'
+    // | 'event'
+    | 'other';
 
 // Compute the current week dates starting from today
 const generateCurrentWeekDates = () => {
