@@ -136,74 +136,157 @@ export const useChallengeData = (initialChallenge: Challenge) => {
     }
   };
 
+  // const handleCompleteChallenge = async (challengeId: number, actionIds: string[]) => {
+  //   setIsLoading(true);
+    
+  //   try {
+  //     // Calculate points dynamically from SUSTAINABLE_ACTIONS
+  //     const actionsPoints = actionIds.includes('none') ? 0 : actionIds.reduce((sum, actionId) => {
+  //         const action = SUSTAINABLE_ACTIONS.find(a => a.id === actionId);
+  //         return sum + (action?.pointValue || 0);
+  //       }, 0);
+
+  //     // Calculate streak
+  //     const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+  //     const newStreak = actionsPoints > 0 ? currentStreak + 1 : 0;
+  //     const streakBonus = newStreak >= 3 ? 5 : 0;
+      
+  //     // Total points for this challenge
+  //     const totalPoints = actionsPoints + streakBonus;
+      
+  //     // Update localStorage
+  //     localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
+  //     localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
+  //     localStorage.setItem('streak', newStreak.toString());
+      
+  //     // Update current totalPoints in localStorage
+  //     const currentTotalPoints = parseInt(localStorage.getItem('totalPoints') || '0');
+  //     const newTotalPoints = currentTotalPoints + totalPoints;
+  //     localStorage.setItem('totalPoints', newTotalPoints.toString());
+      
+  //     // Update completedChallenges in localStorage
+  //     const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0') + 1;
+  //     localStorage.setItem('completedChallenges', completedChallenges.toString());
+      
+  //     // Update state
+  //     setChallengeData(prev => ({
+  //       ...prev,
+  //       completed: true,
+  //       userActions: actionIds
+  //     }));
+      
+  //     // Update user profile in the database and locally immediately
+  //     if (user) {
+  //       console.log("Updating profile after challenge completion with new values:", {
+  //         completed_challenges: completedChallenges,
+  //         total_points: newTotalPoints,
+  //         streak: newStreak
+  //       });
+        
+  //       // Update profile database first
+  //       await updateProfile(user.id, {
+  //         completed_challenges: completedChallenges,
+  //         total_points: newTotalPoints,
+  //         streak: newStreak
+  //       });
+        
+  //       // Force refresh profile to update UI immediately
+  //       if (refreshProfile) {
+  //         console.log("Immediately refreshing profile data to update UI stats");
+  //         await refreshProfile(user.id);
+  //       }
+  //     }
+      
+  //     toast({
+  //       title: "Sfida completata",
+  //       description: totalPoints > 0 
+  //         ? `Hai guadagnato ${actionsPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!` 
+  //         : "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
+  //     });
+      
+  //   } catch (error) {
+  //     console.error("Error completing challenge:", error);
+  //     toast({
+  //       title: "Errore",
+  //       description: "Si è verificato un errore nel salvataggio delle azioni",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const handleCompleteChallenge = async (challengeId: number, actionIds: string[]) => {
     setIsLoading(true);
-    
+  
     try {
-      // Calculate points dynamically from SUSTAINABLE_ACTIONS
-      const actionsPoints = actionIds.includes('none') ? 0 : actionIds.reduce((sum, actionId) => {
-          const action = SUSTAINABLE_ACTIONS.find(a => a.id === actionId);
-          return sum + (action?.pointValue || 0);
-        }, 0);
-
-      // Calculate streak
-      const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-      const newStreak = actionsPoints > 0 ? currentStreak + 1 : 0;
-      const streakBonus = newStreak >= 3 ? 5 : 0;
-      
-      // Total points for this challenge
-      const totalPoints = actionsPoints + streakBonus;
-      
-      // Update localStorage
-      localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
-      localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
-      localStorage.setItem('streak', newStreak.toString());
-      
-      // Update current totalPoints in localStorage
-      const currentTotalPoints = parseInt(localStorage.getItem('totalPoints') || '0');
-      const newTotalPoints = currentTotalPoints + totalPoints;
-      localStorage.setItem('totalPoints', newTotalPoints.toString());
-      
-      // Update completedChallenges in localStorage
-      const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0') + 1;
-      localStorage.setItem('completedChallenges', completedChallenges.toString());
-      
-      // Update state
-      setChallengeData(prev => ({
-        ...prev,
-        completed: true,
-        userActions: actionIds
-      }));
-      
-      // Update user profile in the database and locally immediately
-      if (user) {
-        console.log("Updating profile after challenge completion with new values:", {
-          completed_challenges: completedChallenges,
-          total_points: newTotalPoints,
-          streak: newStreak
-        });
-        
-        // Update profile database first
-        await updateProfile(user.id, {
-          completed_challenges: completedChallenges,
-          total_points: newTotalPoints,
-          streak: newStreak
-        });
-        
-        // Force refresh profile to update UI immediately
-        if (refreshProfile) {
-          console.log("Immediately refreshing profile data to update UI stats");
-          await refreshProfile(user.id);
+      // Verifica se la sfida era già stata completata
+      const alreadyCompleted = localStorage.getItem(`challenge_${challengeId}_completed`) === 'true';
+  
+      if (!alreadyCompleted) {
+        // Calcola punti dinamicamente da SUSTAINABLE_ACTIONS
+        const actionsPoints = actionIds.includes('none')
+          ? 0
+          : actionIds.reduce((sum, actionId) => {
+              const action = SUSTAINABLE_ACTIONS.find(a => a.id === actionId);
+              return sum + (action?.pointValue || 0);
+            }, 0);
+  
+        // Calcola streak
+        const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+        const newStreak = actionsPoints > 0 ? currentStreak + 1 : 0;
+        const streakBonus = newStreak >= 3 ? 5 : 0;
+  
+        // Punti totali per questa sfida
+        const totalPoints = actionsPoints + streakBonus;
+  
+        // Aggiorna localStorage
+        localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
+        localStorage.setItem(`challenge_${challengeId}_completed`, 'true');
+        localStorage.setItem('streak', newStreak.toString());
+  
+        // Aggiorna totalPoints
+        const currentTotalPoints = parseInt(localStorage.getItem('totalPoints') || '0');
+        const newTotalPoints = currentTotalPoints + totalPoints;
+        localStorage.setItem('totalPoints', newTotalPoints.toString());
+  
+        // Aggiorna completedChallenges
+        const completedChallenges = parseInt(localStorage.getItem('completedChallenges') || '0') + 1;
+        localStorage.setItem('completedChallenges', completedChallenges.toString());
+  
+        // Aggiorna stato
+        setChallengeData(prev => ({
+          ...prev,
+          completed: true,
+          userActions: actionIds
+        }));
+  
+        // Aggiorna profilo utente
+        if (user) {
+          await updateProfile(user.id, {
+            completed_challenges: completedChallenges,
+            total_points: newTotalPoints,
+            streak: newStreak
+          });
+  
+          if (refreshProfile) {
+            await refreshProfile(user.id);
+          }
         }
+  
+        toast({
+          title: "Sfida completata",
+          description: totalPoints > 0
+            ? `Hai guadagnato ${actionsPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!`
+            : "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
+        });
+      } else {
+        // Caso già completato
+        toast({
+          title: "Sfida già completata",
+          description: "Hai già completato questa sfida precedentemente.",
+          variant: "default",
+        });
       }
-      
-      toast({
-        title: "Sfida completata",
-        description: totalPoints > 0 
-          ? `Hai guadagnato ${actionsPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!` 
-          : "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
-      });
-      
     } catch (error) {
       console.error("Error completing challenge:", error);
       toast({
@@ -214,7 +297,7 @@ export const useChallengeData = (initialChallenge: Challenge) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  };  
 
   return {
     challengeData,
