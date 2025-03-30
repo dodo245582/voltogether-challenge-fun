@@ -214,9 +214,9 @@ const Dashboard = () => {
             />
           )}
           
-          <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
+          {/* <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
             <CommunityStats />
-          </Suspense>
+          </Suspense>*/}
         </div>
       </main>
       
