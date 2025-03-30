@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { Challenge } from '@/types';
+import { Challenge, SUSTAINABLE_ACTIONS  } from '@/types';
 import { useAuth } from '@/context/auth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { toast } from '@/hooks/use-toast';
@@ -140,11 +140,11 @@ export const useChallengeData = (initialChallenge: Challenge) => {
     setIsLoading(true);
     
     try {
-      // Calculate points
-      const pointsPerAction = 10;
-      // const actionsPoints = actionIds.includes('none') ? 0 : actionIds.length * pointsPerAction;
-      const validActions = actionIds.filter(id => id !== 'none');
-      const actionsPoints = validActions.length * pointsPerAction;
+      // Calculate points dynamically from SUSTAINABLE_ACTIONS
+      const actionsPoints = actionIds.includes('none') ? 0 : actionIds.reduce((sum, actionId) => {
+          const action = SUSTAINABLE_ACTIONS.find(a => a.id === actionId);
+          return sum + (action?.pointValue || 0);
+        }, 0);
 
       // Calculate streak
       const currentStreak = parseInt(localStorage.getItem('streak') || '0');

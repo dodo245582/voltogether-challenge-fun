@@ -66,53 +66,126 @@ const generateCurrentWeekDates = () => {
 
 export const CHALLENGE_DATES = generateCurrentWeekDates();
 
-export const SUSTAINABLE_ACTIONS: SustainableAction[] = [
+export const SUSTAINABLE_ACTIONS: SustainableAction[] = 
+[
   {
     id: 'laundry',
-    label: 'Spostare utilizzo della lavatrice',
-    description: 'Utilizzare la lavatrice fuori dagli orari di punta di consumo energetico',
-    pointValue: 10
+    label: 'Sposta l\'utilizzo della lavatrice',
+    description: 'Usare la lavatrice in orari non di punta per ridurre il consumo energetico',
+    pointValue: 30
   },
   {
     id: 'dishwasher',
-    label: 'Abbassare i gradi della lavastoviglie',
-    description: 'Ridurre la temperatura della lavastoviglie per risparmiare energia',
-    pointValue: 10
+    label: 'Sposta l\'utilizzo della lavastoviglie',
+    description: 'Usare la lavastoviglie fuori dagli orari di picco energetico per risparmiare energia',
+    pointValue: 30
   },
   {
-    id: 'pc',
-    label: 'Spegnere il PC fisso',
-    description: 'Spegnere completamente il PC invece di lasciarlo in standby',
+    id: 'heating',
+    label: 'Abbassare il riscaldamento di due gradi',
+    description: 'Abbassare la temperatura di casa di due gradi per risparmiare energia',
     pointValue: 10
   },
   {
     id: 'lights',
-    label: 'Spegnere le luci non necessarie',
-    description: 'Ridurre l\'illuminazione nelle stanze non utilizzate',
+    label: 'Spegnere luci non necessarie',
+    description: 'Spegnere l\'illuminazione nelle stanze inutilizzate per risparmiare energia',
     pointValue: 10
   },
   {
-    id: 'heating',
-    label: 'Abbassare il riscaldamento',
-    description: 'Ridurre la temperatura del riscaldamento di qualche grado',
+    id: 'pc',
+    label: 'Spegnere il PC fisso anziché lasciarlo in standby',
+    description: 'Spegnere completamente il PC quando non in uso per ridurre il consumo in standby',
+    pointValue: 20
+  },
+  {
+    id: 'tv',
+    label: 'Spegnere la TV anziché lasciarla in standby',
+    description: 'Spegnere completamente la TV invece di lasciarla in modalità standby per risparmiare energia',
+    pointValue: 10
+  },
+  {
+    id: 'chargers',
+    label: 'Scollegare i caricabatterie e le prese non utilizzati',
+    description: 'Scollegare dalla corrente caricabatterie e dispositivi non utilizzati per evitare consumi inutili',
     pointValue: 10
   },
   {
     id: 'cooking',
     label: 'Evitare l\'uso del forno',
     description: 'Utilizzare metodi di cottura più efficienti come microonde o fornelli',
+    pointValue: 20
+  },
+  {
+    id: 'eco_mode',
+    label: 'Usare la modalità ECO/temperatura più bassa sugli elettrodomestici',
+    description: 'Selezionare modalità ECO o temperature più basse negli elettrodomestici per risparmiare energia',
     pointValue: 10
   },
   {
-    id: 'tv',
-    label: 'Spegnere TV e dispositivi',
-    description: 'Spegnere completamente TV e altri dispositivi elettronici',
-    pointValue: 10
+    id: 'iron',
+    label: 'Abbassa la temperatura del ferro da stiro',
+    description: 'Abbassare leggermente la temperatura del ferro per risparmiare energia durante la stiratura',
+    pointValue: 20
   },
   {
-    id: 'shower',
-    label: 'Fare docce più brevi',
-    description: 'Ridurre il tempo sotto la doccia per risparmiare acqua calda',
-    pointValue: 10
+    id: 'fridge',
+    label: 'Alza la temperatura del frigo',
+    description: 'Impostare una temperatura leggermente più alta nel frigorifero per ridurre il consumo energetico',
+    pointValue: 20
   }
 ];
+
+
+//[
+//   {
+//     id: 'laundry',
+//     label: 'Spostare utilizzo della lavatrice',
+//     description: 'Utilizzare la lavatrice fuori dagli orari di punta di consumo energetico',
+//     pointValue: 10
+//   },
+//   {
+//     id: 'dishwasher',
+//     label: 'Abbassare i gradi della lavastoviglie',
+//     description: 'Ridurre la temperatura della lavastoviglie per risparmiare energia',
+//     pointValue: 10
+//   },
+//   {
+//     id: 'pc',
+//     label: 'Spegnere il PC fisso',
+//     description: 'Spegnere completamente il PC invece di lasciarlo in standby',
+//     pointValue: 10
+//   },
+//   {
+//     id: 'lights',
+//     label: 'Spegnere le luci non necessarie',
+//     description: 'Ridurre l\'illuminazione nelle stanze non utilizzate',
+//     pointValue: 10
+//   },
+//   {
+//     id: 'heating',
+//     label: 'Abbassare il riscaldamento',
+//     description: 'Ridurre la temperatura del riscaldamento di qualche grado',
+//     pointValue: 10
+//   },
+//   {
+//     id: 'cooking',
+//     label: 'Evitare l\'uso del forno',
+//     description: 'Utilizzare metodi di cottura più efficienti come microonde o fornelli',
+//     pointValue: 10
+//   },
+//   {
+//     id: 'tv',
+//     label: 'Spegnere TV e dispositivi',
+//     description: 'Spegnere completamente TV e altri dispositivi elettronici',
+//     pointValue: 10
+//   },
+//   {
+//     id: 'shower',
+//     label: 'Fare docce più brevi',
+//     description: 'Ridurre il tempo sotto la doccia per risparmiare acqua calda',
+//     pointValue: 10
+//   }
+// ];
+
+
