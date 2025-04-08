@@ -4,15 +4,15 @@ import { Zap, Award, Calendar, TrendingUp } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface StatsProps {
-  user: User;
   totalChallenges: number;
+  completedChallenges: number;
+  totalPoints: number;
+  streak: number;
 }
 
-const Stats = ({ user, totalChallenges }: StatsProps) => {
-  const completedChallenges = user.completed_challenges || 0;
-  const totalPoints = user.total_points || 0;
-  const streak = user.streak || 0;
-  
+const Stats = ({ totalChallenges = 0, completedChallenges = 0, totalPoints = 0, streak = 0  }: StatsProps) => {
+
+
   const percentageCompleted = totalChallenges > 0 
     ? Math.round((completedChallenges / totalChallenges) * 100) 
     : 0;
