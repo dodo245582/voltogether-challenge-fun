@@ -4,26 +4,44 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Clock } from 'lucide-react';
-import { SustainableAction } from '@/types';
+import { Challenge, SustainableAction } from '@/types';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
 interface CompletionBoxProps {
-  userActions: SustainableAction[];
-  getCompletionDeadline: () => string;
-  handleSubmitCompletionActions: () => Promise<void>;
-  selectedCompletionActions: string[];
-  handleActionToggle: (actionId: string) => void;
+  challenge: Challenge & { start_time: string; end_time: string; action_ids: string[] };
+  submittedActions: (actionIds: string[]) => void;
 }
 
 const CompletionBox = ({ 
-  userActions,
-  getCompletionDeadline,
-  handleSubmitCompletionActions,
-  selectedCompletionActions,
-  handleActionToggle
+  challenge,
+  submittedActions,
 }: CompletionBoxProps) => {
   const today = format(new Date(), 'EEEE d MMMM', { locale: it });
+
+  const [selectedCompletionActions, setSelectedCompletionActions] = useState<string[]>([]);
+
+  const handleActionToggle = (actionId: string) => {
+    setSelectedCompletionActions((prev) => {
+      if (prev.includes(actionId)) {
+        return prev.filter((id) => id !== actionId);
+      } else {
+        if (actionId === 'none') {
+          return ['none'];
+        }
+        return prev.filter((id) => id !== 'none').concat(actionId);
+      }
+    });
+  };
+
+  const handleSubmitCompletionActions = () => {
+    console.log('Selected actions:', selectedCompletionActions);
+  };
+
+  const getCompletionDeadline = () => {
+    const endTime = new Date(challenge.end_time);
+    return format(endTime, 'HH:mm', { locale: it });
+  };
 
   return (
     <Card className="border-voltgreen-200 bg-voltgreen-50 shadow-sm">
@@ -32,7 +50,7 @@ const CompletionBox = ({
       </CardHeader>
       <CardContent>
         <p className="text-voltgreen-700 mb-4">
-          Quali azioni hai fatto oggi {today} per ridurre i consumi energetici?
+          Quali azioni hai fatto oggi per ridurre i consumi energetici?
         </p>
         <div className="bg-white rounded-md p-3 border border-voltgreen-200 mb-4">
           <div className="flex items-center text-amber-800 mb-2">
@@ -44,20 +62,19 @@ const CompletionBox = ({
         </div>
         
         <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
-          {userActions.map((action) => (
-            <div key={action.id} className="flex items-start space-x-2">
+          {challenge.actions.map((action) => (
+            <div key={action.label} className="flex items-center space-x-2">
               <Checkbox 
-                id={`dashboard-action-${action.id}`}
-                checked={selectedCompletionActions.includes(action.id)}
-                onCheckedChange={() => handleActionToggle(action.id)}
-                disabled={selectedCompletionActions.includes('none')}
+                id={`dashboard-action-${action.label}`}
+                checked={selectedCompletionActions.includes(action.label)}
+                onCheckedChange={() => handleActionToggle(action.label)}
               />
               <div>
                 <label
-                  htmlFor={`dashboard-action-${action.id}`}
+                  htmlFor={`dashboard-action-${action.label}`}
                   className="text-sm font-medium text-gray-700"
                 >
-                  {action.label}
+                  {action.title}
                 </label>
               </div>
             </div>
@@ -83,7 +100,7 @@ const CompletionBox = ({
       </CardContent>
       <CardFooter className="pt-2 pb-4">
         <Button 
-          onClick={handleSubmitCompletionActions}
+          onClick={() => submittedActions(selectedCompletionActions)}
           disabled={selectedCompletionActions.length === 0}
           className="w-full bg-voltgreen-600 hover:bg-voltgreen-700"
         >

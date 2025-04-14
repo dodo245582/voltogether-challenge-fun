@@ -1,3 +1,4 @@
+import { Users } from 'lucide-react';
 
 export interface User {
   id: string;
@@ -26,12 +27,19 @@ export interface SustainableAction {
 
 export interface Challenge {
   id: number;
-  date: string;
   startTime: string;
   endTime: string;
   completed: boolean;
   participating?: boolean;
-  userActions?: string[];
+  actions?: {
+    id: string;
+    label: string;
+    description: string | null;
+    point_value: number;
+    title: string | null;
+    created_at: string;
+  }[];
+  Users_Challenges?: any;
 }
 
 export type DiscoverySource = 
