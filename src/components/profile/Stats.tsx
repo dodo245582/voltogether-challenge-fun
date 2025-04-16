@@ -2,15 +2,64 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from '@/types';
 import { Zap, Award, Calendar, TrendingUp } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useEffect, useState } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 
-interface StatsProps {
-  totalChallenges: number;
-  completedChallenges: number;
-  totalPoints: number;
-  streak: number;
-}
+const Stats = () => {
 
-const Stats = ({ totalChallenges = 0, completedChallenges = 0, totalPoints = 0, streak = 0  }: StatsProps) => {
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [totalChallenges, setTotalChallenges] = useState(0);
+  const [completedChallenges, setCompletedChallenges] = useState(0);
+  const [streak, setStreak] = useState(0);
+
+
+    useEffect(() => {
+      fetchData();
+    }, []);
+
+
+
+      const fetchData = async () => {
+      
+        try {
+          // Fetch all challenges, including their action_ids arrays and associated challenge_user
+          const { data: userChallenges, error: challengeError } = await supabase
+          .from('Users_Challenges')
+          .select('id, points')
+
+          if (challengeError) {
+            console.error('Error fetching challenge:', challengeError);
+            return;
+            }
+          
+          setTotalPoints(userChallenges.reduce((sum, userChallenge) => sum + (userChallenge.points || 0), 0));
+
+          setTotalChallenges(userChallenges.length);
+          setCompletedChallenges(userChallenges.filter(userChallenge => userChallenge.points > 0).length);
+
+            let currentStreak = 0;
+            let maxStreak = 0;
+
+            // Sort challenges by id in descending order to prioritize the most recent ones
+            const sortedChallenges = userChallenges.sort((a, b) => b.id - a.id);
+
+            // Iterate through sorted challenges to calculate streak
+            sortedChallenges.forEach((challenge) => {
+              if (challenge.points > 0) {
+              currentStreak++;
+              maxStreak = Math.max(maxStreak, currentStreak);
+              } else {
+              currentStreak = 0;
+              }
+            });
+
+            setStreak(maxStreak);
+      
+        } catch (error) {
+          console.error('Unexpected error:', error);
+        }
+      
+        };
 
 
   const percentageCompleted = totalChallenges > 0 

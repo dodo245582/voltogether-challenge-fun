@@ -208,12 +208,7 @@ const Dashboard = () => {
           />
           
           {profile && (
-            <Stats
-              totalChallenges={challengeStats.totalChallenges}
-              completedChallenges={challengeStats.completedChallenges}
-              totalPoints={challengeStats.points}
-              streak={profile.streak}
-            />
+            <Stats />
           )}
           {/*
           <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>

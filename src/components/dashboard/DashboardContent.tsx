@@ -106,9 +106,20 @@ const DashboardContent = ({
   const completeChallenge = async (actionIds: string[]) => {
     console.log('Selected actions:', actionIds);
 
+    let points = 0;
+
+    if (actionIds[0] !== 'none') {
+      // Fetch points for the selected actions
+      const { data: actions } = await supabase
+        .from('Actions')
+        .select('point_value')
+        .in('label', actionIds);
+      points = actions.reduce((sum, action) => sum + (action.point_value || 0), 0);
+      console.log(points)
+    }
     const { error } = await supabase
       .from('Users_Challenges')
-      .update({ completed_at: new Date().toISOString() })
+      .update({ completed_at: new Date().toISOString(), actions_done: actionIds, points: points })
       .eq('challenge_id', challenge.id);
 
     if (error) {

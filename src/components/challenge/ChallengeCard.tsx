@@ -146,10 +146,21 @@ const ClockDisplay = ({ challenge }: { challenge: Challenge & { start_time: stri
 
   if (isActive) {
     const minutesLeft = Math.floor((endTime.getTime() - now.getTime()) / 60000);
+    const hoursLeft = Math.floor((endTime.getTime() - now.getTime()) / 3600000);
+
+
+    if (hoursLeft === 0) {
+      return (
+        <span className="text-voltgreen-700 font-medium flex items-center">
+          <Clock className="h-4 w-4 mr-1" />
+          {minutesLeft === 0 ? 'Un minuto' : `${minutesLeft} minuti`} alla fine
+        </span>
+      );
+    }
     return (
-      <span className="text-voltgreen-700 font-medium flex items-center">
+      <span className="text-gray-600 flex items-center">
         <Clock className="h-4 w-4 mr-1" />
-        {minutesLeft === 0 ? 'Un minuto' : `${minutesLeft} minuti`} alla fine
+        {hoursLeft === 1 ? '1 ora' : `${hoursLeft} ore`} alla fine
       </span>
     );
   }
