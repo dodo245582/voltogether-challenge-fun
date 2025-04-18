@@ -20,6 +20,7 @@ const NextEvents = () => {
           .from('Challenges')
           .select('*')
           .gte('start_time', addHours(new Date(), 2).toISOString())
+          .order('start_time', { ascending: true })
           .limit(1)
 
 
