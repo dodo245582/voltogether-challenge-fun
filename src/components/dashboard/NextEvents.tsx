@@ -21,7 +21,7 @@ const NextEvents = () => {
           .select('*')
           .gte('start_time', addHours(new Date(), 2).toISOString())
           .order('start_time', { ascending: true })
-          .limit(1)
+          .limit(2)
 
 
         if (challengesError) {
