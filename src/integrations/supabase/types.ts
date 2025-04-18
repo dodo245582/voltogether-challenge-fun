@@ -54,6 +54,19 @@ export type Database = {
         }
         Relationships: []
       }
+      Challenges: {
+        Row: {
+          id: number
+          created_at: Date
+          date: Date
+          start_time: string
+          end_time: string
+          description: string | null
+          actions: string[] | null
+          title: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

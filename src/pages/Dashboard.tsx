@@ -208,15 +208,17 @@ const Dashboard = () => {
           />
           
           {profile && (
-            <Stats
-              user={profile}
-              totalChallenges={challengeStats.totalChallenges}
-            />
+            <Stats />
           )}
-          
-          {/* <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
-            <CommunityStats />
-          </Suspense>*/}
+          {/*
+          <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-gray-100"></div>}>
+            <CommunityStats
+              activeUsers={profile?.active_users || 0}
+              completedChallenges={profile?.completed_challenges || 0}
+              impact={profile?.impact || 0}
+            />
+          </Suspense>
+          */}
         </div>
       </main>
       
