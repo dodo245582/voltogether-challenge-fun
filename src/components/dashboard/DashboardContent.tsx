@@ -54,8 +54,8 @@ const DashboardContent = ({
       const { data: challenge, error: challengeError } = await supabase
       .from('Challenges')
       .select('*, Users_Challenges(*)') // Include the challenge_user relationship
-      .lte('start_time', addHours(new Date(), 2).toISOString())
-      .gte('end_time', subHours(new Date(), 2).toISOString())
+      .lte('start_time', addHours(new Date(), 3).toISOString())
+      .gte('end_time', subHours(new Date(), 3).toISOString())
       .single();
 
       if (challengeError) {
@@ -131,14 +131,14 @@ const DashboardContent = ({
   return (
     <div className="lg:col-span-2 space-y-6">
 
-      {challenge && !(challenge.Users_Challenges && challenge.Users_Challenges.length > 0) && isAfter(new Date(), parseISO(challenge.start_time)) && isBefore(new Date(), subHours(parseISO(challenge.end_time), 2)) && (
+      {challenge && !(challenge.Users_Challenges && challenge.Users_Challenges.length > 0) && isAfter(new Date(), subHours(parseISO(challenge.start_time), 3)) && isBefore(new Date(), parseISO(challenge.start_time)) && (
         <ParticipationBox
           challenge={challenge}
           acceptChallenge={acceptChallenge}
         />
       )}
       
-      {challenge && (challenge.Users_Challenges && challenge.Users_Challenges.length > 0 && !challenge.Users_Challenges[0].completed_at) && isAfter(new Date(), subHours(parseISO(challenge.end_time), 2)) && isBefore(new Date(), parseISO(challenge.end_time)) && (
+      {challenge && (challenge.Users_Challenges && challenge.Users_Challenges.length > 0 && !challenge.Users_Challenges[0].completed_at) && isAfter(new Date(), parseISO(challenge.end_time)) && isBefore(new Date(), addHours(parseISO(challenge.end_time), 3)) && (
         <CompletionBox 
           challenge={challenge}
           submittedActions={completeChallenge}

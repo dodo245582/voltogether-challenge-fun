@@ -31,7 +31,7 @@ const ParticipationBox = ({
           <div className="flex items-center text-amber-800 mb-2">
             <Clock className="h-4 w-4 mr-2" />
             <p className="text-sm font-medium">
-              Hai tempo per rispondere fino alle {format(addHours(parseISO(challenge.end_time), -1), 'HH:mm')}!
+              Hai tempo per rispondere fino alle {format(parseISO(challenge.start_time), 'HH:mm')}!
             </p>
           </div>
           <p className="text-sm text-gray-600">

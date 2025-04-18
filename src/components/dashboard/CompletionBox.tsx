@@ -40,6 +40,7 @@ const CompletionBox = ({
 
   const getCompletionDeadline = () => {
     const endTime = new Date(challenge.end_time);
+    endTime.setHours(endTime.getHours() + 3);
     return format(endTime, 'HH:mm', { locale: it });
   };
 
