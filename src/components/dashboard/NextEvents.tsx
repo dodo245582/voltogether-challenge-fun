@@ -78,10 +78,10 @@ const NextEvents = () => {
                 <p className="font-medium">{challenge.title}</p>
                 <p>{format(new Date(challenge.start_time), "EEEE d MMMM", { locale: it })}, {format(new Date(challenge.start_time), "HH:mm", { locale: it })} - {format(new Date(challenge.end_time), "HH:mm", { locale: it })} </p>
                 </div>
-                <span className="text-xs font-medium px-2 py-1 bg-voltgreen-100 text-voltgreen-700 rounded-full">
+                {/* <span className="text-xs font-medium px-2 py-1 bg-voltgreen-100 text-voltgreen-700 rounded-full">
                 +10 punti per azione
-                </span>
-              </div>
+                </span> */}
+              </div> 
 
               <div className="mt-3 pl-3">
                 <p className="text-sm font-medium mb-2">Azioni consigliate:</p>
