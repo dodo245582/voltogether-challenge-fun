@@ -110,7 +110,7 @@ export const SUSTAINABLE_ACTIONS: SustainableAction[] =
   },
   {
     id: 'dryer',
-    label: 'Stendi i panni invece di usare l'asciugatrice',
+    label: 'Stendi i panni invece di usare l\'asciugatrice',
     description: 'Non usare l'asciugatrice, per risparmiare energia',
     pointValue: 10
   },
