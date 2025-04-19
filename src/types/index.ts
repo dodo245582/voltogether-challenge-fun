@@ -79,16 +79,16 @@ export const CHALLENGE_DATES = generateCurrentWeekDates();
 export const SUSTAINABLE_ACTIONS: SustainableAction[] = 
 [
   {
-    id: 'laundry',
+    id: 'washing_machine',
     label: 'Sposta l\'utilizzo della lavatrice',
     description: 'Usare la lavatrice in orari non di punta per ridurre il consumo energetico',
-    pointValue: 30
+    pointValue: 20
   },
   {
     id: 'dishwasher',
     label: 'Sposta l\'utilizzo della lavastoviglie',
     description: 'Usare la lavastoviglie fuori dagli orari di picco energetico per risparmiare energia',
-    pointValue: 30
+    pointValue: 20
   },
   {
     id: 'heating',
@@ -97,31 +97,31 @@ export const SUSTAINABLE_ACTIONS: SustainableAction[] =
     pointValue: 10
   },
   {
-    id: 'lights',
+    id: 'lights_off',
     label: 'Spegnere luci non necessarie',
     description: 'Spegnere l\'illuminazione nelle stanze inutilizzate per risparmiare energia',
-    pointValue: 10
+    pointValue: 5
   },
   {
-    id: 'pc',
-    label: 'Spegnere il PC fisso anziché lasciarlo in standby',
-    description: 'Spegnere completamente il PC quando non in uso per ridurre il consumo in standby',
-    pointValue: 20
+    id: 'stand_by',
+    label: 'Spegni dispositivi come TV e PC anziché lasciarli in standby',
+    description: 'Spegnere completamente dispositivi quando non in uso per ridurre il consumo in standby',
+    pointValue: 5
   },
   {
-    id: 'tv',
-    label: 'Spegnere la TV anziché lasciarla in standby',
-    description: 'Spegnere completamente la TV invece di lasciarla in modalità standby per risparmiare energia',
+    id: 'dryer',
+    label: 'Stendi i panni invece di usare l'asciugatrice',
+    description: 'Non usare l'asciugatrice, per risparmiare energia',
     pointValue: 10
   },
   {
     id: 'chargers',
     label: 'Scollegare i caricabatterie e le prese non utilizzati',
     description: 'Scollegare dalla corrente caricabatterie e dispositivi non utilizzati per evitare consumi inutili',
-    pointValue: 10
+    pointValue: 5
   },
   {
-    id: 'cooking',
+    id: 'oven',
     label: 'Evitare l\'uso del forno',
     description: 'Utilizzare metodi di cottura più efficienti come microonde o fornelli',
     pointValue: 20
@@ -136,13 +136,13 @@ export const SUSTAINABLE_ACTIONS: SustainableAction[] =
     id: 'iron',
     label: 'Abbassa la temperatura del ferro da stiro',
     description: 'Abbassare leggermente la temperatura del ferro per risparmiare energia durante la stiratura',
-    pointValue: 20
+    pointValue: 10
   },
   {
     id: 'fridge',
     label: 'Alza la temperatura del frigo',
     description: 'Impostare una temperatura leggermente più alta nel frigorifero per ridurre il consumo energetico',
-    pointValue: 20
+    pointValue: 10
   }
 ];
 
