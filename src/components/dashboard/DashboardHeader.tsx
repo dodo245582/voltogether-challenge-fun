@@ -39,13 +39,14 @@ const DashboardHeader = ({
             </Button>
           </Link>
           
+          {/*
           <div className="text-gray-600 hover:text-gray-900 cursor-pointer">
             {hasUnreadNotifications ? (
               <BellDot className="h-6 w-6 text-voltgreen-600" />
             ) : (
               <Bell className="h-6 w-6" />
             )}
-          </div>
+          </div> */}
           
           {username && (
             <div className="text-right hidden sm:block">
