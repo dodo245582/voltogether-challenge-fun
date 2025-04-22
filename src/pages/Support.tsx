@@ -20,7 +20,7 @@ const Support = () => {
               >
                 team@voltogether.it
               </a>{' '}
-              con come oggetto "Supporto" e spiegaci cosa non va.
+              con come oggetto "Supporto" e spiegaci cosa non va. Se hai dimenticato la password, puoi scrivere direttamente nell'oggetto "Password dimenticata"
             </p>
             
             <p className="text-lg">
