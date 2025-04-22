@@ -96,8 +96,8 @@ const Login = () => {
           />
           
           <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Demo: usa <span className="font-mono bg-gray-100 px-1 py-0.5 rounded">demo@voltogether.com</span> e <span className="font-mono bg-gray-100 px-1 py-0.5 rounded">password123</span></p>
-            <p className="mt-2 italic">Nota: Per l'account demo, assicurati di controllare l'email per confermare la registrazione oppure disabilita la verifica email nelle impostazioni di Supabase.</p>
+            <p> <span className="font-mono bg-gray-100 px-1 py-0.5 rounded"></span> <span className="font-mono bg-gray-100 px-1 py-0.5 rounded"></span></p>
+            <p className="mt-2 italic"></p>
           </div>
         </div>
       </main>
