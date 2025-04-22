@@ -120,9 +120,15 @@ const AuthForm = ({ type, onSubmit, isLoading = false }: AuthFormProps) => {
           
           {type === 'login' && (
             <div className="text-right">
-              <Link to="/reset-password" className="text-sm text-voltgreen-600 hover:text-voltgreen-700">
-                Password dimenticata?
-              </Link>
+              <a 
+  href="https://app.voltogether.it/support" 
+  target="_blank" 
+  rel="noopener noreferrer" 
+  className="text-sm text-voltgreen-600 hover:text-voltgreen-700"
+>
+  Password dimenticata?
+</a>
+
             </div>
           )}
         </CardContent>
