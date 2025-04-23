@@ -82,37 +82,37 @@ export const SUSTAINABLE_ACTIONS: SustainableAction[] =
     id: 'washing_machine',
     label: 'Sposta l\'utilizzo della lavatrice',
     description: 'Usare la lavatrice in orari non di punta per ridurre il consumo energetico',
-    pointValue: 20
+    pointValue: 70
   },
   {
     id: 'dishwasher',
     label: 'Sposta l\'utilizzo della lavastoviglie',
     description: 'Usare la lavastoviglie fuori dagli orari di picco energetico per risparmiare energia',
-    pointValue: 20
+    pointValue: 100
   },
   {
     id: 'heating',
     label: 'Abbassare il riscaldamento di due gradi',
     description: 'Abbassare la temperatura di casa di due gradi per risparmiare energia',
-    pointValue: 10
+    pointValue: 25
   },
   {
     id: 'lights_off',
     label: 'Spegnere luci non necessarie',
     description: 'Spegnere l\'illuminazione nelle stanze inutilizzate per risparmiare energia',
-    pointValue: 5
+    pointValue: 10
   },
   {
     id: 'stand_by',
-    label: 'Spegni dispositivi come TV e PC anziché lasciarli in standby',
-    description: 'Spegnere completamente dispositivi quando non in uso per ridurre il consumo in standby',
-    pointValue: 5
+    label: 'Spegni dispositivi come TV e PC',
+    description: 'Spegnere completamente dispositivi quando non in uso per ridurre il consumo',
+    pointValue: 15
   },
   {
     id: 'dryer',
     label: 'Stendi i panni invece di usare l\'asciugatrice',
     description: 'Non usare l\'asciugatrice, per risparmiare energia',
-    pointValue: 10
+    pointValue: 190
   },
   {
     id: 'chargers',
@@ -124,7 +124,7 @@ export const SUSTAINABLE_ACTIONS: SustainableAction[] =
     id: 'oven',
     label: 'Evitare l\'uso del forno',
     description: 'Utilizzare metodi di cottura più efficienti come microonde o fornelli',
-    pointValue: 20
+    pointValue: 100
   },
   {
     id: 'eco_mode',
@@ -134,15 +134,15 @@ export const SUSTAINABLE_ACTIONS: SustainableAction[] =
   },
   {
     id: 'iron',
-    label: 'Abbassa la temperatura del ferro da stiro',
+    label: 'Abbassa la temperatura del ferro da stiro di almeno 10 gradi',
     description: 'Abbassare leggermente la temperatura del ferro per risparmiare energia durante la stiratura',
-    pointValue: 10
+    pointValue: 15
   },
   {
     id: 'fridge',
-    label: 'Alza la temperatura del frigo',
-    description: 'Impostare una temperatura leggermente più alta nel frigorifero per ridurre il consumo energetico',
-    pointValue: 10
+    label: 'Spegni il frigorifero per 1 ora, o alza la sua temperatura',
+    description: 'Spegnere o impostare una temperatura leggermente più alta nel frigorifero per ridurre il consumo energetico',
+    pointValue: 15
   }
 ];
 
