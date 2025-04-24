@@ -60,11 +60,17 @@ export const useNotificationManager = () => {
       console.log('Adding valid notification:', newNotification);
       setNotifications(prev => [newNotification, ...prev]);
       
-      toast({
-        title: newNotification.title,
-        description: newNotification.message,
-        variant: "default",
-      });
+      if (
+        ENABLE_LEGACY_NOTIFICATION_RENDERING ||
+        (type !== 'participation-request')  // allow other toasts through
+      ) {
+        toast({
+          title: newNotification.title,
+          description: newNotification.message,
+          variant: "default",
+        });
+      }
+      
       
       if (areNotificationsEnabled()) {
         new window.Notification(newNotification.title, {
