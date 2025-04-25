@@ -6,6 +6,8 @@ import { useNotificationPermissions } from './useNotificationPermissions';
 import { parseISO, isToday, set } from 'date-fns';
 import { useLocation } from 'react-router-dom';
 
+const ENABLE_LEGACY_NOTIFICATION_RENDERING = false;
+
 export const useNotificationManager = () => {
   const { toast } = useToast();
   const { notificationsEnabled } = useNotificationPermissions();
@@ -58,11 +60,17 @@ export const useNotificationManager = () => {
       console.log('Adding valid notification:', newNotification);
       setNotifications(prev => [newNotification, ...prev]);
       
-      toast({
-        title: newNotification.title,
-        description: newNotification.message,
-        variant: "default",
-      });
+      if (
+        ENABLE_LEGACY_NOTIFICATION_RENDERING ||
+        (type !== 'participation-request')  // allow other toasts through
+      ) {
+        toast({
+          title: newNotification.title,
+          description: newNotification.message,
+          variant: "default",
+        });
+      }
+      
       
       if (areNotificationsEnabled()) {
         new window.Notification(newNotification.title, {
@@ -72,7 +80,7 @@ export const useNotificationManager = () => {
       }
       
       // Only show modals if we're on the dashboard
-      if (isDashboard) {
+      if (isDashboard && ENABLE_LEGACY_NOTIFICATION_RENDERING) {
         if (type === 'participation-request') {
           console.log('Setting participation modal to show');
           setCurrentChallengeId(challengeId || null);

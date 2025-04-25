@@ -16,6 +16,8 @@ import {
   shouldShowCompletionBox as checkShouldShowCompletionBox
 } from './notifications/dateUtils';
 
+const ENABLE_LEGACY_NOTIFICATIONS = false;
+
 export const useNotificationSystem = () => {
   console.log("useNotificationSystem hook initializing");
   const { user, profile, refreshProfile } = useAuth();
@@ -81,6 +83,9 @@ export const useNotificationSystem = () => {
   );
   
   const shouldShowParticipationBox = useMemo(() => {
+
+    if (!ENABLE_LEGACY_NOTIFICATIONS) return false; // Skip if legacy notifications are disabled
+
     if (forceHideParticipationBox) {
       console.log("Forcing hide participation box due to user response");
       return false;
@@ -114,6 +119,9 @@ export const useNotificationSystem = () => {
   }, [currentChallenge, notifications, forceHideParticipationBox]);
 
   const shouldShowCompletionBox = useMemo(() => {
+
+    if (!ENABLE_LEGACY_NOTIFICATIONS) return false; // Skip if legacy notifications are disabled
+
     const activeChallenge = currentChallenge || getCurrentChallengeId();
     console.log("Checking if completion box should show for challenge:", activeChallenge);
     return checkShouldShowCompletionBox(activeChallenge, notifications);
@@ -121,6 +129,9 @@ export const useNotificationSystem = () => {
   
   // Check for initial participation notification
   useEffect(() => {
+
+    if (!ENABLE_LEGACY_NOTIFICATIONS) return; // Skip if legacy notifications are disabled
+
     const challengeId = currentChallenge || getCurrentChallengeId();
     console.log("Scheduling initial notification check for challenge:", challengeId);
     
