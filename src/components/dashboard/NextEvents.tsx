@@ -19,7 +19,7 @@ const NextEvents = () => {
         const { data: challenges, error: challengesError } = await supabase
           .from('Challenges')
           .select('*')
-          .gte('start_time', addHours(new Date(), 3).toISOString())
+          .gte('start_time', addHours(new Date(), 10).toISOString())
           .order('start_time', { ascending: true })
           .limit(2)
 
