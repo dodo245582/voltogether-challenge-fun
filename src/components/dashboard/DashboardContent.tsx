@@ -54,7 +54,7 @@ const DashboardContent = ({
       const { data: challenge, error: challengeError } = await supabase
       .from('Challenges')
       .select('*, Users_Challenges(*)') // Include the challenge_user relationship
-      .lte('start_time', addHours(new Date(), 3).toISOString())
+      .lte('start_time', addHours(new Date(), 10).toISOString())
       .gte('end_time', subHours(new Date(), 3).toISOString())
       .single();
 
@@ -131,7 +131,7 @@ const DashboardContent = ({
   return (
     <div className="lg:col-span-2 space-y-6">
 
-      {challenge && !(challenge.Users_Challenges && challenge.Users_Challenges.length > 0) && isAfter(new Date(), subHours(parseISO(challenge.start_time), 3)) && isBefore(new Date(), parseISO(challenge.start_time)) && (
+      {challenge && !(challenge.Users_Challenges && challenge.Users_Challenges.length > 0) && isAfter(new Date(), subHours(parseISO(challenge.start_time), 10)) && isBefore(new Date(), parseISO(challenge.start_time)) && (
         <ParticipationBox
           challenge={challenge}
           acceptChallenge={acceptChallenge}
