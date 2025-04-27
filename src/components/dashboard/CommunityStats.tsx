@@ -1,31 +1,38 @@
 
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 
-interface CommunityStatsProps {
-  activeUsers: number;
-  completedChallenges: number;
-  impact: number;
-}
+const CommunityStats = () => {
+  const [totalCO2Saved, setTotalCO2Saved] = useState<number>(0);
 
-const CommunityStats = ({activeUsers, completedChallenges, impact}: CommunityStatsProps ) => {
+  useEffect(() => {
+    const fetchTotalPoints = async () => {
+      const { data, error } = await supabase
+        .from('Users_Challenges')
+        .select('points')
+        .not('points', 'is', null);
+
+      if (!error && data) {
+        const totalPoints = data.reduce((sum, record) => sum + (record.points || 0), 0);
+        const co2Saved = (totalPoints * 0.01 * 0.256).toFixed(2);
+        setTotalCO2Saved(parseFloat(co2Saved));
+      }
+    };
+
+    fetchTotalPoints();
+  }, []);
 
   return (
-    <Card className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-      <CardTitle className="text-xl font-semibold mb-4">Community</CardTitle>
-      <CardContent className="p-0">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Utenti attivi</span>
-            <span className="font-medium">{activeUsers}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Sfide completate</span>
-            <span className="font-medium">{completedChallenges}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Impatto totale</span>
-            <span className="font-medium">{impact}</span>
-          </div>
+    <Card className="overflow-hidden bg-white shadow-sm">
+      <CardContent className="p-6">
+        <div className="text-center">
+          <h3 className="text-base font-medium text-gray-600">
+            CO₂ Risparmiata dalla Community
+          </h3>
+          <p className="mt-2 text-3xl font-bold text-gray-900">
+            {totalCO2Saved.toFixed(2)} kg
+          </p>
         </div>
       </CardContent>
     </Card>
