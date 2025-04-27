@@ -8,14 +8,14 @@ const CommunityStats = () => {
 
   useEffect(() => {
     const fetchTotalPoints = async () => {
-      const { data, error } = await supabase
-        .from('Users_Challenges')
-        .select('points')
-        .not('points', 'is', null);
+      // Use RPC function to bypass RLS and get the sum of all points
+      const { data, error } = await supabase.rpc('get_total_community_points');
 
-      if (!error && data) {
-        const totalPoints = data.reduce((sum, record) => sum + (record.points || 0), 0);
-        const co2Saved = (totalPoints * 0.01 * 0.256).toFixed(2);
+      if (error) {
+        console.error('Error fetching total community points:', error);
+      } else if (data !== null) {
+        // Apply the CO2 calculation formula
+        const co2Saved = (data * 0.01 * 0.256).toFixed(2);
         setTotalCO2Saved(parseFloat(co2Saved));
       }
     };
