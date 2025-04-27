@@ -8,18 +8,20 @@ export const useOnboardingState = (profile: User | null) => {
   const [city, setCity] = useState('');
   const [discoverySource, setDiscoverySource] = useState<DiscoverySource | ''>('');
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
+  const [instagramAccount, setInstagramAccount] = useState('');
+  const [areraPortalAccess, setAreraPortalAccess] = useState<boolean | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
-  // Simple initialization from profile, only runs once when profile is available
   useEffect(() => {
     if (!profile) return;
     
-    // Initialize values from profile if available
     if (profile.name) setName(profile.name);
     if (profile.city) setCity(profile.city);
     if (profile.discovery_source) setDiscoverySource(profile.discovery_source as DiscoverySource);
     if (profile.selected_actions) setSelectedActions(profile.selected_actions);
+    if (profile.instagram_account) setInstagramAccount(profile.instagram_account);
+    if (profile.arera_portal_access !== undefined) setAreraPortalAccess(profile.arera_portal_access);
   }, [profile]);
 
   return {
@@ -33,6 +35,10 @@ export const useOnboardingState = (profile: User | null) => {
     setDiscoverySource,
     selectedActions,
     setSelectedActions,
+    instagramAccount,
+    setInstagramAccount,
+    areraPortalAccess,
+    setAreraPortalAccess,
     isLoading,
     setIsLoading,
     redirectAttempted,

@@ -28,6 +28,9 @@ const OnboardingContainer = () => {
     redirectAttempted, setRedirectAttempted
   } = useOnboardingState(profile);
   
+  const [instagramAccount, setInstagramAccount] = useState('');
+  const [areraPortalAccess, setAreraPortalAccess] = useState<boolean | undefined>(undefined);
+  
   const [error, setError] = useState(false);
   
   const nextStep = () => {
@@ -102,13 +105,22 @@ const OnboardingContainer = () => {
     }
     
     setIsLoading(true);
-    console.log("Starting profile completion with data:", { name, city, discoverySource, selectedActions });
+    console.log("Starting profile completion with data:", { 
+      name, 
+      city, 
+      discoverySource, 
+      selectedActions,
+      instagramAccount: instagramAccount || null,
+      areraPortalAccess 
+    });
     
     const profileData = {
       name,
       city,
       discovery_source: discoverySource,
       selected_actions: selectedActions,
+      instagram_account: instagramAccount || null,
+      arera_portal_access: areraPortalAccess,
       profile_completed: true
     };
     
@@ -195,7 +207,14 @@ const OnboardingContainer = () => {
   const renderStepContent = () => {
     switch(step) {
       case 1:
-        return <ProfileStep name={name} setName={setName} />;
+        return <ProfileStep 
+          name={name} 
+          setName={setName}
+          instagramAccount={instagramAccount}
+          setInstagramAccount={setInstagramAccount}
+          areraPortalAccess={areraPortalAccess}
+          setAreraPortalAccess={setAreraPortalAccess}
+        />;
       case 2:
         return <LocationStep city={city} setCity={setCity} />;
       case 3:
