@@ -99,7 +99,16 @@ const NextEvents = () => {
             ) : (
             <div className="flex flex-col items-center justify-center text-center text-gray-500">
               <TreePalm className="h-8 w-8 text-gray-300 mb-2"/>
-              <p className="text-sm">Al momento non ci sono prossime challenge attive, ma arriveranno a breve...clicca su 'Come Funziona'per saperne di più, e preparati a partecipare nei prossimi giorni!</p>
+              <p className="text-sm">Al momento non ci sono challenge attive, ma arriveranno a breve... clicca su 'Come Funziona' per saperne di più, e preparati a partecipare nei prossimi giorni! Ricordati di seguirci su Instagram 
+  <a 
+    href="https://www.instagram.com/vol.together/" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="text-blue-600 hover:underline"
+  >
+    @vol.together
+  </a> 
+  per conoscerci meglio e restare aggiornato/a su tutte le novità. </p>
             </div>
             )}
 
