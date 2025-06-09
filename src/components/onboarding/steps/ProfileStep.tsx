@@ -48,9 +48,11 @@ const ProfileStep = ({
           onChange={(e) => setInstagramAccount(e.target.value)}
           maxLength={30}
         />
-        <p className="text-sm text-gray-500">
+
+        {/* <p className="text-sm text-gray-500">
           Così, se hai interagito con i nostri contenuti, riceverai dei punti aggiuntivi!
-        </p>
+        </p> */}
+        
       </div>
 
       <div className="space-y-3">
