@@ -52,6 +52,7 @@ export interface Challenge {
 
 export type DiscoverySource = 
   | 'social-media'
+  | 'sustainable-friends'
   | 'friend'
   | 'advertisement'
   | 'previous-experiment'

@@ -17,7 +17,14 @@ const DiscoveryStep = ({ discoverySource, setDiscoverySource }: DiscoveryStepPro
           value={discoverySource} 
           onValueChange={(value) => setDiscoverySource(value as DiscoverySource)}
         >
+
+
           <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="sustainable-friends" id="sustainable-friends" />
+              <Label htmlFor="sustainable-friends">Tramite Sustainable Friends</Label>
+            </div>
+
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="social-media" id="social-media" />
               <Label htmlFor="social-media">Social Media</Label>
