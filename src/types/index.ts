@@ -51,14 +51,17 @@ export interface Challenge {
 }
 
 export type DiscoverySource = 
-  | 'social-media'
+  | 'instagram'
   | 'sustainable-friends'
+  | 'heroots'
+  | 'greenpea'
   | 'friend'
-  | 'advertisement'
+  // | 'advertisement'
   | 'previous-experiment'
   | 'atmospheralab'
-  | 'cs1bc'
-  | 'other';
+  | 'milan-green-forum'
+  | 'impatto'
+  | 'cs1bc';
 
 const generateCurrentWeekDates = () => {
   const dates: string[] = [];
