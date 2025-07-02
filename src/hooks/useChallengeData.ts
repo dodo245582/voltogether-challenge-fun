@@ -237,7 +237,8 @@ export const useChallengeData = (initialChallenge: Challenge) => {
         const streakBonus = newStreak >= 3 ? 5 : 0;
   
         // Punti totali per questa sfida
-        const totalPoints = actionsPoints + streakBonus;
+        const uncappedTotalPoints = actionsPoints + streakBonus;
+        const totalPoints = Math.min(uncappedTotalPoints, 300);
   
         // Aggiorna localStorage
         localStorage.setItem(`challenge_${challengeId}_actions`, JSON.stringify(actionIds));
@@ -273,10 +274,16 @@ export const useChallengeData = (initialChallenge: Challenge) => {
           }
         }
   
+        // toast({
+        //   title: "Sfida completata",
+        //   description: totalPoints > 0
+        //     ? `Hai guadagnato ${actionsPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!`
+        //     : "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
+        // });
         toast({
           title: "Sfida completata",
           description: totalPoints > 0
-            ? `Hai guadagnato ${actionsPoints} punti${streakBonus > 0 ? ` + ${streakBonus} punti bonus per la streak` : ''}!`
+            ? `Hai guadagnato ${totalPoints} punti${streakBonus > 0 ? ` (inclusi ${streakBonus} punti bonus per la streak)` : ''}${totalPoints < uncappedTotalPoints ? ' (massimo raggiunto: 300 punti)' : ''}!`
             : "Grazie per la tua onestà! Ti aspettiamo alla prossima sfida.",
         });
       } else {

@@ -48,6 +48,8 @@ export interface Challenge {
     points: number | null;
     actions_done: string[] | null;
   }[];
+  userActions?: string[];
+  date?: string;
 }
 
 export type DiscoverySource = 
