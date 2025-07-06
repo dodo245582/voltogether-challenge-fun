@@ -97,6 +97,21 @@ const HowItWorks = () => {
                     </div>
                   </div>
 
+                  {/* Limite Punti */}
+                  <div className="flex gap-3">
+                    <div className="shrink-0 bg-voltgreen-100 rounded-full p-2 mt-1">
+                      <Zap className="h-5 w-5 text-voltgreen-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Nota Sul Calcolo Dei Punti</p>
+                      <p>
+                        Per ogni sfida è possibile guadagnare fino a un massimo di 300 punti, che corrispondono a un risparmio massimo di circa 3 kWh.
+                        Questo limite esiste perché, realisticamente, è difficile ridurre il consumo oltre questa soglia in un’unica occasione.
+                        Il nostro obiettivo è premiare comportamenti concreti e sostenibili!
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Community */}
                   <div className="flex gap-3">
                     <div className="shrink-0 bg-voltgreen-100 rounded-full p-2 mt-1">
