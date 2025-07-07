@@ -46,7 +46,7 @@ const HowItWorks = () => {
                         Ecco gli step da seguire:<br /><br />
                         1. 24 ore prima dell’inizio della sfida verrai avvisato/a sui nostri canali (Telegram e email).<br /><br />
                         2. Il giorno della sfida troverai un box sulla tua dashboard con la domanda:
-                        “Parteciperai alla sfida di oggi?” Clicca su “Parteciperò” per confermare. Puoi confermar la partecipazione fino a 5 minuti prima dell’orario di inizio.<br /><br />
+                        “Parteciperai alla sfida di oggi?” Clicca su “Parteciperò” per confermare. Puoi confermare la partecipazione fino a 5 minuti prima dell’orario di inizio.<br /><br />
                         3. Solo se avrai confermato la tua partecipazione, al termine della sfida comparirà una nuova domanda sulla tua dashboard:
                         “Che azioni hai fatto per partecipare alla sfida?”, dove potrai selezionare le azioni che hai fatto.
                         Avrai tempo per compilarlo entro 3 ore dalla fine della sfida.<br /><br />
