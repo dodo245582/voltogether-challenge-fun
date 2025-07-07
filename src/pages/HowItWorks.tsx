@@ -31,7 +31,7 @@ const HowItWorks = () => {
                     </div>
                     <div>
                       <p className="font-medium">Sfide Giornaliere</p>
-                      <p>Durante la settimana dal 5 all’11 maggio, lanceremo 3 sfide tra le 19:00 e le 20:00. Ti avviseremo con 24 ore di anticipo ogni volta che una sfida sarà attiva. Cosa dovrai fare per partecipare? Abbassare il tuo consumo energetico durante l’orario stabilito, tramite alcune semplici azioni (la lista completa è qui sotto, in “Guadagna Punti”).</p>
+                      <p>Lanceremo 3 sfide per ogni settimana di sperimentazione. Ti avviseremo con 24 ore di anticipo ogni volta che una sfida sarà attiva. Cosa dovrai fare per partecipare? Abbassare il tuo consumo energetico durante l’orario stabilito, tramite alcune semplici azioni (la lista completa è qui sotto, in “Guadagna Punti”).</p>
                     </div>
                   </div>
 
@@ -44,9 +44,9 @@ const HowItWorks = () => {
                       <p className="font-medium">Partecipazione</p>
                       <p>
                         Ecco gli step da seguire:<br /><br />
-                        1. 24 ore prima dell’inizio della sfida verrai avvisato/a tramite email.<br /><br />
-                        2. Il giorno della sfida, dalle ore 9:00, troverai un box sulla tua dashboard con la domanda:
-                        “Parteciperai alla sfida di oggi?” Clicca su “Parteciperò” per confermare. Hai tempo fino alle 19:00.<br /><br />
+                        1. 24 ore prima dell’inizio della sfida verrai avvisato/a sui nostri canali (Telegram e email).<br /><br />
+                        2. Il giorno della sfida troverai un box sulla tua dashboard con la domanda:
+                        “Parteciperai alla sfida di oggi?” Clicca su “Parteciperò” per confermare. Puoi confermar la partecipazione fino a 5 minuti prima dell’orario di inizio.<br /><br />
                         3. Solo se avrai confermato la tua partecipazione, al termine della sfida comparirà una nuova domanda sulla tua dashboard:
                         “Che azioni hai fatto per partecipare alla sfida?”, dove potrai selezionare le azioni che hai fatto.
                         Avrai tempo per compilarlo entro 3 ore dalla fine della sfida.<br /><br />
